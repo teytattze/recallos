@@ -1,8 +1,11 @@
 {
-  "name": "recall-os",
+  "name": "recallos",
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "bin": {
+    "recallos": "src/cli.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
