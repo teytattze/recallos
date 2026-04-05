@@ -1,0 +1,28 @@
+{
+  "name": "recall-os",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@chroma-core/default-embed": "^0.1.9",
+    "@hono/mcp": "^0.2.5",
+    "@langchain/textsplitters": "^1.0.1",
+    "@modelcontextprotocol/hono": "^2.0.0-alpha.2",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/server": "^2.0.0-alpha.2",
+    "@types/yargs": "^17.0.35",
+    "chromadb": "^3.4.0",
+    "dotenv": "^17.4.0",
+    "glob": "^13.0.6",
+    "hono": "^4.12.10",
+    "voyageai": "^0.2.1",
+    "yargs": "^18.0.0",
+    "zod": "^4.3.6"
+  }
+}
