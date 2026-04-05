@@ -6,7 +6,7 @@ import { Hono } from "hono";
 const app = new Hono();
 
 const mcpServer = new McpServer({
-  name: "recall-os",
+  name: "recallos",
   version: "0.0.0",
 });
 const transport = new StreamableHTTPTransport();

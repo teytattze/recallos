@@ -1,20 +1,25 @@
-import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { client } from "./client";
+import { chunker } from "./chunker";
 
 const COLLECTION_NAME = "code_collection";
 const EMBEDDING_MODEL = "voyage-code-3.5";
 
 type Metadata = {
   filePath: string;
+  symbolName: string;
+  symbolKind: string;
+  startLine: number;
+  endLine: number;
 };
 
-const getCollection = async () =>
-  await client.chromadb.getOrCreateCollection({
+async function getCollection() {
+  return await client.chromadb.getOrCreateCollection({
     name: COLLECTION_NAME,
     embeddingFunction: null,
   });
+}
 
-const read = async (input: { queries: string[] }) => {
+async function read(input: { queries: string[] }) {
   const { queries } = input;
 
   const embeddings = await client.voyageai.embed({
@@ -26,42 +31,42 @@ const read = async (input: { queries: string[] }) => {
 
   return await codeCollection.query<Metadata>({
     queryEmbeddings: embeddings.data?.map((item) => item.embedding ?? []),
-    nResults: 3,
+    nResults: 10,
   });
-};
+}
 
-const write = async (input: { code: string; filePath: string }) => {
+async function write(input: { code: string; filePath: string }) {
   const { code, filePath } = input;
 
-  const jsSplitter = RecursiveCharacterTextSplitter.fromLanguage("js", {
-    chunkSize: 120,
-    chunkOverlap: 0,
-  });
-  const docs = await jsSplitter.createDocuments([code], [{ filePath }]);
+  const codeChunks = chunker.chunkCode(code, filePath);
 
   const embeddings = await client.voyageai.embed({
-    input: docs.map((doc) => doc.pageContent),
+    input: codeChunks.map((chunk) => chunk.content),
     model: EMBEDDING_MODEL,
   });
 
-  const chunks = docs.map((doc, i) => ({
-    id: filePath + "#" + i,
-    document: doc.pageContent,
+  const records = codeChunks.map((chunk, i) => ({
+    id: `${filePath}#${chunk.symbolName}`,
+    document: chunk.content,
     embedding: embeddings.data?.[i]?.embedding ?? [],
     metadata: {
-      filePath: doc.metadata["filePath"],
+      filePath: chunk.filePath,
+      symbolName: chunk.symbolName,
+      symbolKind: chunk.symbolKind,
+      startLine: chunk.startLine,
+      endLine: chunk.endLine,
     },
   }));
 
   const codeCollection = await getCollection();
 
   await codeCollection.add({
-    ids: chunks.map((chunk) => chunk.id),
-    documents: chunks.map((chunk) => chunk.document),
-    embeddings: chunks.map((chunk) => chunk.embedding),
-    metadatas: chunks.map((chunk) => chunk.metadata),
+    ids: records.map((r) => r.id),
+    documents: records.map((r) => r.document),
+    embeddings: records.map((r) => r.embedding),
+    metadatas: records.map((r) => r.metadata),
   });
-};
+}
 
 const codeMemory = {
   read,
