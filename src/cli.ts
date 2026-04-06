@@ -4,25 +4,39 @@ import { hideBin } from "yargs/helpers";
 import z from "zod";
 import { memoryManager } from "./memory-manager";
 import { client } from "./client";
-import { codeMemory } from "./code-memory";
+import { codeMemory } from "./memory/code";
 import { indexState } from "./index-state";
 import { diffFiles } from "./incremental-index";
 import { util } from "./util";
+
+const VALID_KINDS = ["code", "docs", "conversation", "knowledge"] as const;
+type Kind = (typeof VALID_KINDS)[number];
+
+const memories = {
+  code: codeMemory,
+} as const;
 
 yargs(hideBin(process.argv))
   .command(
     "recall <queries...>",
     "Queries the memory",
     (yargs) => {
-      return yargs.positional("queries", {
-        describe: "A list of queries to read memory",
-        default: [],
-      });
+      return yargs
+        .positional("queries", {
+          describe: "A list of queries to read memory",
+          default: [],
+        })
+        .option("kind", {
+          alias: "k",
+          describe: "The memory kind to query",
+          choices: VALID_KINDS,
+          default: "code" as Kind,
+        });
     },
     async (argv) => {
-      const { queries: maybeQueries } = argv;
+      const { queries: maybeQueries, kind } = argv;
       const queries = z.string().array().parse(maybeQueries);
-      const result = await memoryManager.read({ kind: "code", queries });
+      const result = await memoryManager.read({ kind, queries } as any);
       console.log(JSON.stringify(result, null, 4));
     },
   )
@@ -31,6 +45,12 @@ yargs(hideBin(process.argv))
     "Indexes source files into memory",
     (yargs) => {
       return yargs
+        .option("kind", {
+          alias: "k",
+          describe: "The memory kind to index",
+          choices: VALID_KINDS,
+          default: "code" as Kind,
+        })
         .option("include", {
           alias: "i",
           describe: "Glob patterns to include",
@@ -53,6 +73,14 @@ yargs(hideBin(process.argv))
         });
     },
     async (argv) => {
+      const { kind } = argv;
+      const memory = memories[kind as keyof typeof memories];
+
+      if (!memory) {
+        console.error(`Indexing for kind "${kind}" is not yet implemented`);
+        process.exit(1);
+      }
+
       const files = await util.loadFiles({
         includePatterns: argv.include,
         excludePatterns: argv.exclude,
@@ -75,15 +103,15 @@ yargs(hideBin(process.argv))
         } catch {
           // Collection may not exist yet
         }
-        await indexState.deleteAll();
+        await indexState.deleteAll(kind);
 
         for (const file of diskFiles) {
-          await indexState.insertPending(file.path, file.hash);
-          const chunkIds = await codeMemory.write({
+          await indexState.insertPending(kind, file.path, file.hash);
+          const chunkIds = await memory.writeOne({
             code: file.content,
             filePath: file.path,
           });
-          await indexState.markComplete(file.path, chunkIds);
+          await indexState.markComplete(kind, file.path, chunkIds);
         }
 
         console.log(`Indexed ${diskFiles.length} files (force)`);
@@ -91,16 +119,16 @@ yargs(hideBin(process.argv))
       }
 
       // Clean up pending docs from interrupted previous runs
-      const pendingDocs = await indexState.getPending();
+      const pendingDocs = await indexState.getPending(kind);
       if (pendingDocs.length > 0) {
         const pendingChunkIds = pendingDocs.flatMap((d) => d.chunkIds);
-        await codeMemory.deleteChunks(pendingChunkIds);
-        await indexState.deleteMany(pendingDocs.map((d) => d.filePath));
+        await memory.deleteChunks(pendingChunkIds);
+        await indexState.deleteMany(kind, pendingDocs.map((d) => d.filePath));
         console.log(`Cleaned up ${pendingDocs.length} pending entries`);
       }
 
       // Fetch complete state and diff
-      const stateEntries = await indexState.getAll();
+      const stateEntries = await indexState.getAll(kind);
       const diff = diffFiles(
         diskFiles.map((f) => ({ path: f.path, hash: f.hash })),
         stateEntries.map((s) => ({
@@ -115,8 +143,8 @@ yargs(hideBin(process.argv))
           diff.deleted.includes(s.filePath),
         );
         const deletedChunkIds = deletedState.flatMap((s) => s.chunkIds);
-        await codeMemory.deleteChunks(deletedChunkIds);
-        await indexState.deleteMany(diff.deleted);
+        await memory.deleteChunks(deletedChunkIds);
+        await indexState.deleteMany(kind, diff.deleted);
       }
 
       // Handle MODIFIED files (delete old chunks)
@@ -125,8 +153,8 @@ yargs(hideBin(process.argv))
           diff.modified.includes(s.filePath),
         );
         const modifiedChunkIds = modifiedState.flatMap((s) => s.chunkIds);
-        await codeMemory.deleteChunks(modifiedChunkIds);
-        await indexState.deleteMany(diff.modified);
+        await memory.deleteChunks(modifiedChunkIds);
+        await indexState.deleteMany(kind, diff.modified);
       }
 
       // Index ADDED + MODIFIED files (two-phase write)
@@ -135,12 +163,12 @@ yargs(hideBin(process.argv))
 
       for (const filePath of toIndex) {
         const file = fileMap.get(filePath)!;
-        await indexState.insertPending(file.path, file.hash);
-        const chunkIds = await codeMemory.write({
+        await indexState.insertPending(kind, file.path, file.hash);
+        const chunkIds = await memory.writeOne({
           code: file.content,
           filePath: file.path,
         });
-        await indexState.markComplete(file.path, chunkIds);
+        await indexState.markComplete(kind, file.path, chunkIds);
       }
 
       console.log(

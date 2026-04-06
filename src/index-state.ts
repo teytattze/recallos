@@ -4,6 +4,7 @@ const DB_NAME = "recallos";
 const COLLECTION_NAME = "index_state";
 
 type IndexStateDoc = {
+  kind: string;
   filePath: string;
   contentHash: string;
   chunkIds: string[];
@@ -17,15 +18,16 @@ function getCollection() {
 
 async function ensureIndexes() {
   const col = getCollection();
-  await col.createIndex({ filePath: 1 }, { unique: true });
+  await col.createIndex({ kind: 1, filePath: 1 }, { unique: true });
 }
 
-async function insertPending(filePath: string, contentHash: string) {
+async function insertPending(kind: string, filePath: string, contentHash: string) {
   const col = getCollection();
   await col.updateOne(
-    { filePath },
+    { kind, filePath },
     {
       $set: {
+        kind,
         filePath,
         contentHash,
         chunkIds: [],
@@ -37,33 +39,33 @@ async function insertPending(filePath: string, contentHash: string) {
   );
 }
 
-async function markComplete(filePath: string, chunkIds: string[]) {
+async function markComplete(kind: string, filePath: string, chunkIds: string[]) {
   const col = getCollection();
   await col.updateOne(
-    { filePath },
+    { kind, filePath },
     { $set: { chunkIds, status: "complete" as const, indexedAt: new Date() } },
   );
 }
 
-async function getAll(): Promise<IndexStateDoc[]> {
+async function getAll(kind: string): Promise<IndexStateDoc[]> {
   const col = getCollection();
-  return col.find({ status: "complete" }).toArray() as Promise<IndexStateDoc[]>;
+  return col.find({ kind, status: "complete" }).toArray() as Promise<IndexStateDoc[]>;
 }
 
-async function getPending(): Promise<IndexStateDoc[]> {
+async function getPending(kind: string): Promise<IndexStateDoc[]> {
   const col = getCollection();
-  return col.find({ status: "pending" }).toArray() as Promise<IndexStateDoc[]>;
+  return col.find({ kind, status: "pending" }).toArray() as Promise<IndexStateDoc[]>;
 }
 
-async function deleteMany(filePaths: string[]) {
+async function deleteMany(kind: string, filePaths: string[]) {
   if (filePaths.length === 0) return;
   const col = getCollection();
-  await col.deleteMany({ filePath: { $in: filePaths } });
+  await col.deleteMany({ kind, filePath: { $in: filePaths } });
 }
 
-async function deleteAll() {
+async function deleteAll(kind: string) {
   const col = getCollection();
-  await col.deleteMany({});
+  await col.deleteMany({ kind });
 }
 
 const indexState = {

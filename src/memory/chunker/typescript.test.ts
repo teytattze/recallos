@@ -1,7 +1,7 @@
 import { test, expect, describe } from "bun:test";
-import { chunker } from "./chunker";
+import { typescriptChunker } from "./typescript";
 
-describe("chunker", () => {
+describe("typescriptChunker", () => {
   test("extracts preamble from imports and top comments", () => {
     const code = `// Top comment
 import { foo } from "bar";
@@ -9,7 +9,7 @@ import { baz } from "qux";
 
 const x = 1;`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     const preamble = chunks.find((c) => c.symbolName === "_preamble");
     expect(preamble).toBeDefined();
     expect(preamble!.symbolKind).toBe("preamble");
@@ -23,7 +23,7 @@ const x = 1;`;
   return "hello " + name;
 }`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     const fn = chunks.find((c) => c.symbolName === "greet");
     expect(fn).toBeDefined();
     expect(fn!.symbolKind).toBe("function");
@@ -35,7 +35,7 @@ const x = 1;`;
   test("extracts arrow function in const", () => {
     const code = `const add = (a: number, b: number) => a + b;`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     const fn = chunks.find((c) => c.symbolName === "add");
     expect(fn).toBeDefined();
     expect(fn!.symbolKind).toBe("variable");
@@ -48,7 +48,7 @@ const x = 1;`;
   method() { return 1; }
 }`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     const cls = chunks.find((c) => c.symbolName === "MyClass");
     expect(cls).toBeDefined();
     expect(cls!.symbolKind).toBe("class");
@@ -61,7 +61,7 @@ const x = 1;`;
   age: number;
 }`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     const iface = chunks.find((c) => c.symbolName === "User");
     expect(iface).toBeDefined();
     expect(iface!.symbolKind).toBe("interface");
@@ -70,7 +70,7 @@ const x = 1;`;
   test("extracts type alias", () => {
     const code = `type Point = { x: number; y: number };`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     const t = chunks.find((c) => c.symbolName === "Point");
     expect(t).toBeDefined();
     expect(t!.symbolKind).toBe("type");
@@ -82,7 +82,7 @@ const x = 1;`;
   Inactive,
 }`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     const e = chunks.find((c) => c.symbolName === "Status");
     expect(e).toBeDefined();
     expect(e!.symbolKind).toBe("enum");
@@ -91,7 +91,7 @@ const x = 1;`;
   test("unwraps export statement", () => {
     const code = `export function greet() { return "hi"; }`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     const fn = chunks.find((c) => c.symbolName === "greet");
     expect(fn).toBeDefined();
     expect(fn!.symbolKind).toBe("function");
@@ -104,7 +104,7 @@ function add(a: number, b: number) {
   return a + b;
 }`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     const fn = chunks.find((c) => c.symbolName === "add");
     expect(fn).toBeDefined();
     expect(fn!.content).toContain("/** Adds two numbers */");
@@ -117,7 +117,7 @@ function add(a: number, b: number) {
 
 function foo() {}`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     const fn = chunks.find((c) => c.symbolName === "foo");
     expect(fn).toBeDefined();
     expect(fn!.content).not.toContain("// Unrelated comment");
@@ -132,7 +132,7 @@ const bar = 42;
 
 function baz() { return bar; }`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     // Every non-whitespace character in the source should appear in some chunk
     const allChunkContent = chunks.map((c) => c.content).join("");
     const sourceNonWs = code.replace(/\s+/g, "");
@@ -142,13 +142,13 @@ function baz() { return bar; }`;
 
   test("falls back to single chunk for empty file", () => {
     const code = ``;
-    const chunks = chunker.chunkCode(code, "empty.ts");
+    const chunks = typescriptChunker.chunkCode(code, "empty.ts");
     expect(chunks.length).toBe(0);
   });
 
   test("falls back to single chunk for file with only whitespace", () => {
     const code = `   \n\n   `;
-    const chunks = chunker.chunkCode(code, "blank.ts");
+    const chunks = typescriptChunker.chunkCode(code, "blank.ts");
     expect(chunks.length).toBe(0);
   });
 
@@ -156,7 +156,7 @@ function baz() { return bar; }`;
     const code = `// just a comment
 // another comment`;
 
-    const chunks = chunker.chunkCode(code, "comments.ts");
+    const chunks = typescriptChunker.chunkCode(code, "comments.ts");
     // Comments-only file: preamble captures them
     expect(chunks.length).toBeGreaterThan(0);
     expect(chunks[0]!.symbolKind).toBe("preamble");
@@ -166,15 +166,15 @@ function baz() { return bar; }`;
     const code = `const foo = 1;
 const foo = 2;`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     const names = chunks.map((c) => c.symbolName);
     expect(names).toContain("foo");
     expect(names).toContain("foo_2");
   });
 
-  test("parses actual code-memory.ts file", async () => {
-    const content = await Bun.file("src/code-memory.ts").text();
-    const chunks = chunker.chunkCode(content, "src/code-memory.ts");
+  test("parses actual memory/code.ts file", async () => {
+    const content = await Bun.file("src/memory/code.ts").text();
+    const chunks = typescriptChunker.chunkCode(content, "src/memory/code.ts");
 
     expect(chunks.length).toBeGreaterThan(0);
 
@@ -192,7 +192,7 @@ const foo = 2;`;
 
     // Every chunk should have valid metadata
     for (const chunk of chunks) {
-      expect(chunk.filePath).toBe("src/code-memory.ts");
+      expect(chunk.filePath).toBe("src/memory/code.ts");
       expect(chunk.startLine).toBeGreaterThan(0);
       expect(chunk.endLine).toBeGreaterThanOrEqual(chunk.startLine);
       expect(chunk.content.length).toBeGreaterThan(0);
@@ -202,7 +202,7 @@ const foo = 2;`;
   test("handles export default", () => {
     const code = `export default function main() {}`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     // The export wraps a function declaration — should unwrap it
     const fn = chunks.find((c) => c.symbolName === "main");
     expect(fn).toBeDefined();
@@ -213,7 +213,7 @@ const foo = 2;`;
     const code = `const x = 1;
 export { x };`;
 
-    const chunks = chunker.chunkCode(code, "test.ts");
+    const chunks = typescriptChunker.chunkCode(code, "test.ts");
     const exportChunk = chunks.find((c) => c.symbolKind === "export");
     expect(exportChunk).toBeDefined();
     expect(exportChunk!.content).toContain("export { x }");

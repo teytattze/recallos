@@ -1,14 +1,6 @@
 import Parser from "tree-sitter";
 import TreeSitterTypeScript from "tree-sitter-typescript";
-
-type CodeChunk = {
-  content: string;
-  symbolName: string;
-  symbolKind: string;
-  filePath: string;
-  startLine: number;
-  endLine: number;
-};
+import type { Chunk } from "./types";
 
 const parser = new Parser();
 parser.setLanguage(
@@ -90,11 +82,11 @@ function hasBlankLineGap(
   return between.includes("\n\n");
 }
 
-function chunkCode(code: string, filePath: string): CodeChunk[] {
+function chunkCode(code: string, filePath: string): Chunk[] {
   const tree = parser.parse(code);
   const rootNode = tree.rootNode;
   const children = rootNode.children;
-  const chunks: CodeChunk[] = [];
+  const chunks: Chunk[] = [];
 
   // Track which nodes have been consumed as preamble or leading comments
   const consumed = new Set<number>();
@@ -243,7 +235,6 @@ function chunkCode(code: string, filePath: string): CodeChunk[] {
   return chunks;
 }
 
-const chunker = { chunkCode };
+const typescriptChunker = { chunkCode };
 
-export { chunker };
-export type { CodeChunk };
+export { typescriptChunker };

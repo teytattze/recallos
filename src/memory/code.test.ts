@@ -1,5 +1,5 @@
 import { test, expect, mock, beforeEach } from "bun:test";
-import { chunker } from "./chunker";
+import { typescriptChunker } from "./chunker/typescript";
 
 // Mock the client module to avoid hitting external services
 const mockAdd = mock(() => Promise.resolve());
@@ -9,7 +9,7 @@ const mockCollection = {
   delete: mockDelete,
 };
 
-mock.module("./client", () => ({
+mock.module("../client", () => ({
   client: {
     chromadb: {
       getOrCreateCollection: mock(() => Promise.resolve(mockCollection)),
@@ -31,14 +31,14 @@ mock.module("./client", () => ({
 }));
 
 // Import after mocking
-const { codeMemory } = await import("./code-memory");
+const { codeMemory } = await import("./code");
 
 beforeEach(() => {
   mockAdd.mockClear();
   mockDelete.mockClear();
 });
 
-test("write returns chunk IDs matching chunker output", async () => {
+test("writeOne returns chunk IDs matching chunker output", async () => {
   const code = `
 import { foo } from "bar";
 
@@ -48,8 +48,8 @@ function hello() {
 
 const x = 42;
 `;
-  const chunks = chunker.chunkCode(code, "test.ts");
-  const ids = await codeMemory.write({ code, filePath: "test.ts" });
+  const chunks = typescriptChunker.chunkCode(code, "test.ts");
+  const ids = await codeMemory.writeOne({ code, filePath: "test.ts" });
 
   expect(ids).toBeArrayOfSize(chunks.length);
   for (const id of ids) {
@@ -57,9 +57,9 @@ const x = 42;
   }
 });
 
-test("write returns IDs in format filePath#symbolName", async () => {
+test("writeOne returns IDs in format filePath#symbolName", async () => {
   const code = `function greet() { return "hi"; }`;
-  const ids = await codeMemory.write({ code, filePath: "src/greet.ts" });
+  const ids = await codeMemory.writeOne({ code, filePath: "src/greet.ts" });
 
   expect(ids).toContain("src/greet.ts#greet");
 });

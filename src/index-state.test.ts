@@ -12,10 +12,12 @@ const testCollection = testDb.collection("index_state");
 
 import { indexState } from "./index-state";
 
+const KIND = "code";
+
 beforeEach(async () => {
   await testCollection.deleteMany({});
   // Also clear via the module's own collection (may use different db name)
-  await indexState.deleteAll();
+  await indexState.deleteAll(KIND);
 });
 
 afterAll(async () => {
@@ -25,10 +27,11 @@ afterAll(async () => {
 
 describe("indexState", () => {
   test("insertPending creates a doc with status pending and empty chunkIds", async () => {
-    await indexState.insertPending("src/foo.ts", "abc123");
+    await indexState.insertPending(KIND, "src/foo.ts", "abc123");
 
-    const docs = await indexState.getPending();
+    const docs = await indexState.getPending(KIND);
     expect(docs).toHaveLength(1);
+    expect(docs[0]!.kind).toBe(KIND);
     expect(docs[0]!.filePath).toBe("src/foo.ts");
     expect(docs[0]!.contentHash).toBe("abc123");
     expect(docs[0]!.chunkIds).toEqual([]);
@@ -36,10 +39,10 @@ describe("indexState", () => {
   });
 
   test("markComplete updates status to complete with chunkIds and indexedAt", async () => {
-    await indexState.insertPending("src/bar.ts", "def456");
-    await indexState.markComplete("src/bar.ts", ["chunk1", "chunk2"]);
+    await indexState.insertPending(KIND, "src/bar.ts", "def456");
+    await indexState.markComplete(KIND, "src/bar.ts", ["chunk1", "chunk2"]);
 
-    const docs = await indexState.getAll();
+    const docs = await indexState.getAll(KIND);
     expect(docs).toHaveLength(1);
     expect(docs[0]!.status).toBe("complete");
     expect(docs[0]!.chunkIds).toEqual(["chunk1", "chunk2"]);
@@ -47,77 +50,97 @@ describe("indexState", () => {
   });
 
   test("getAll returns only complete docs", async () => {
-    await indexState.insertPending("src/a.ts", "h1");
-    await indexState.insertPending("src/b.ts", "h2");
-    await indexState.markComplete("src/b.ts", ["id1"]);
+    await indexState.insertPending(KIND, "src/a.ts", "h1");
+    await indexState.insertPending(KIND, "src/b.ts", "h2");
+    await indexState.markComplete(KIND, "src/b.ts", ["id1"]);
 
-    const docs = await indexState.getAll();
+    const docs = await indexState.getAll(KIND);
     expect(docs).toHaveLength(1);
     expect(docs[0]!.filePath).toBe("src/b.ts");
   });
 
   test("getPending returns only pending docs", async () => {
-    await indexState.insertPending("src/a.ts", "h1");
-    await indexState.insertPending("src/b.ts", "h2");
-    await indexState.markComplete("src/a.ts", ["id1"]);
+    await indexState.insertPending(KIND, "src/a.ts", "h1");
+    await indexState.insertPending(KIND, "src/b.ts", "h2");
+    await indexState.markComplete(KIND, "src/a.ts", ["id1"]);
 
-    const docs = await indexState.getPending();
+    const docs = await indexState.getPending(KIND);
     expect(docs).toHaveLength(1);
     expect(docs[0]!.filePath).toBe("src/b.ts");
   });
 
   test("getPending returns empty array when none pending", async () => {
-    const docs = await indexState.getPending();
+    const docs = await indexState.getPending(KIND);
     expect(docs).toEqual([]);
   });
 
   test("deleteMany removes docs by filePath", async () => {
-    await indexState.insertPending("src/a.ts", "h1");
-    await indexState.markComplete("src/a.ts", ["id1"]);
-    await indexState.insertPending("src/b.ts", "h2");
-    await indexState.markComplete("src/b.ts", ["id2"]);
-    await indexState.insertPending("src/c.ts", "h3");
-    await indexState.markComplete("src/c.ts", ["id3"]);
+    await indexState.insertPending(KIND, "src/a.ts", "h1");
+    await indexState.markComplete(KIND, "src/a.ts", ["id1"]);
+    await indexState.insertPending(KIND, "src/b.ts", "h2");
+    await indexState.markComplete(KIND, "src/b.ts", ["id2"]);
+    await indexState.insertPending(KIND, "src/c.ts", "h3");
+    await indexState.markComplete(KIND, "src/c.ts", ["id3"]);
 
-    await indexState.deleteMany(["src/a.ts", "src/c.ts"]);
+    await indexState.deleteMany(KIND, ["src/a.ts", "src/c.ts"]);
 
-    const docs = await indexState.getAll();
+    const docs = await indexState.getAll(KIND);
     expect(docs).toHaveLength(1);
     expect(docs[0]!.filePath).toBe("src/b.ts");
   });
 
   test("deleteMany with empty array is a no-op", async () => {
-    await indexState.insertPending("src/a.ts", "h1");
-    await indexState.markComplete("src/a.ts", ["id1"]);
+    await indexState.insertPending(KIND, "src/a.ts", "h1");
+    await indexState.markComplete(KIND, "src/a.ts", ["id1"]);
 
-    await indexState.deleteMany([]);
+    await indexState.deleteMany(KIND, []);
 
-    const docs = await indexState.getAll();
+    const docs = await indexState.getAll(KIND);
     expect(docs).toHaveLength(1);
   });
 
-  test("deleteAll removes all docs", async () => {
-    await indexState.insertPending("src/a.ts", "h1");
-    await indexState.markComplete("src/a.ts", ["id1"]);
-    await indexState.insertPending("src/b.ts", "h2");
+  test("deleteAll removes all docs for kind", async () => {
+    await indexState.insertPending(KIND, "src/a.ts", "h1");
+    await indexState.markComplete(KIND, "src/a.ts", ["id1"]);
+    await indexState.insertPending(KIND, "src/b.ts", "h2");
 
-    await indexState.deleteAll();
+    await indexState.deleteAll(KIND);
 
-    const all = await indexState.getAll();
-    const pending = await indexState.getPending();
+    const all = await indexState.getAll(KIND);
+    const pending = await indexState.getPending(KIND);
     expect(all).toEqual([]);
     expect(pending).toEqual([]);
   });
 
   test("insertPending for existing path resets to pending", async () => {
-    await indexState.insertPending("src/a.ts", "h1");
-    await indexState.markComplete("src/a.ts", ["id1"]);
+    await indexState.insertPending(KIND, "src/a.ts", "h1");
+    await indexState.markComplete(KIND, "src/a.ts", ["id1"]);
 
-    await indexState.insertPending("src/a.ts", "h2");
+    await indexState.insertPending(KIND, "src/a.ts", "h2");
 
-    const pending = await indexState.getPending();
+    const pending = await indexState.getPending(KIND);
     expect(pending).toHaveLength(1);
     expect(pending[0]!.contentHash).toBe("h2");
     expect(pending[0]!.chunkIds).toEqual([]);
+  });
+
+  test("different kinds are isolated", async () => {
+    await indexState.insertPending("code", "src/a.ts", "h1");
+    await indexState.markComplete("code", "src/a.ts", ["id1"]);
+    await indexState.insertPending("docs", "src/a.ts", "h2");
+    await indexState.markComplete("docs", "src/a.ts", ["id2"]);
+
+    const codeDocs = await indexState.getAll("code");
+    const docsDocs = await indexState.getAll("docs");
+    expect(codeDocs).toHaveLength(1);
+    expect(codeDocs[0]!.contentHash).toBe("h1");
+    expect(docsDocs).toHaveLength(1);
+    expect(docsDocs[0]!.contentHash).toBe("h2");
+
+    await indexState.deleteAll("code");
+    const codeAfter = await indexState.getAll("code");
+    const docsAfter = await indexState.getAll("docs");
+    expect(codeAfter).toEqual([]);
+    expect(docsAfter).toHaveLength(1);
   });
 });
