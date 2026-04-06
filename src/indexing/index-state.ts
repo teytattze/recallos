@@ -1,4 +1,4 @@
-import { client } from "../lib/client";
+import { client } from "@/lib/client";
 
 const DB_NAME = "recallos";
 const COLLECTION_NAME = "index_state";

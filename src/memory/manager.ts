@@ -1,8 +1,8 @@
 import z from "zod";
-import { codeMemory } from "./code";
-import { docsMemory } from "./docs";
-import { conversationMemory } from "./conversation";
-import { knowledgeMemory } from "./knowledge";
+import { codeMemory } from "@/memory/code";
+import { docsMemory } from "@/memory/docs";
+import { conversationMemory } from "@/memory/conversation";
+import { knowledgeMemory } from "@/memory/knowledge";
 
 // -- Discriminated unions --
 

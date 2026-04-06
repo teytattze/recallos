@@ -1,7 +1,7 @@
-import { indexState } from "./index-state";
-import { diffFiles } from "./incremental-index";
-import { client } from "../lib/client";
-import { util } from "../lib/util";
+import { indexState } from "@/indexing/index-state";
+import { diffFiles } from "@/indexing/incremental-index";
+import { client } from "@/lib/client";
+import { util } from "@/lib/util";
 
 type MemoryWriter = {
   writeOne(input: { code: string; filePath: string }): Promise<string[]>;

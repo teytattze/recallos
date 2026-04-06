@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/server";
-import { memoryManager } from "./memory/manager";
+import { memoryManager } from "@/memory/manager";
 import { StreamableHTTPTransport } from "@hono/mcp";
 import { Hono } from "hono";
 
@@ -21,7 +21,8 @@ app.all("/mcp", async (c) => {
 mcpServer.registerTool(
   "read_memory",
   {
-    description: "Read different kind of memory, including codebase",
+    description:
+      "Read different kind of memory, including code, doc, tool, etc",
     inputSchema: memoryManager.readInputSchema,
     outputSchema: memoryManager.readOutputSchema,
   },

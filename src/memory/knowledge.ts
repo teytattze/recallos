@@ -1,5 +1,5 @@
 import z from "zod";
-import type { MemoryAdapter } from "./types";
+import type { MemoryAdapter } from "@/memory/types";
 
 const readInputSchema = z.object({
   kind: z.literal("knowledge").describe("The memory kind to read from"),

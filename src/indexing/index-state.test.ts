@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterAll } from "bun:test";
+import { describe, test, expect, mock, beforeEach, afterAll } from "bun:test";
 import { MongoClient } from "mongodb";
 
 const TEST_URI = process.env.MONGODB_URI ?? "mongodb://localhost:27017";
@@ -6,11 +6,12 @@ const testClient = new MongoClient(TEST_URI);
 const testDb = testClient.db("recallos_test");
 const testCollection = testDb.collection("index_state");
 
-// We test the logic directly against MongoDB rather than importing index-state
-// (which would pull in client.ts and all its side effects).
-// The index-state module is a thin wrapper, so we validate the MongoDB operations here.
+// oxlint-disable-next-line typescript/no-floating-promises
+mock.module("../lib/client", () => ({
+  client: { mongodb: testClient },
+}));
 
-import { indexState } from "./index-state";
+const { indexState } = await import("./index-state");
 
 const KIND = "code";
 

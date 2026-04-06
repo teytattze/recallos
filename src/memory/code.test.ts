@@ -1,5 +1,5 @@
 import { test, expect, mock, beforeEach } from "bun:test";
-import { typescriptChunker } from "./chunker/typescript";
+import { typescriptChunker } from "@/memory/chunker/typescript";
 
 // Mock the client module to avoid hitting external services
 const mockAdd = mock(() => Promise.resolve());
@@ -9,7 +9,8 @@ const mockCollection = {
   delete: mockDelete,
 };
 
-mock.module("../client", () => ({
+// oxlint-disable-next-line typescript/no-floating-promises
+mock.module("../lib/client", () => ({
   client: {
     chromadb: {
       getOrCreateCollection: mock(() => Promise.resolve(mockCollection)),

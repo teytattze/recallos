@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { util } from "./util";
+import { util } from "@/lib/util";
 
 test("hashContent returns a 64-character hex string", () => {
   const hash = util.hashContent("hello world");

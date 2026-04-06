@@ -1,6 +1,6 @@
 import Parser from "tree-sitter";
 import TreeSitterTypeScript from "tree-sitter-typescript";
-import type { Chunk } from "./types";
+import type { Chunk } from "@/memory/chunker/types";
 
 const parser = new Parser();
 parser.setLanguage(

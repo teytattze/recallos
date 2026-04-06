@@ -1,7 +1,7 @@
 import z from "zod";
-import { client } from "../lib/client";
-import { typescriptChunker } from "./chunker/typescript";
-import type { MemoryAdapter } from "./types";
+import { client } from "@/lib/client";
+import { typescriptChunker } from "@/memory/chunker/typescript";
+import type { MemoryAdapter } from "@/memory/types";
 
 const COLLECTION_NAME = "code_collection";
 const EMBEDDING_MODEL = "voyage-code-3.5";

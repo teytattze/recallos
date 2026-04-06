@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test";
-import { typescriptChunker } from "./typescript";
+import { typescriptChunker } from "@/memory/chunker/typescript";
 
 describe("typescriptChunker", () => {
   test("extracts preamble from imports and top comments", () => {

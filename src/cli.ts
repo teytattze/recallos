@@ -2,9 +2,9 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import z from "zod";
-import { memoryManager } from "./memory/manager";
-import { codeMemory } from "./memory/code";
-import { runIndex } from "./indexing";
+import { memoryManager } from "@/memory/manager";
+import { codeMemory } from "@/memory/code";
+import { runIndex } from "@/indexing/run-index";
 
 const VALID_KINDS = ["code", "docs", "conversation", "knowledge"] as const;
 type Kind = (typeof VALID_KINDS)[number];
@@ -13,8 +13,7 @@ const memories = {
   code: codeMemory,
 } as const;
 
-// oxlint-disable-next-line typescript/no-floating-promises
-yargs(hideBin(process.argv))
+await yargs(hideBin(process.argv))
   .command(
     "recall <queries...>",
     "Queries the memory",

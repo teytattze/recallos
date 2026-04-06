@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { diffFiles } from "./incremental-index";
+import { diffFiles } from "@/indexing/incremental-index";
 
 test("files on disk not in state are added", () => {
   const result = diffFiles([{ path: "src/a.ts", hash: "h1" }], []);
