@@ -2,6 +2,7 @@ import { indexState } from "@/indexing/index-state";
 import { diffFiles } from "@/indexing/incremental-index";
 import { client } from "@/lib/client";
 import { util } from "@/lib/util";
+import { COLLECTION_NAME } from "@/memory/codebase";
 
 type MemoryWriter = {
   writeOne(input: { code: string; filePath: string }): Promise<string[]>;
@@ -44,7 +45,7 @@ async function runIndex(input: RunIndexInput): Promise<RunIndexResult> {
   if (force) {
     console.log("Force mode: full re-index");
     try {
-      await client.chromadb.deleteCollection({ name: "code_collection" });
+      await client.chromadb.deleteCollection({ name: COLLECTION_NAME });
     } catch {
       // Collection may not exist yet
     }

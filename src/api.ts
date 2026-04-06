@@ -1,7 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/server";
-import { codeMemory } from "@/memory/code";
+import { codebaseMemory } from "@/memory/codebase";
 import { StreamableHTTPTransport } from "@hono/mcp";
 import { Hono } from "hono";
+import { timeout } from "hono/timeout";
 
 const app = new Hono();
 
@@ -10,6 +11,8 @@ const mcpServer = new McpServer({
   version: "0.0.0",
 });
 const transport = new StreamableHTTPTransport();
+
+app.use(timeout(1 * 60 * 1000));
 
 app.all("/mcp", async (c) => {
   if (!mcpServer.isConnected()) {
@@ -28,11 +31,11 @@ mcpServer.registerTool(
     and find relevant code before writing or modifying it. Returns matching source code chunks with 
     file paths, symbol names, symbol kinds, and line numbers. Accepts natural-language queries 
     (e.g. 'authentication middleware', 'database connection setup', 'error handling patterns').`,
-    inputSchema: codeMemory.readInputSchema,
-    outputSchema: codeMemory.readOutputSchema,
+    inputSchema: codebaseMemory.readInputSchema,
+    outputSchema: codebaseMemory.readOutputSchema,
   },
   async (input) => {
-    const output = await codeMemory.read(input);
+    const output = await codebaseMemory.read(input);
     return {
       content: [{ type: "text", text: JSON.stringify(output) }],
       structuredContent: output,
