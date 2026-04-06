@@ -1,9 +1,9 @@
 import { Language, type Node, Parser } from "web-tree-sitter";
 import type { Chunk } from "@/memory/chunker/types";
 // @ts-expect-error -- Bun file embed, returns a path string
-import parserWasmPath from "../../../node_modules/web-tree-sitter/web-tree-sitter.wasm" with { type: "file" };
+import parserWasmPath from "./wasm/web-tree-sitter.wasm" with { type: "file" };
 // @ts-expect-error -- Bun file embed, returns a path string
-import tsWasmPath from "../../../node_modules/tree-sitter-typescript/tree-sitter-typescript.wasm" with { type: "file" };
+import tsWasmPath from "./wasm/tree-sitter-typescript.wasm" with { type: "file" };
 
 let parser: Parser | null = null;
 
@@ -97,6 +97,10 @@ function hasBlankLineGap(
 async function chunkCode(code: string, filePath: string): Promise<Chunk[]> {
   const p = await getParser();
   const tree = p.parse(code);
+
+  if (tree === null) {
+    return [];
+  }
   const rootNode = tree.rootNode;
   const children = rootNode.children;
   const chunks: Chunk[] = [];

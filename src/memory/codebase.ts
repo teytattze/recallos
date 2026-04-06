@@ -1,6 +1,6 @@
 import z from "zod";
 import { client } from "@/lib/client";
-import { typescriptChunker } from "@/memory/chunker/typescript";
+import { chunkFile } from "@/memory/chunker/router";
 import type { MemoryAdapter } from "@/memory/types";
 
 const COLLECTION_NAME = "codebase_collection";
@@ -153,7 +153,7 @@ async function writeOne(input: {
 }): Promise<string[]> {
   const { code, filePath } = input;
 
-  const codeChunks = await typescriptChunker.chunkCode(code, filePath);
+  const codeChunks = await chunkFile(code, filePath);
 
   const embeddings = await client.voyageai.embed({
     input: codeChunks.map((chunk) => chunk.content),

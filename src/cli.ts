@@ -56,14 +56,20 @@ yargs(hideBin(process.argv))
           describe: "Glob patterns to include",
           type: "string",
           array: true,
-          default: ["src/**/*.ts"],
+          default: ["**/*.{ts,md,json}"],
         })
         .option("exclude", {
           alias: "e",
           describe: "Glob patterns to exclude",
           type: "string",
           array: true,
-          default: ["node_modules/**"],
+          default: [
+            "node_modules/**",
+            "dist/**",
+            "bin/**",
+            ".vscode/**",
+            ".claude/**",
+          ],
         })
         .option("force", {
           alias: "f",
