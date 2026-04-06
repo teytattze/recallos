@@ -28,7 +28,9 @@ const readInputSchema = z.object({
   queries: z
     .string()
     .array()
-    .describe("The search queries provided by agent or user"),
+    .describe(
+      "Natural-language search queries describing what you're looking for (e.g. 'how authentication works', 'database query helpers', 'API route handlers'). Use multiple queries to cover different angles of the same question.",
+    ),
 });
 
 const readOutputSchema = z.object({
@@ -159,7 +161,7 @@ async function writeOne(input: {
   });
 
   const records = codeChunks.map((chunk, i) => ({
-    id: `${filePath}#${chunk.symbolName}`,
+    id: Bun.randomUUIDv7(),
     document: chunk.content,
     embedding: embeddings.data?.[i]?.embedding ?? [],
     metadata: {

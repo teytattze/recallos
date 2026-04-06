@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/server";
-import { memoryManager } from "@/memory/manager";
+import { codeMemory } from "@/memory/code";
 import { StreamableHTTPTransport } from "@hono/mcp";
 import { Hono } from "hono";
 
@@ -19,15 +19,20 @@ app.all("/mcp", async (c) => {
 });
 
 mcpServer.registerTool(
-  "read_memory",
+  "search_codebase",
   {
-    description:
-      "Read different kind of memory, including code, doc, tool, etc",
-    inputSchema: memoryManager.readInputSchema,
-    outputSchema: memoryManager.readOutputSchema,
+    title: "Search the codebase by meaning",
+    description: `
+    Search the codebase by meaning — use this tool to explore architecture, find implementations, 
+    locate functions/types/classes, understand patterns, research how features work, plan changes, 
+    and find relevant code before writing or modifying it. Returns matching source code chunks with 
+    file paths, symbol names, symbol kinds, and line numbers. Accepts natural-language queries 
+    (e.g. 'authentication middleware', 'database connection setup', 'error handling patterns').`,
+    inputSchema: codeMemory.readInputSchema,
+    outputSchema: codeMemory.readOutputSchema,
   },
   async (input) => {
-    const output = await memoryManager.read(input);
+    const output = await codeMemory.read(input);
     return {
       content: [{ type: "text", text: JSON.stringify(output) }],
       structuredContent: output,

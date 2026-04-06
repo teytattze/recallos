@@ -53,16 +53,21 @@ const x = 42;
   const ids = await codeMemory.writeOne({ code, filePath: "test.ts" });
 
   expect(ids).toBeArrayOfSize(chunks.length);
+  const uuidV7Re =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
   for (const id of ids) {
-    expect(id).toStartWith("test.ts#");
+    expect(id).toMatch(uuidV7Re);
   }
 });
 
-test("writeOne returns IDs in format filePath#symbolName", async () => {
+test("writeOne returns UUID v7 IDs", async () => {
   const code = `function greet() { return "hi"; }`;
   const ids = await codeMemory.writeOne({ code, filePath: "src/greet.ts" });
 
-  expect(ids).toContain("src/greet.ts#greet");
+  const uuidV7Re =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  expect(ids).toBeArrayOfSize(1);
+  expect(ids[0]).toMatch(uuidV7Re);
 });
 
 test("deleteChunks with empty array is a no-op", async () => {
