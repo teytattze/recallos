@@ -6,6 +6,7 @@ import { memoryManager } from "@/memory/manager";
 import { codebaseMemory } from "@/memory/codebase";
 import { runIndex } from "@/indexing/run-index";
 import { client } from "@/lib/client";
+import { gitignore } from "@/lib/gitignore";
 
 const VALID_KINDS = ["codebase", "docs", "conversation", "knowledge"] as const;
 type Kind = (typeof VALID_KINDS)[number];
@@ -63,13 +64,7 @@ yargs(hideBin(process.argv))
           describe: "Glob patterns to exclude",
           type: "string",
           array: true,
-          default: [
-            "node_modules/**",
-            "dist/**",
-            "bin/**",
-            ".vscode/**",
-            ".claude/**",
-          ],
+          default: [...gitignore.loadPatterns(), ".claude/**"],
         })
         .option("force", {
           alias: "f",
