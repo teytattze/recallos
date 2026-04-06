@@ -13,7 +13,7 @@ mock.module("../lib/client", () => ({
 
 const { indexState } = await import("./index-state");
 
-const KIND = "code";
+const KIND = "codebase";
 
 beforeEach(async () => {
   await testCollection.deleteMany({});
@@ -126,20 +126,20 @@ describe("indexState", () => {
   });
 
   test("different kinds are isolated", async () => {
-    await indexState.insertPending("code", "src/a.ts", "h1");
-    await indexState.markComplete("code", "src/a.ts", ["id1"]);
+    await indexState.insertPending("codebase", "src/a.ts", "h1");
+    await indexState.markComplete("codebase", "src/a.ts", ["id1"]);
     await indexState.insertPending("docs", "src/a.ts", "h2");
     await indexState.markComplete("docs", "src/a.ts", ["id2"]);
 
-    const codeDocs = await indexState.getAll("code");
+    const codeDocs = await indexState.getAll("codebase");
     const docsDocs = await indexState.getAll("docs");
     expect(codeDocs).toHaveLength(1);
     expect(codeDocs[0]!.contentHash).toBe("h1");
     expect(docsDocs).toHaveLength(1);
     expect(docsDocs[0]!.contentHash).toBe("h2");
 
-    await indexState.deleteAll("code");
-    const codeAfter = await indexState.getAll("code");
+    await indexState.deleteAll("codebase");
+    const codeAfter = await indexState.getAll("codebase");
     const docsAfter = await indexState.getAll("docs");
     expect(codeAfter).toEqual([]);
     expect(docsAfter).toHaveLength(1);

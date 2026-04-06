@@ -3,7 +3,7 @@ import { client } from "@/lib/client";
 import { typescriptChunker } from "@/memory/chunker/typescript";
 import type { MemoryAdapter } from "@/memory/types";
 
-const COLLECTION_NAME = "code_collection";
+const COLLECTION_NAME = "codebase_collection";
 const EMBEDDING_MODEL = "voyage-code-3.5";
 
 type Metadata = {
@@ -24,7 +24,7 @@ async function getCollection() {
 // -- Schemas --
 
 const readInputSchema = z.object({
-  kind: z.literal("code").describe("The memory kind to read from"),
+  kind: z.literal("codebase").describe("The memory kind to read from"),
   queries: z
     .string()
     .array()
@@ -34,7 +34,7 @@ const readInputSchema = z.object({
 });
 
 const readOutputSchema = z.object({
-  kind: z.literal("code").describe("The memory kind that was read from"),
+  kind: z.literal("codebase").describe("The memory kind that was read from"),
   queryOutputs: z
     .object({
       originalQuery: z
@@ -78,7 +78,7 @@ const readOutputSchema = z.object({
 });
 
 const writeInputSchema = z.object({
-  kind: z.literal("code").describe("The memory kind to write to"),
+  kind: z.literal("codebase").describe("The memory kind to write to"),
   items: z
     .object({
       code: z.string().describe("The source code content to store in memory"),
@@ -91,7 +91,7 @@ const writeInputSchema = z.object({
 });
 
 const writeOutputSchema = z.object({
-  kind: z.literal("code").describe("The memory kind that was written to"),
+  kind: z.literal("codebase").describe("The memory kind that was written to"),
 });
 
 // -- Handlers --
@@ -117,7 +117,7 @@ async function read(input: ReadInput): Promise<ReadOutput> {
   });
 
   return {
-    kind: "code",
+    kind: "codebase",
     queryOutputs: queries.map((query, queryIndex) => ({
       originalQuery: query,
       results:
@@ -144,7 +144,7 @@ async function write(input: WriteInput): Promise<WriteOutput> {
       writeOne({ code: item.code, filePath: item.filePath }),
     ),
   );
-  return { kind: "code" };
+  return { kind: "codebase" };
 }
 
 async function writeOne(input: {
@@ -191,8 +191,8 @@ async function deleteChunks(ids: string[]) {
   await codeCollection.delete({ ids });
 }
 
-const codeMemory = {
-  name: "code" as const,
+const codebaseMemory = {
+  name: "codebase" as const,
   readInputSchema,
   readOutputSchema,
   writeInputSchema,
@@ -205,4 +205,4 @@ const codeMemory = {
   writeOne: typeof writeOne;
 };
 
-export { codeMemory };
+export { codebaseMemory, COLLECTION_NAME };

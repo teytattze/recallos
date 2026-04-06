@@ -172,9 +172,9 @@ const foo = 2;`;
     expect(names).toContain("foo_2");
   });
 
-  test("parses actual memory/code.ts file", async () => {
-    const content = await Bun.file("src/memory/code.ts").text();
-    const chunks = await typescriptChunker.chunkCode(content, "src/memory/code.ts");
+  test("parses actual memory/codebase.ts file", async () => {
+    const content = await Bun.file("src/memory/codebase.ts").text();
+    const chunks = await typescriptChunker.chunkCode(content, "src/memory/codebase.ts");
 
     expect(chunks.length).toBeGreaterThan(0);
 
@@ -188,11 +188,11 @@ const foo = 2;`;
     expect(names).toContain("getCollection");
     expect(names).toContain("read");
     expect(names).toContain("write");
-    expect(names).toContain("codeMemory");
+    expect(names).toContain("codebaseMemory");
 
     // Every chunk should have valid metadata
     for (const chunk of chunks) {
-      expect(chunk.filePath).toBe("src/memory/code.ts");
+      expect(chunk.filePath).toBe("src/memory/codebase.ts");
       expect(chunk.startLine).toBeGreaterThan(0);
       expect(chunk.endLine).toBeGreaterThanOrEqual(chunk.startLine);
       expect(chunk.content.length).toBeGreaterThan(0);

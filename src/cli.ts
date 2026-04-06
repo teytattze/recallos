@@ -3,15 +3,15 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import z from "zod";
 import { memoryManager } from "@/memory/manager";
-import { codeMemory } from "@/memory/code";
+import { codebaseMemory } from "@/memory/codebase";
 import { runIndex } from "@/indexing/run-index";
 import { client } from "@/lib/client";
 
-const VALID_KINDS = ["code", "docs", "conversation", "knowledge"] as const;
+const VALID_KINDS = ["codebase", "docs", "conversation", "knowledge"] as const;
 type Kind = (typeof VALID_KINDS)[number];
 
 const memories = {
-  code: codeMemory,
+  codebase: codebaseMemory,
 } as const;
 
 // oxlint-disable-next-line typescript/no-floating-promises
@@ -29,7 +29,7 @@ yargs(hideBin(process.argv))
           alias: "k",
           describe: "The memory kind to query",
           choices: VALID_KINDS,
-          default: "code" as Kind,
+          default: "codebase" as Kind,
         });
     },
     async (argv) => {
@@ -49,7 +49,7 @@ yargs(hideBin(process.argv))
           alias: "k",
           describe: "The memory kind to index",
           choices: VALID_KINDS,
-          default: "code" as Kind,
+          default: "codebase" as Kind,
         })
         .option("include", {
           alias: "i",

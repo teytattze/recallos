@@ -32,7 +32,7 @@ mock.module("../lib/client", () => ({
 }));
 
 // Import after mocking
-const { codeMemory } = await import("./code");
+const { codebaseMemory } = await import("./codebase");
 
 beforeEach(() => {
   mockAdd.mockClear();
@@ -50,7 +50,7 @@ function hello() {
 const x = 42;
 `;
   const chunks = await typescriptChunker.chunkCode(code, "test.ts");
-  const ids = await codeMemory.writeOne({ code, filePath: "test.ts" });
+  const ids = await codebaseMemory.writeOne({ code, filePath: "test.ts" });
 
   expect(ids).toBeArrayOfSize(chunks.length);
   const uuidV7Re =
@@ -62,7 +62,7 @@ const x = 42;
 
 test("writeOne returns UUID v7 IDs", async () => {
   const code = `function greet() { return "hi"; }`;
-  const ids = await codeMemory.writeOne({ code, filePath: "src/greet.ts" });
+  const ids = await codebaseMemory.writeOne({ code, filePath: "src/greet.ts" });
 
   const uuidV7Re =
     /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -71,11 +71,11 @@ test("writeOne returns UUID v7 IDs", async () => {
 });
 
 test("deleteChunks with empty array is a no-op", async () => {
-  await codeMemory.deleteChunks([]);
+  await codebaseMemory.deleteChunks([]);
   expect(mockDelete).not.toHaveBeenCalled();
 });
 
 test("deleteChunks calls collection.delete with ids", async () => {
-  await codeMemory.deleteChunks(["a#foo", "a#bar"]);
+  await codebaseMemory.deleteChunks(["a#foo", "a#bar"]);
   expect(mockDelete).toHaveBeenCalledWith({ ids: ["a#foo", "a#bar"] });
 });
