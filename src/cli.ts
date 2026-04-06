@@ -37,7 +37,7 @@ yargs(hideBin(process.argv))
       const queries = z.string().array().parse(maybeQueries);
       const result = await memoryManager.read({ kind, queries } as any);
       console.log(JSON.stringify(result, null, 4));
-      await close();
+      await client.shutdown();
     },
   )
   .command(

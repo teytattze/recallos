@@ -25,7 +25,7 @@ bun run fmt:check              # Check formatting
 ### CLI
 
 ```bash
-bun run src/cli.ts recall <queries...> [-k code]     # Semantic search over indexed memory
+bun run src/cli.ts recall <queries...> [-k codebase]     # Semantic search over indexed memory
 bun run src/cli.ts index [-i "src/**/*.ts"] [-f]     # Index source files (incremental by default)
 ```
 
