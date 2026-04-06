@@ -8,8 +8,13 @@ type DiffResult = {
   unchanged: string[];
 };
 
-function diffFiles(diskFiles: DiskFile[], stateEntries: StateEntry[]): DiffResult {
-  const stateMap = new Map(stateEntries.map((s) => [s.filePath, s.contentHash]));
+function diffFiles(
+  diskFiles: DiskFile[],
+  stateEntries: StateEntry[],
+): DiffResult {
+  const stateMap = new Map(
+    stateEntries.map((s) => [s.filePath, s.contentHash]),
+  );
   const diskMap = new Map(diskFiles.map((f) => [f.path, f.hash]));
 
   const added: string[] = [];

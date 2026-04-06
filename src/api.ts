@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/server";
-import { memoryManager } from "./memory-manager";
+import { memoryManager } from "./memory/manager";
 import { StreamableHTTPTransport } from "@hono/mcp";
 import { Hono } from "hono";
 

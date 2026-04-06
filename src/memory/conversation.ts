@@ -10,7 +10,9 @@ const readInputSchema = z.object({
 });
 
 const readOutputSchema = z.object({
-  kind: z.literal("conversation").describe("The memory kind that was read from"),
+  kind: z
+    .literal("conversation")
+    .describe("The memory kind that was read from"),
   queryOutputs: z
     .object({
       originalQuery: z.string().describe("The original search query"),
@@ -40,7 +42,9 @@ const writeInputSchema = z.object({
 });
 
 const writeOutputSchema = z.object({
-  kind: z.literal("conversation").describe("The memory kind that was written to"),
+  kind: z
+    .literal("conversation")
+    .describe("The memory kind that was written to"),
 });
 
 type ReadInput = z.infer<typeof readInputSchema>;

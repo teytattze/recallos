@@ -1,11 +1,6 @@
 import type z from "zod";
 
-type MemoryAdapter<
-  TReadInput,
-  TReadOutput,
-  TWriteInput,
-  TWriteOutput,
-> = {
+type MemoryAdapter<TReadInput, TReadOutput, TWriteInput, TWriteOutput> = {
   name: string;
   readInputSchema: z.ZodType<TReadInput>;
   readOutputSchema: z.ZodType<TReadOutput>;

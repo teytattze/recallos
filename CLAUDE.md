@@ -27,19 +27,20 @@ Default to Bun for everything. Do not use Node.js equivalents.
 
 ### Preferred Bun APIs (do not use the alternatives)
 
-| Use | Instead of |
-|-----|-----------|
-| `Bun.serve()` (supports routes, WebSockets, HTTPS) | express |
-| `bun:sqlite` | better-sqlite3 |
-| `Bun.redis` | ioredis |
-| `Bun.sql` | pg, postgres.js |
-| Built-in `WebSocket` | ws |
-| `Bun.file` | node:fs readFile/writeFile |
-| `Bun.$\`cmd\`` | execa |
+| Use                                                | Instead of                 |
+| -------------------------------------------------- | -------------------------- |
+| `Bun.serve()` (supports routes, WebSockets, HTTPS) | express                    |
+| `bun:sqlite`                                       | better-sqlite3             |
+| `Bun.redis`                                        | ioredis                    |
+| `Bun.sql`                                          | pg, postgres.js            |
+| Built-in `WebSocket`                               | ws                         |
+| `Bun.file`                                         | node:fs readFile/writeFile |
+| `Bun.$\`cmd\``                                     | execa                      |
 
 ### Testing
 
 Use `bun:test` for imports:
+
 ```ts
 import { test, expect } from "bun:test";
 ```

@@ -1,5 +1,5 @@
 import z from "zod";
-import { client } from "../client";
+import { client } from "../lib/client";
 import { typescriptChunker } from "./chunker/typescript";
 import type { MemoryAdapter } from "./types";
 
@@ -122,18 +122,14 @@ async function read(input: ReadInput): Promise<ReadOutput> {
         result.ids[queryIndex]?.map((id, i) => ({
           id,
           document: result.documents[queryIndex]?.[i] ?? "",
-          filePath: String(
-            result.metadatas[queryIndex]?.[i]?.filePath ?? "",
-          ),
+          filePath: String(result.metadatas[queryIndex]?.[i]?.filePath ?? ""),
           symbolName: String(
             result.metadatas[queryIndex]?.[i]?.symbolName ?? "",
           ),
           symbolKind: String(
             result.metadatas[queryIndex]?.[i]?.symbolKind ?? "",
           ),
-          startLine: Number(
-            result.metadatas[queryIndex]?.[i]?.startLine ?? 0,
-          ),
+          startLine: Number(result.metadatas[queryIndex]?.[i]?.startLine ?? 0),
           endLine: Number(result.metadatas[queryIndex]?.[i]?.endLine ?? 0),
         })) ?? [],
     })),
@@ -142,12 +138,17 @@ async function read(input: ReadInput): Promise<ReadOutput> {
 
 async function write(input: WriteInput): Promise<WriteOutput> {
   await Promise.all(
-    input.items.map((item) => writeOne({ code: item.code, filePath: item.filePath })),
+    input.items.map((item) =>
+      writeOne({ code: item.code, filePath: item.filePath }),
+    ),
   );
   return { kind: "code" };
 }
 
-async function writeOne(input: { code: string; filePath: string }): Promise<string[]> {
+async function writeOne(input: {
+  code: string;
+  filePath: string;
+}): Promise<string[]> {
   const { code, filePath } = input;
 
   const codeChunks = typescriptChunker.chunkCode(code, filePath);
@@ -198,6 +199,8 @@ const codeMemory = {
   write,
   writeOne,
   deleteChunks,
-} satisfies MemoryAdapter<ReadInput, ReadOutput, WriteInput, WriteOutput> & { writeOne: typeof writeOne };
+} satisfies MemoryAdapter<ReadInput, ReadOutput, WriteInput, WriteOutput> & {
+  writeOne: typeof writeOne;
+};
 
 export { codeMemory };

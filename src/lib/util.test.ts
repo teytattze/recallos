@@ -23,5 +23,7 @@ test("hashContent handles empty string", () => {
   const hash = util.hashContent("");
   expect(hash).toHaveLength(64);
   // Known SHA-256 of empty string
-  expect(hash).toBe("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+  expect(hash).toBe(
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  );
 });

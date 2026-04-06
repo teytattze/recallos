@@ -2,10 +2,7 @@ import { test, expect } from "bun:test";
 import { diffFiles } from "./incremental-index";
 
 test("files on disk not in state are added", () => {
-  const result = diffFiles(
-    [{ path: "src/a.ts", hash: "h1" }],
-    [],
-  );
+  const result = diffFiles([{ path: "src/a.ts", hash: "h1" }], []);
   expect(result.added).toEqual(["src/a.ts"]);
   expect(result.modified).toEqual([]);
   expect(result.deleted).toEqual([]);
@@ -13,10 +10,7 @@ test("files on disk not in state are added", () => {
 });
 
 test("files in state not on disk are deleted", () => {
-  const result = diffFiles(
-    [],
-    [{ filePath: "src/a.ts", contentHash: "h1" }],
-  );
+  const result = diffFiles([], [{ filePath: "src/a.ts", contentHash: "h1" }]);
   expect(result.deleted).toEqual(["src/a.ts"]);
   expect(result.added).toEqual([]);
   expect(result.modified).toEqual([]);
@@ -48,14 +42,14 @@ test("files with same hash are unchanged", () => {
 test("mixed scenario classifies correctly", () => {
   const result = diffFiles(
     [
-      { path: "src/a.ts", hash: "h1" },       // unchanged
-      { path: "src/b.ts", hash: "h2_new" },   // modified
-      { path: "src/d.ts", hash: "h4" },       // added
+      { path: "src/a.ts", hash: "h1" }, // unchanged
+      { path: "src/b.ts", hash: "h2_new" }, // modified
+      { path: "src/d.ts", hash: "h4" }, // added
     ],
     [
       { filePath: "src/a.ts", contentHash: "h1" },
       { filePath: "src/b.ts", contentHash: "h2_old" },
-      { filePath: "src/c.ts", contentHash: "h3" },  // deleted
+      { filePath: "src/c.ts", contentHash: "h3" }, // deleted
     ],
   );
   expect(result.added).toEqual(["src/d.ts"]);

@@ -2,12 +2,9 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import z from "zod";
-import { memoryManager } from "./memory-manager";
-import { client } from "./client";
+import { memoryManager } from "./memory/manager";
 import { codeMemory } from "./memory/code";
-import { indexState } from "./index-state";
-import { diffFiles } from "./incremental-index";
-import { util } from "./util";
+import { runIndex } from "./indexing";
 
 const VALID_KINDS = ["code", "docs", "conversation", "knowledge"] as const;
 type Kind = (typeof VALID_KINDS)[number];
@@ -16,6 +13,7 @@ const memories = {
   code: codeMemory,
 } as const;
 
+// oxlint-disable-next-line typescript/no-floating-promises
 yargs(hideBin(process.argv))
   .command(
     "recall <queries...>",
@@ -81,100 +79,13 @@ yargs(hideBin(process.argv))
         process.exit(1);
       }
 
-      const files = await util.loadFiles({
+      await runIndex({
+        kind,
         includePatterns: argv.include,
         excludePatterns: argv.exclude,
+        force: argv.force,
+        memory,
       });
-
-      console.log(`Found ${files.length} files`);
-
-      await indexState.ensureIndexes();
-
-      const diskFiles = files.map((f) => ({
-        path: f.path,
-        content: f.content,
-        hash: util.hashContent(f.content),
-      }));
-
-      if (argv.force) {
-        console.log("Force mode: full re-index");
-        try {
-          await client.chromadb.deleteCollection({ name: "code_collection" });
-        } catch {
-          // Collection may not exist yet
-        }
-        await indexState.deleteAll(kind);
-
-        for (const file of diskFiles) {
-          await indexState.insertPending(kind, file.path, file.hash);
-          const chunkIds = await memory.writeOne({
-            code: file.content,
-            filePath: file.path,
-          });
-          await indexState.markComplete(kind, file.path, chunkIds);
-        }
-
-        console.log(`Indexed ${diskFiles.length} files (force)`);
-        return;
-      }
-
-      // Clean up pending docs from interrupted previous runs
-      const pendingDocs = await indexState.getPending(kind);
-      if (pendingDocs.length > 0) {
-        const pendingChunkIds = pendingDocs.flatMap((d) => d.chunkIds);
-        await memory.deleteChunks(pendingChunkIds);
-        await indexState.deleteMany(kind, pendingDocs.map((d) => d.filePath));
-        console.log(`Cleaned up ${pendingDocs.length} pending entries`);
-      }
-
-      // Fetch complete state and diff
-      const stateEntries = await indexState.getAll(kind);
-      const diff = diffFiles(
-        diskFiles.map((f) => ({ path: f.path, hash: f.hash })),
-        stateEntries.map((s) => ({
-          filePath: s.filePath,
-          contentHash: s.contentHash,
-        })),
-      );
-
-      // Handle DELETED files
-      if (diff.deleted.length > 0) {
-        const deletedState = stateEntries.filter((s) =>
-          diff.deleted.includes(s.filePath),
-        );
-        const deletedChunkIds = deletedState.flatMap((s) => s.chunkIds);
-        await memory.deleteChunks(deletedChunkIds);
-        await indexState.deleteMany(kind, diff.deleted);
-      }
-
-      // Handle MODIFIED files (delete old chunks)
-      if (diff.modified.length > 0) {
-        const modifiedState = stateEntries.filter((s) =>
-          diff.modified.includes(s.filePath),
-        );
-        const modifiedChunkIds = modifiedState.flatMap((s) => s.chunkIds);
-        await memory.deleteChunks(modifiedChunkIds);
-        await indexState.deleteMany(kind, diff.modified);
-      }
-
-      // Index ADDED + MODIFIED files (two-phase write)
-      const toIndex = [...diff.added, ...diff.modified];
-      const fileMap = new Map(diskFiles.map((f) => [f.path, f]));
-
-      for (const filePath of toIndex) {
-        const file = fileMap.get(filePath)!;
-        await indexState.insertPending(kind, file.path, file.hash);
-        const chunkIds = await memory.writeOne({
-          code: file.content,
-          filePath: file.path,
-        });
-        await indexState.markComplete(kind, file.path, chunkIds);
-      }
-
-      console.log(
-        `Indexed ${diff.added.length} new, ${diff.modified.length} updated, ` +
-          `${diff.deleted.length} deleted, ${diff.unchanged.length} unchanged`,
-      );
     },
   )
   .demandCommand(1, "Please specify a command: recall or index")

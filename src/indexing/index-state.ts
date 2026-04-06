@@ -1,4 +1,4 @@
-import { client } from "./client";
+import { client } from "../lib/client";
 
 const DB_NAME = "recallos";
 const COLLECTION_NAME = "index_state";
@@ -21,7 +21,11 @@ async function ensureIndexes() {
   await col.createIndex({ kind: 1, filePath: 1 }, { unique: true });
 }
 
-async function insertPending(kind: string, filePath: string, contentHash: string) {
+async function insertPending(
+  kind: string,
+  filePath: string,
+  contentHash: string,
+) {
   const col = getCollection();
   await col.updateOne(
     { kind, filePath },
@@ -39,7 +43,11 @@ async function insertPending(kind: string, filePath: string, contentHash: string
   );
 }
 
-async function markComplete(kind: string, filePath: string, chunkIds: string[]) {
+async function markComplete(
+  kind: string,
+  filePath: string,
+  chunkIds: string[],
+) {
   const col = getCollection();
   await col.updateOne(
     { kind, filePath },
@@ -49,12 +57,16 @@ async function markComplete(kind: string, filePath: string, chunkIds: string[]) 
 
 async function getAll(kind: string): Promise<IndexStateDoc[]> {
   const col = getCollection();
-  return col.find({ kind, status: "complete" }).toArray() as Promise<IndexStateDoc[]>;
+  return col.find({ kind, status: "complete" }).toArray() as Promise<
+    IndexStateDoc[]
+  >;
 }
 
 async function getPending(kind: string): Promise<IndexStateDoc[]> {
   const col = getCollection();
-  return col.find({ kind, status: "pending" }).toArray() as Promise<IndexStateDoc[]>;
+  return col.find({ kind, status: "pending" }).toArray() as Promise<
+    IndexStateDoc[]
+  >;
 }
 
 async function deleteMany(kind: string, filePaths: string[]) {
