@@ -1,11 +1,23 @@
-import Parser from "tree-sitter";
-import TreeSitterTypeScript from "tree-sitter-typescript";
+import { Language, type Node, Parser } from "web-tree-sitter";
 import type { Chunk } from "@/memory/chunker/types";
+// @ts-expect-error -- Bun file embed, returns a path string
+import parserWasmPath from "../../../node_modules/web-tree-sitter/web-tree-sitter.wasm" with { type: "file" };
+// @ts-expect-error -- Bun file embed, returns a path string
+import tsWasmPath from "../../../node_modules/tree-sitter-typescript/tree-sitter-typescript.wasm" with { type: "file" };
 
-const parser = new Parser();
-parser.setLanguage(
-  TreeSitterTypeScript.typescript as unknown as Parser.Language,
-);
+let parser: Parser | null = null;
+
+async function getParser(): Promise<Parser> {
+  if (parser) return parser;
+  await Parser.init({
+    locateFile: () => parserWasmPath,
+  });
+  const p = new Parser();
+  const lang = await Language.load(tsWasmPath);
+  p.setLanguage(lang);
+  parser = p;
+  return parser;
+}
 
 const SYMBOL_NODE_TYPES = new Set([
   "function_declaration",
@@ -37,7 +49,7 @@ function getSymbolKind(nodeType: string): string {
   }
 }
 
-function getSymbolName(node: Parser.SyntaxNode): string {
+function getSymbolName(node: Node): string {
   const nameNode = node.childForFieldName("name");
   if (nameNode) return nameNode.text;
 
@@ -54,8 +66,8 @@ function getSymbolName(node: Parser.SyntaxNode): string {
   return "_unnamed";
 }
 
-function unwrapExport(node: Parser.SyntaxNode): {
-  declaration: Parser.SyntaxNode | null;
+function unwrapExport(node: Node): {
+  declaration: Node | null;
   isDefault: boolean;
 } {
   const declaration = node.childForFieldName("declaration");
@@ -75,15 +87,16 @@ function unwrapExport(node: Parser.SyntaxNode): {
 
 function hasBlankLineGap(
   code: string,
-  prevNode: Parser.SyntaxNode,
-  nextNode: Parser.SyntaxNode,
+  prevNode: Node,
+  nextNode: Node,
 ): boolean {
   const between = code.slice(prevNode.endIndex, nextNode.startIndex);
   return between.includes("\n\n");
 }
 
-function chunkCode(code: string, filePath: string): Chunk[] {
-  const tree = parser.parse(code);
+async function chunkCode(code: string, filePath: string): Promise<Chunk[]> {
+  const p = await getParser();
+  const tree = p.parse(code);
   const rootNode = tree.rootNode;
   const children = rootNode.children;
   const chunks: Chunk[] = [];
@@ -92,7 +105,7 @@ function chunkCode(code: string, filePath: string): Chunk[] {
   const consumed = new Set<number>();
 
   // Phase 1: Identify preamble (leading imports + comments before first symbol)
-  const preambleNodes: Parser.SyntaxNode[] = [];
+  const preambleNodes: Node[] = [];
   for (const child of children) {
     if (PREAMBLE_NODE_TYPES.has(child.type)) {
       preambleNodes.push(child);

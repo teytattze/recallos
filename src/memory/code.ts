@@ -151,7 +151,7 @@ async function writeOne(input: {
 }): Promise<string[]> {
   const { code, filePath } = input;
 
-  const codeChunks = typescriptChunker.chunkCode(code, filePath);
+  const codeChunks = await typescriptChunker.chunkCode(code, filePath);
 
   const embeddings = await client.voyageai.embed({
     input: codeChunks.map((chunk) => chunk.content),

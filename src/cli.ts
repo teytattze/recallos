@@ -5,6 +5,7 @@ import z from "zod";
 import { memoryManager } from "@/memory/manager";
 import { codeMemory } from "@/memory/code";
 import { runIndex } from "@/indexing/run-index";
+import { client } from "@/lib/client";
 
 const VALID_KINDS = ["code", "docs", "conversation", "knowledge"] as const;
 type Kind = (typeof VALID_KINDS)[number];
@@ -13,7 +14,8 @@ const memories = {
   code: codeMemory,
 } as const;
 
-await yargs(hideBin(process.argv))
+// oxlint-disable-next-line typescript/no-floating-promises
+yargs(hideBin(process.argv))
   .command(
     "recall <queries...>",
     "Queries the memory",
@@ -35,6 +37,7 @@ await yargs(hideBin(process.argv))
       const queries = z.string().array().parse(maybeQueries);
       const result = await memoryManager.read({ kind, queries } as any);
       console.log(JSON.stringify(result, null, 4));
+      await close();
     },
   )
   .command(
@@ -85,6 +88,8 @@ await yargs(hideBin(process.argv))
         force: argv.force,
         memory,
       });
+
+      await client.shutdown();
     },
   )
   .demandCommand(1, "Please specify a command: recall or index")

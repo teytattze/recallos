@@ -14,10 +14,16 @@ const voyageai = new VoyageAIClient({
 
 const mongodb = new MongoClient(env.mongodbUri);
 
+async function shutdown() {
+  await mongodb.close();
+}
+
 const client = {
   chromadb,
   mongodb,
   voyageai,
+
+  shutdown,
 };
 
 export { client };

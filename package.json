@@ -7,7 +7,8 @@
   "type": "module",
   "module": "index.ts",
   "scripts": {
-    "build:api": "bun build ./src/api.ts --outdir ./dist --target bun",
+    "build:api": "bun build ./src/api.ts --compile --sourcemap --outfile ./bin/api",
+    "build:cli": "bun build ./src/cli.ts --compile --sourcemap --outfile ./bin/cli",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "lint": "oxlint",
@@ -26,9 +27,9 @@
     "glob": "^13.0.6",
     "hono": "^4.12.10",
     "mongodb": "^7.1.1",
-    "tree-sitter": "^0.25.0",
     "tree-sitter-typescript": "^0.23.2",
     "voyageai": "^0.2.1",
+    "web-tree-sitter": "^0.26.8",
     "yargs": "^18.0.0",
     "zod": "^4.3.6"
   },

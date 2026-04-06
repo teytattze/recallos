@@ -49,7 +49,7 @@ function hello() {
 
 const x = 42;
 `;
-  const chunks = typescriptChunker.chunkCode(code, "test.ts");
+  const chunks = await typescriptChunker.chunkCode(code, "test.ts");
   const ids = await codeMemory.writeOne({ code, filePath: "test.ts" });
 
   expect(ids).toBeArrayOfSize(chunks.length);
