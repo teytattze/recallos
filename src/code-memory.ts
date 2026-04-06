@@ -35,7 +35,7 @@ async function read(input: { queries: string[] }) {
   });
 }
 
-async function write(input: { code: string; filePath: string }) {
+async function write(input: { code: string; filePath: string }): Promise<string[]> {
   const { code, filePath } = input;
 
   const codeChunks = chunker.chunkCode(code, filePath);
@@ -66,11 +66,20 @@ async function write(input: { code: string; filePath: string }) {
     embeddings: records.map((r) => r.embedding),
     metadatas: records.map((r) => r.metadata),
   });
+
+  return records.map((r) => r.id);
+}
+
+async function deleteChunks(ids: string[]) {
+  if (ids.length === 0) return;
+  const codeCollection = await getCollection();
+  await codeCollection.delete({ ids });
 }
 
 const codeMemory = {
   read,
   write,
+  deleteChunks,
 };
 
 export { codeMemory };

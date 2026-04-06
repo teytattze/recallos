@@ -1,4 +1,5 @@
 import { CloudClient } from "chromadb";
+import { MongoClient } from "mongodb";
 import { VoyageAIClient } from "voyageai";
 import { env } from "./env";
 
@@ -11,8 +12,11 @@ const voyageai = new VoyageAIClient({
   apiKey: env.voyageaiApiKey,
 });
 
+const mongodb = new MongoClient(env.mongodbUri);
+
 const client = {
   chromadb,
+  mongodb,
   voyageai,
 };
 

@@ -13,8 +13,15 @@ const loadFiles = async (input: {
   }));
 };
 
+const hashContent = (content: string): string => {
+  const hasher = new Bun.CryptoHasher("sha256");
+  hasher.update(content);
+  return hasher.digest("hex") as string;
+};
+
 const util = {
   loadFiles,
+  hashContent,
 };
 
 export { util };
