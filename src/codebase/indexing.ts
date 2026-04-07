@@ -47,8 +47,15 @@ function diffFiles(
   return { added, modified, deleted, unchanged };
 }
 
-async function indexFile(file: DiskFile) {
+async function indexFile(file: DiskFile, opts?: { deleteExisting?: boolean }) {
   await db.transaction(async (tx) => {
+    // Delete existing file row first if re-indexing a modified file
+    if (opts?.deleteExisting) {
+      await tx
+        .delete(codebaseFile)
+        .where(eq(codebaseFile.filePath, file.path));
+    }
+
     // Insert file as pending
     const [inserted] = await tx
       .insert(codebaseFile)
@@ -158,18 +165,21 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
     dbFiles,
   );
 
-  // Delete removed and modified files (CASCADE cleans chunks)
-  const toDelete = [...diff.deleted, ...diff.modified];
-  for (const filePath of toDelete) {
+  // Delete removed files (CASCADE cleans chunks)
+  for (const filePath of diff.deleted) {
     await db.delete(codebaseFile).where(eq(codebaseFile.filePath, filePath));
   }
 
   // Index added and modified files
-  const toIndex = [...diff.added, ...diff.modified];
   const fileMap = new Map(diskFiles.map((f) => [f.path, f]));
 
-  for (const filePath of toIndex) {
+  for (const filePath of diff.added) {
     await indexFile(fileMap.get(filePath)!);
+  }
+
+  // Re-index modified files (delete + insert atomically in one transaction)
+  for (const filePath of diff.modified) {
+    await indexFile(fileMap.get(filePath)!, { deleteExisting: true });
   }
 
   console.log(

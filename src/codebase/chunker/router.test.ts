@@ -34,7 +34,7 @@ test("getExtension: given file with multiple dots, when extracted, then returns 
   expect(result).toBe(".ts");
 });
 
-test("getExtension: given dot only in directory component, when extracted, then returns from last dot in full path", () => {
+test("getExtension: given dot only in directory component, when extracted, then returns empty string", () => {
   // Given
   const filePath = "src/.config/myfile";
 
@@ -42,8 +42,7 @@ test("getExtension: given dot only in directory component, when extracted, then 
   const result = getExtension(filePath);
 
   // Then
-  // lastIndexOf(".") finds the dot in ".config", so slice returns ".config/myfile"
-  expect(result).toBe(".config/myfile");
+  expect(result).toBe("");
 });
 
 test("getExtension: given hidden file like .gitignore, when extracted, then returns .gitignore", () => {

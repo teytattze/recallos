@@ -15,8 +15,9 @@ const EXTENSION_MAP: Record<
 };
 
 function getExtension(filePath: string): string {
-  const dot = filePath.lastIndexOf(".");
-  return dot === -1 ? "" : filePath.slice(dot);
+  const basename = filePath.split("/").pop() ?? filePath;
+  const dot = basename.lastIndexOf(".");
+  return dot === -1 ? "" : basename.slice(dot);
 }
 
 async function chunkFile(content: string, filePath: string): Promise<Chunk[]> {

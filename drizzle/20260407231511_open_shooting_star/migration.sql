@@ -1,0 +1,1 @@
+ALTER TABLE "codebase_chunks" ALTER COLUMN "embedding" SET NOT NULL;
