@@ -77,6 +77,10 @@ async function indexFile(file: DiskFile) {
     // Embed all chunks
     const embeddings = await embedTexts(chunks.map((c) => c.content));
 
+    if (embeddings.length !== chunks.length) {
+      throw new Error("Embedding results count doesn't match the chunks count");
+    }
+
     // Insert chunks with embeddings
     await tx.insert(codebaseChunk).values(
       chunks.map((chunk, i) => ({
@@ -86,7 +90,7 @@ async function indexFile(file: DiskFile) {
         symbolKind: chunk.symbolKind,
         startLine: chunk.startLine,
         endLine: chunk.endLine,
-        embedding: embeddings[i],
+        embedding: embeddings[i] as number[],
         fileId,
       })),
     );
@@ -174,4 +178,4 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
   );
 }
 
-export { startIndexing };
+export { startIndexing, diffFiles };

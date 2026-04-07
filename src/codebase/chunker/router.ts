@@ -44,4 +44,4 @@ async function chunkFile(content: string, filePath: string): Promise<Chunk[]> {
   ];
 }
 
-export { chunkFile };
+export { chunkFile, getExtension };

@@ -50,4 +50,4 @@ const hash = (value: string): string => {
   return hasher.digest("hex") as string;
 };
 
-export { loadFiles, loadGitignorePatterns, hash };
+export { loadFiles, loadGitignorePatterns, hash, toGlobPattern, parseGitignoreContent };
