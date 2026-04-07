@@ -1,14 +1,8 @@
-import "dotenv/config";
 import z from "zod";
 
-const chromadbApiKey = z.string().parse(process.env.CHROMADB_API_KEY);
-const voyageaiApiKey = z.string().parse(process.env.VOYAGEAI_API_KEY);
-const mongodbUri = z.string().parse(process.env.MONGODB_URI);
-
 const env = {
-  chromadbApiKey,
-  voyageaiApiKey,
-  mongodbUri,
+  voyageaiApiKey: z.string().parse(process.env.VOYAGEAI_API_KEY),
+  databaseUrl: z.string().parse(process.env.DATABASE_URL),
 };
 
 export { env };

@@ -13,21 +13,23 @@
     "fmt:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "test": "bun test"
+    "test": "bun test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@chroma-core/default-embed": "^0.1.9",
     "@hono/mcp": "^0.2.5",
     "@modelcontextprotocol/hono": "^2.0.0-alpha.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@modelcontextprotocol/server": "^2.0.0-alpha.2",
     "@tree-sitter-grammars/tree-sitter-markdown": "^0.3.2",
     "@types/yargs": "^17.0.35",
-    "chromadb": "^3.4.0",
-    "dotenv": "^17.4.0",
+    "@vercel/postgres": "^0.10.0",
+    "drizzle-orm": "^1.0.0-beta.20",
     "glob": "^13.0.6",
     "hono": "^4.12.10",
-    "mongodb": "^7.1.1",
     "tree-sitter-json": "^0.24.8",
     "tree-sitter-typescript": "^0.23.2",
     "voyageai": "^0.2.1",
@@ -37,9 +39,11 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "drizzle-kit": "^1.0.0-beta.20",
     "oxfmt": "^0.43.0",
     "oxlint": "^1.58.0",
-    "oxlint-tsgolint": "^0.19.0"
+    "oxlint-tsgolint": "^0.19.0",
+    "tsx": "^4.21.0"
   },
   "peerDependencies": {
     "typescript": "^5"

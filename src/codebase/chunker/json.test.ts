@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test";
-import { jsonChunker } from "@/memory/chunker/json";
+import { jsonChunker } from "@/codebase/chunker/json";
 
 describe("jsonChunker", () => {
   test("extracts top-level object keys", async () => {

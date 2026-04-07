@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test";
-import { typescriptChunker } from "@/memory/chunker/typescript";
+import { typescriptChunker } from "@/codebase/chunker/typescript";
 
 describe("typescriptChunker", () => {
   test("extracts preamble from imports and top comments", async () => {
@@ -172,9 +172,12 @@ const foo = 2;`;
     expect(names).toContain("foo_2");
   });
 
-  test("parses actual memory/codebase.ts file", async () => {
-    const content = await Bun.file("src/memory/codebase.ts").text();
-    const chunks = await typescriptChunker.chunkCode(content, "src/memory/codebase.ts");
+  test("parses actual codebase/query.ts file", async () => {
+    const content = await Bun.file("src/codebase/query.ts").text();
+    const chunks = await typescriptChunker.chunkCode(
+      content,
+      "src/codebase/query.ts",
+    );
 
     expect(chunks.length).toBeGreaterThan(0);
 
@@ -184,15 +187,12 @@ const foo = 2;`;
 
     // Should have recognizable symbols
     const names = chunks.map((c) => c.symbolName);
-    expect(names).toContain("Metadata");
-    expect(names).toContain("getCollection");
-    expect(names).toContain("read");
-    expect(names).toContain("write");
-    expect(names).toContain("codebaseMemory");
+    expect(names).toContain("readInputSchema");
+    expect(names).toContain("searchCodebase");
 
     // Every chunk should have valid metadata
     for (const chunk of chunks) {
-      expect(chunk.filePath).toBe("src/memory/codebase.ts");
+      expect(chunk.filePath).toBe("src/codebase/query.ts");
       expect(chunk.startLine).toBeGreaterThan(0);
       expect(chunk.endLine).toBeGreaterThanOrEqual(chunk.startLine);
       expect(chunk.content.length).toBeGreaterThan(0);

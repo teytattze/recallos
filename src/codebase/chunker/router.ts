@@ -1,9 +1,12 @@
-import type { Chunk } from "@/memory/chunker/types";
-import { typescriptChunker } from "@/memory/chunker/typescript";
-import { markdownChunker } from "@/memory/chunker/markdown";
-import { jsonChunker } from "@/memory/chunker/json";
+import type { Chunk } from "@/codebase/chunker/types";
+import { typescriptChunker } from "@/codebase/chunker/typescript";
+import { markdownChunker } from "@/codebase/chunker/markdown";
+import { jsonChunker } from "@/codebase/chunker/json";
 
-const EXTENSION_MAP: Record<string, (content: string, filePath: string) => Promise<Chunk[]>> = {
+const EXTENSION_MAP: Record<
+  string,
+  (content: string, filePath: string) => Promise<Chunk[]>
+> = {
   ".ts": typescriptChunker.chunkCode,
   ".tsx": typescriptChunker.chunkCode,
   ".md": markdownChunker.chunkCode,

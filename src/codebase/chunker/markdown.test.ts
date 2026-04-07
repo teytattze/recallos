@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test";
-import { markdownChunker } from "@/memory/chunker/markdown";
+import { markdownChunker } from "@/codebase/chunker/markdown";
 
 describe("markdownChunker", () => {
   test("extracts h1 sections", async () => {

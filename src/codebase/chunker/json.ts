@@ -1,5 +1,5 @@
 import { Language, Parser } from "web-tree-sitter";
-import type { Chunk } from "@/memory/chunker/types";
+import type { Chunk } from "@/codebase/chunker/types";
 // @ts-expect-error -- Bun file embed, returns a path string
 import parserWasmPath from "./wasm/web-tree-sitter.wasm" with { type: "file" };
 // @ts-expect-error -- Bun file embed, returns a path string
