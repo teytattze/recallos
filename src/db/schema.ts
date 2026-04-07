@@ -35,7 +35,7 @@ const codebaseChunk = pgTable("codebase_chunks", {
   symbolKind: text("symbol_kind").notNull(),
   startLine: integer("start_line").notNull(),
   endLine: integer("end_line").notNull(),
-  embedding: vector("embedding", { dimensions: 1024 }),
+  embedding: vector("embedding", { dimensions: 1024 }).notNull(),
 
   fileId: uuid("file_id")
     .notNull()

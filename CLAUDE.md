@@ -1,10 +1,8 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Overview
 
-## Project Overview
-
-RecallOS is a semantic code memory system built with Bun and TypeScript. It indexes source code into vector embeddings (VoyageAI), stores them in ChromaDB for similarity search, and tracks indexing state in MongoDB.
+RecallOS is a semantic code memory system built with Bun and TypeScript. It indexes source code into vector embeddings (VoyageAI), stores them in PostgreSQL with pgvector for similarity search, and tracks indexing state via Drizzle ORM.
 
 - CLI binary: `recallos` (entry: `src/cli.ts`)
 - MCP API server: `src/api.ts` (Hono + MCP protocol, single endpoint at `/mcp`)
@@ -15,52 +13,55 @@ RecallOS is a semantic code memory system built with Bun and TypeScript. It inde
 bun install                    # Install dependencies
 bun test                       # Run tests
 bun test path/to/file.test.ts  # Run a single test file
-bun run build:api              # Build API server to dist/
+bun run build:api              # Build API server to bin/
+bun run build:cli              # Build CLI to bin/
 bun run lint                   # Lint with oxlint
 bun run lint:fix               # Lint and auto-fix
 bun run fmt                    # Format with oxfmt
 bun run fmt:check              # Check formatting
+bun run db:generate            # Generate Drizzle migrations
+bun run db:migrate             # Run migrations
+bun run db:push                # Push schema to database
+bun run db:studio              # Open Drizzle Studio
 ```
 
 ### CLI
 
 ```bash
-bun run src/cli.ts recall <queries...> [-k codebase]     # Semantic search over indexed memory
-bun run src/cli.ts index [-i "src/**/*.ts"] [-f]     # Index source files (incremental by default)
+bun run src/cli.ts recall <queries...> [-k codebase]   # Semantic search
+bun run src/cli.ts index [-i "src/**/*.ts"] [-f]       # Index source files
 ```
 
 ## Architecture
 
-- `src/memory/` -- memory adapters implementing `MemoryAdapter` interface. Code memory is implemented; docs, conversation, and knowledge are stubs.
-- `src/memory/chunker/` -- tree-sitter-based code chunking (TypeScript implemented, Markdown is a stub)
-- `src/indexing/` -- incremental indexing with two-phase writes (pending/complete) and MongoDB state tracking
-- `src/lib/` -- shared clients (ChromaDB, VoyageAI, MongoDB), env validation, utilities
+- `src/codebase/query.ts` -- semantic search: embeds queries via VoyageAI, cosine similarity search on pgvector
+- `src/codebase/indexing.ts` -- incremental indexing with two-phase writes (pending/complete) and content-hash change detection
+- `src/codebase/embed.ts` -- VoyageAI embedding client (voyage-code-3.5, 1024 dimensions)
+- `src/codebase/chunker/` -- tree-sitter-based code chunking (TypeScript, Markdown, JSON) with extension-based router
+- `src/db/` -- Drizzle ORM schema (codebaseFile, codebaseChunk with pgvector), connection, utilities
+- `src/lib/` -- env validation (zod), file loading, gitignore parsing, hashing
 
-## External Services
+## Tech Stack
 
-Configured via `.env`:
+- **Runtime:** Bun
+- **Language:** TypeScript (strict mode, ESM)
+- **Database:** PostgreSQL 18 with pgvector (via `docker-compose.yml`)
+- **ORM:** Drizzle ORM
+- **HTTP:** Hono
+- **Protocol:** MCP (Model Context Protocol)
+- **Embeddings:** VoyageAI (voyage-code-3.5)
+- **Parsing:** web-tree-sitter (WASM)
+- **Linting:** oxlint
+- **Formatting:** oxfmt
 
-- **ChromaDB** -- vector database for code embeddings
-- **VoyageAI** -- embedding model (`voyage-code-3.5`)
-- **MongoDB** -- index state tracking (collection: `index_state`)
+## Rules
 
-## Bun Runtime Rules
+- **Bun only.** Use `bun` for runtime, packages, builds, and scripts. Do not use Node.js, ts-node, npm, webpack, esbuild, vite, or dotenv. Bun auto-loads `.env`.
+- **TypeScript strict.** `noUncheckedIndexedAccess: true` — indexed access returns `T | undefined`. Path alias `@/*` maps to `./src/*`.
+- **ESM modules.** `"type": "module"` in package.json.
 
-Default to Bun for everything. Do not use Node.js equivalents.
+## Reference
 
-- **Runtime:** `bun <file>` not `node`/`ts-node`
-- **Packages:** `bun install`, `bun run <script>`, `bunx <pkg>`
-- **Build:** `bun build` not webpack/esbuild/vite
-- **Env:** Bun auto-loads `.env` — do not use dotenv
-
-### Bun API Reference
-
-Detailed docs available at `node_modules/bun-types/docs/**/*.mdx`.
-
-## TypeScript
-
-- Strict mode enabled
-- `noUncheckedIndexedAccess: true` -- indexed access returns `T | undefined`
-- JSX configured as `react-jsx`
-- ESM modules (`"type": "module"` in package.json)
-- Path alias: `@/*` maps to `./src/*`
+- Bun API docs: `node_modules/bun-types/docs/**/*.mdx`
+- Drizzle config: `drizzle.config.ts` (schema at `src/db/schema.ts`, migrations at `drizzle/`)
+- Environment variables: `VOYAGEAI_API_KEY`, `DATABASE_URL` (validated in `src/lib/env.ts`)
