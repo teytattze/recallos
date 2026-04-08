@@ -1,18 +1,22 @@
-import type { Chunk } from "@/codebase/chunker/types";
-import { typescriptChunker } from "@/codebase/chunker/typescript";
-import { markdownChunker } from "@/codebase/chunker/markdown";
-import { jsonChunker } from "@/codebase/chunker/json";
+import type { Chunk, LanguageAdapter } from "@/codebase/chunker/types";
+import { wholeFileChunk } from "@/codebase/chunker/util";
+import { chunkWithAdapter } from "@/codebase/chunker/generic";
+import { typescriptAdapter } from "@/codebase/chunker/adapters/typescript";
+import { markdownAdapter } from "@/codebase/chunker/adapters/markdown";
+import { jsonAdapter } from "@/codebase/chunker/adapters/json";
 
-const EXTENSION_MAP: Record<
-  string,
-  (content: string, filePath: string) => Promise<Chunk[]>
-> = {
-  ".ts": typescriptChunker.chunkCode,
-  ".tsx": typescriptChunker.chunkCode,
-  ".md": markdownChunker.chunkCode,
-  ".mdx": markdownChunker.chunkCode,
-  ".json": jsonChunker.chunkCode,
-};
+const ADAPTERS: LanguageAdapter[] = [
+  typescriptAdapter,
+  markdownAdapter,
+  jsonAdapter,
+];
+
+const EXTENSION_MAP = new Map<string, LanguageAdapter>();
+for (const adapter of ADAPTERS) {
+  for (const ext of adapter.extensions) {
+    EXTENSION_MAP.set(ext, adapter);
+  }
+}
 
 function getExtension(filePath: string): string {
   const basename = filePath.split("/").pop() ?? filePath;
@@ -20,29 +24,16 @@ function getExtension(filePath: string): string {
   return dot === -1 ? "" : basename.slice(dot);
 }
 
-async function chunkFile(content: string, filePath: string): Promise<Chunk[]> {
+function chunkFile(content: string, filePath: string): Chunk[] {
   const ext = getExtension(filePath);
-  const chunker = EXTENSION_MAP[ext];
+  const adapter = EXTENSION_MAP.get(ext);
 
-  if (chunker) {
-    return chunker(content, filePath);
+  if (adapter) {
+    return chunkWithAdapter(content, filePath, adapter);
   }
 
-  // Fallback: whole file as a single chunk
-  const trimmed = content.trim();
-  if (trimmed.length === 0) return [];
-
-  const basename = filePath.split("/").pop() ?? filePath;
-  return [
-    {
-      content,
-      symbolName: basename,
-      symbolKind: "file",
-      filePath,
-      startLine: 1,
-      endLine: content.split("\n").length,
-    },
-  ];
+  if (content.trim().length === 0) return [];
+  return [wholeFileChunk(content, filePath)];
 }
 
 export { chunkFile, getExtension };

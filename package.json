@@ -20,24 +20,30 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@ast-grep/lang-json": "^0.0.7",
+    "@ast-grep/napi": "^0.42.1",
     "@hono/mcp": "^0.2.5",
     "@modelcontextprotocol/hono": "^2.0.0-alpha.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@modelcontextprotocol/server": "^2.0.0-alpha.2",
-    "@tree-sitter-grammars/tree-sitter-markdown": "^0.3.2",
     "@types/yargs": "^17.0.35",
     "@vercel/postgres": "^0.10.0",
     "drizzle-orm": "^1.0.0-beta.20",
     "glob": "^13.0.6",
     "hono": "^4.12.10",
-    "tree-sitter-json": "^0.24.8",
-    "tree-sitter-typescript": "^0.23.2",
+    "rehype-parse": "^9.0.1",
+    "rehype-remark": "^10.0.1",
+    "rehype-stringify": "^10.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "remark-stringify": "^11.0.0",
+    "unified": "^11.0.5",
     "voyageai": "^0.2.1",
-    "web-tree-sitter": "^0.26.8",
     "yargs": "^18.0.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@total-typescript/ts-reset": "^0.6.1",
     "@types/bun": "latest",
     "drizzle-kit": "^1.0.0-beta.20",
     "oxfmt": "^0.43.0",
@@ -47,5 +53,8 @@
   },
   "peerDependencies": {
     "typescript": "^5"
-  }
+  },
+  "trustedDependencies": [
+    "@ast-grep/lang-json"
+  ]
 }

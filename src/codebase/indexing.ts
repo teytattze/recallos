@@ -51,9 +51,7 @@ async function indexFile(file: DiskFile, opts?: { deleteExisting?: boolean }) {
   await db.transaction(async (tx) => {
     // Delete existing file row first if re-indexing a modified file
     if (opts?.deleteExisting) {
-      await tx
-        .delete(codebaseFile)
-        .where(eq(codebaseFile.filePath, file.path));
+      await tx.delete(codebaseFile).where(eq(codebaseFile.filePath, file.path));
     }
 
     // Insert file as pending
@@ -71,7 +69,7 @@ async function indexFile(file: DiskFile, opts?: { deleteExisting?: boolean }) {
     const fileId = inserted!.id;
 
     // Chunk the file
-    const chunks = await chunkFile(file.content, file.path);
+    const chunks = chunkFile(file.content, file.path);
 
     if (chunks.length === 0) {
       await tx
