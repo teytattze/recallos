@@ -2,9 +2,7 @@
   "version": "8",
   "dialect": "postgres",
   "id": "9b521017-e049-4ace-b1b5-50ecc1d277ae",
-  "prevIds": [
-    "ca7caacd-28e0-4635-be8a-dcb2dbc03f3a"
-  ],
+  "prevIds": ["ca7caacd-28e0-4635-be8a-dcb2dbc03f3a"],
   "ddl": [
     {
       "isRlsEnabled": false,
@@ -286,14 +284,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "file_id"
-      ],
+      "columns": ["file_id"],
       "schemaTo": "public",
       "tableTo": "codebase_files",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "codebase_chunks_file_id_codebase_files_id_fkey",
@@ -302,9 +296,7 @@
       "table": "codebase_chunks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "codebase_chunks_pkey",
       "schema": "public",
@@ -312,9 +304,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "codebase_files_pkey",
       "schema": "public",
@@ -322,9 +312,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "graph_edges_pkey",
       "schema": "public",
@@ -333,9 +321,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "file_path"
-      ],
+      "columns": ["file_path"],
       "nullsNotDistinct": false,
       "name": "codebase_files_file_path_key",
       "schema": "public",

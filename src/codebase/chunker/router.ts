@@ -5,7 +5,7 @@ import { jsonChunker } from "@/codebase/chunker/json";
 
 const EXTENSION_MAP: Record<
   string,
-  (content: string, filePath: string) => Promise<Chunk[]>
+  (content: string, filePath: string) => Chunk[]
 > = {
   ".ts": typescriptChunker.chunkCode,
   ".tsx": typescriptChunker.chunkCode,
@@ -20,7 +20,7 @@ function getExtension(filePath: string): string {
   return dot === -1 ? "" : basename.slice(dot);
 }
 
-async function chunkFile(content: string, filePath: string): Promise<Chunk[]> {
+function chunkFile(content: string, filePath: string): Chunk[] {
   const ext = getExtension(filePath);
   const chunker = EXTENSION_MAP[ext];
 

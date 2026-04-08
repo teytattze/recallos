@@ -1,9 +1,5 @@
 import { test, expect } from "bun:test";
-import {
-  hash,
-  toGlobPattern,
-  parseGitignoreContent,
-} from "@/lib/util";
+import { hash, toGlobPattern, parseGitignoreContent } from "@/lib/util";
 
 // -- toGlobPattern --
 

@@ -1,23 +1,8 @@
-import { Language, Parser } from "web-tree-sitter";
+import { registerDynamicLanguage, parse } from "@ast-grep/napi";
+import json from "@ast-grep/lang-json";
 import type { Chunk } from "@/codebase/chunker/types";
-// @ts-expect-error -- Bun file embed, returns a path string
-import parserWasmPath from "./wasm/web-tree-sitter.wasm" with { type: "file" };
-// @ts-expect-error -- Bun file embed, returns a path string
-import jsonWasmPath from "./wasm/tree-sitter-json.wasm" with { type: "file" };
 
-let parser: Parser | null = null;
-
-async function getParser(): Promise<Parser> {
-  if (parser) return parser;
-  await Parser.init({
-    locateFile: () => parserWasmPath,
-  });
-  const p = new Parser();
-  const lang = await Language.load(jsonWasmPath);
-  p.setLanguage(lang);
-  parser = p;
-  return p;
-}
+registerDynamicLanguage({ json });
 
 function unquote(text: string): string {
   if (text.startsWith('"') && text.endsWith('"')) {
@@ -26,44 +11,40 @@ function unquote(text: string): string {
   return text;
 }
 
-async function chunkCode(content: string, filePath: string): Promise<Chunk[]> {
-  const p = await getParser();
-  const tree = p.parse(content);
-
-  if (tree === null) return [];
-
-  const rootNode = tree.rootNode;
+function chunkCode(content: string, filePath: string): Chunk[] {
+  const root = parse("json", content).root();
   const chunks: Chunk[] = [];
 
   // Find the root value node (first named child of document)
-  const rootValue = rootNode.children.find((c) => c.isNamed);
+  const rootValue = root.children().find((c) => c.isNamed());
 
   if (!rootValue) {
     return [];
   }
 
-  if (rootValue.type === "object") {
+  if (rootValue.kind() === "object") {
     const nameCount = new Map<string, number>();
 
-    for (const child of rootValue.children) {
-      if (child.type !== "pair") continue;
+    for (const child of rootValue.children()) {
+      if (child.kind() !== "pair") continue;
 
-      const keyNode = child.childForFieldName("key");
+      const keyNode = child.field("key");
       if (!keyNode) continue;
 
-      const keyText = unquote(keyNode.text);
+      const keyText = unquote(keyNode.text());
 
       const count = nameCount.get(keyText) ?? 0;
       nameCount.set(keyText, count + 1);
       const finalName = count > 0 ? `${keyText}_${count + 1}` : keyText;
 
+      const range = child.range();
       chunks.push({
-        content: content.slice(child.startIndex, child.endIndex),
+        content: content.slice(range.start.index, range.end.index),
         symbolName: finalName,
         symbolKind: "property",
         filePath,
-        startLine: child.startPosition.row + 1,
-        endLine: child.endPosition.row + 1,
+        startLine: range.start.line + 1,
+        endLine: range.end.line + 1,
       });
     }
   }

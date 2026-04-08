@@ -2,14 +2,14 @@ import { test, expect, describe } from "bun:test";
 import { jsonChunker } from "@/codebase/chunker/json";
 
 describe("jsonChunker", () => {
-  test("extracts top-level object keys", async () => {
+  test("extracts top-level object keys", () => {
     const content = `{
   "name": "recallos",
   "version": "1.0.0",
   "description": "A semantic code memory system"
 }`;
 
-    const chunks = await jsonChunker.chunkCode(content, "package.json");
+    const chunks = jsonChunker.chunkCode(content, "package.json");
     expect(chunks).toHaveLength(3);
     expect(chunks[0]!.symbolName).toBe("name");
     expect(chunks[0]!.symbolKind).toBe("property");
@@ -18,7 +18,7 @@ describe("jsonChunker", () => {
     expect(chunks[2]!.symbolName).toBe("description");
   });
 
-  test("handles nested objects as single chunks", async () => {
+  test("handles nested objects as single chunks", () => {
     const content = `{
   "scripts": {
     "build": "bun build",
@@ -29,7 +29,7 @@ describe("jsonChunker", () => {
   }
 }`;
 
-    const chunks = await jsonChunker.chunkCode(content, "package.json");
+    const chunks = jsonChunker.chunkCode(content, "package.json");
     expect(chunks).toHaveLength(2);
     expect(chunks[0]!.symbolName).toBe("scripts");
     expect(chunks[0]!.content).toContain('"build"');
@@ -37,39 +37,39 @@ describe("jsonChunker", () => {
     expect(chunks[1]!.symbolName).toBe("dependencies");
   });
 
-  test("array root falls back to whole file", async () => {
+  test("array root falls back to whole file", () => {
     const content = `[1, 2, 3]`;
 
-    const chunks = await jsonChunker.chunkCode(content, "data.json");
+    const chunks = jsonChunker.chunkCode(content, "data.json");
     expect(chunks).toHaveLength(1);
     expect(chunks[0]!.symbolKind).toBe("file");
     expect(chunks[0]!.symbolName).toBe("data.json");
   });
 
-  test("primitive root falls back to whole file", async () => {
+  test("primitive root falls back to whole file", () => {
     const content = `"hello"`;
 
-    const chunks = await jsonChunker.chunkCode(content, "value.json");
+    const chunks = jsonChunker.chunkCode(content, "value.json");
     expect(chunks).toHaveLength(1);
     expect(chunks[0]!.symbolKind).toBe("file");
     expect(chunks[0]!.symbolName).toBe("value.json");
   });
 
-  test("handles empty object", async () => {
+  test("handles empty object", () => {
     const content = `{}`;
 
-    const chunks = await jsonChunker.chunkCode(content, "empty.json");
+    const chunks = jsonChunker.chunkCode(content, "empty.json");
     expect(chunks).toHaveLength(1);
     expect(chunks[0]!.symbolKind).toBe("file");
     expect(chunks[0]!.symbolName).toBe("empty.json");
   });
 
-  test("handles empty file", async () => {
-    const chunks = await jsonChunker.chunkCode("", "empty.json");
+  test("handles empty file", () => {
+    const chunks = jsonChunker.chunkCode("", "empty.json");
     expect(chunks).toHaveLength(0);
   });
 
-  test("sets correct line numbers", async () => {
+  test("sets correct line numbers", () => {
     const content = `{
   "first": 1,
   "second": {
@@ -77,7 +77,7 @@ describe("jsonChunker", () => {
   }
 }`;
 
-    const chunks = await jsonChunker.chunkCode(content, "test.json");
+    const chunks = jsonChunker.chunkCode(content, "test.json");
     expect(chunks[0]!.startLine).toBe(2);
     expect(chunks[0]!.endLine).toBe(2);
     expect(chunks[1]!.symbolName).toBe("second");
@@ -85,34 +85,34 @@ describe("jsonChunker", () => {
     expect(chunks[1]!.endLine).toBe(5);
   });
 
-  test("sets filePath on all chunks", async () => {
+  test("sets filePath on all chunks", () => {
     const content = `{"key": "value"}`;
 
-    const chunks = await jsonChunker.chunkCode(content, "path/to/config.json");
+    const chunks = jsonChunker.chunkCode(content, "path/to/config.json");
     for (const chunk of chunks) {
       expect(chunk.filePath).toBe("path/to/config.json");
     }
   });
 
-  test("handles duplicate keys", async () => {
+  test("handles duplicate keys", () => {
     const content = `{
   "key": 1,
   "key": 2
 }`;
 
-    const chunks = await jsonChunker.chunkCode(content, "dup.json");
+    const chunks = jsonChunker.chunkCode(content, "dup.json");
     expect(chunks).toHaveLength(2);
     expect(chunks[0]!.symbolName).toBe("key");
     expect(chunks[1]!.symbolName).toBe("key_2");
   });
 
-  test("handles array of objects at root", async () => {
+  test("handles array of objects at root", () => {
     const content = `[
   {"name": "a"},
   {"name": "b"}
 ]`;
 
-    const chunks = await jsonChunker.chunkCode(content, "items.json");
+    const chunks = jsonChunker.chunkCode(content, "items.json");
     expect(chunks).toHaveLength(1);
     expect(chunks[0]!.symbolKind).toBe("file");
   });

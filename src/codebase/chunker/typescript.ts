@@ -1,25 +1,12 @@
-import { Language, type Node, Parser } from "web-tree-sitter";
+import { parse, Lang, type SgNode } from "@ast-grep/napi";
 import type { Chunk } from "@/codebase/chunker/types";
-// @ts-expect-error -- Bun file embed, returns a path string
-import parserWasmPath from "./wasm/web-tree-sitter.wasm" with { type: "file" };
-// @ts-expect-error -- Bun file embed, returns a path string
-import tsWasmPath from "./wasm/tree-sitter-typescript.wasm" with { type: "file" };
 
-let parser: Parser | null = null;
-
-async function getParser(): Promise<Parser> {
-  if (parser) return parser;
-  await Parser.init({
-    locateFile: () => parserWasmPath,
-  });
-  const p = new Parser();
-  const lang = await Language.load(tsWasmPath);
-  p.setLanguage(lang);
-  parser = p;
-  return parser;
+/** Get node kind as plain string (ast-grep returns a branded type) */
+function kindOf(node: SgNode): string {
+  return node.kind() as string;
 }
 
-const SYMBOL_NODE_TYPES = new Set([
+const SYMBOL_NODE_TYPES = new Set<string>([
   "function_declaration",
   "class_declaration",
   "interface_declaration",
@@ -28,7 +15,7 @@ const SYMBOL_NODE_TYPES = new Set([
   "lexical_declaration",
 ]);
 
-const PREAMBLE_NODE_TYPES = new Set(["import_statement", "comment"]);
+const PREAMBLE_NODE_TYPES = new Set<string>(["import_statement", "comment"]);
 
 function getSymbolKind(nodeType: string): string {
   switch (nodeType) {
@@ -49,16 +36,16 @@ function getSymbolKind(nodeType: string): string {
   }
 }
 
-function getSymbolName(node: Node): string {
-  const nameNode = node.childForFieldName("name");
-  if (nameNode) return nameNode.text;
+function getSymbolName(node: SgNode): string {
+  const nameNode = node.field("name");
+  if (nameNode) return nameNode.text();
 
   // For lexical_declaration, get the name from the first variable_declarator
-  if (node.type === "lexical_declaration") {
-    for (const child of node.children) {
-      if (child.type === "variable_declarator") {
-        const varName = child.childForFieldName("name");
-        if (varName) return varName.text;
+  if (kindOf(node) === "lexical_declaration") {
+    for (const child of node.children()) {
+      if (kindOf(child) === "variable_declarator") {
+        const varName = child.field("name");
+        if (varName) return varName.text();
       }
     }
   }
@@ -66,18 +53,18 @@ function getSymbolName(node: Node): string {
   return "_unnamed";
 }
 
-function unwrapExport(node: Node): {
-  declaration: Node | null;
+function unwrapExport(node: SgNode): {
+  declaration: SgNode | null;
   isDefault: boolean;
 } {
-  const declaration = node.childForFieldName("declaration");
+  const declaration = node.field("declaration");
   if (declaration) {
     return { declaration, isDefault: false };
   }
 
   // Check for export default
-  for (const child of node.children) {
-    if (child.type === "default") {
+  for (const child of node.children()) {
+    if (kindOf(child) === "default") {
       return { declaration: null, isDefault: true };
     }
   }
@@ -87,32 +74,31 @@ function unwrapExport(node: Node): {
 
 function hasBlankLineGap(
   code: string,
-  prevNode: Node,
-  nextNode: Node,
+  prevNode: SgNode,
+  nextNode: SgNode,
 ): boolean {
-  const between = code.slice(prevNode.endIndex, nextNode.startIndex);
+  const between = code.slice(
+    prevNode.range().end.index,
+    nextNode.range().start.index,
+  );
   return between.includes("\n\n");
 }
 
-async function chunkCode(code: string, filePath: string): Promise<Chunk[]> {
-  const p = await getParser();
-  const tree = p.parse(code);
-
-  if (tree === null) {
-    return [];
-  }
-  const rootNode = tree.rootNode;
-  const children = rootNode.children;
+function chunkCode(code: string, filePath: string): Chunk[] {
+  const lang = filePath.endsWith(".tsx") ? Lang.Tsx : Lang.TypeScript;
+  const root = parse(lang, code).root();
+  const children = root.children();
   const chunks: Chunk[] = [];
 
-  // Track which nodes have been consumed as preamble or leading comments
+  // Track which node indices have been consumed as preamble or leading comments
   const consumed = new Set<number>();
 
   // Phase 1: Identify preamble (leading imports + comments before first symbol)
-  const preambleNodes: Node[] = [];
-  for (const child of children) {
-    if (PREAMBLE_NODE_TYPES.has(child.type)) {
-      preambleNodes.push(child);
+  const preambleIndices: number[] = [];
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]!;
+    if (PREAMBLE_NODE_TYPES.has(kindOf(child))) {
+      preambleIndices.push(i);
     } else {
       break;
     }
@@ -120,31 +106,35 @@ async function chunkCode(code: string, filePath: string): Promise<Chunk[]> {
 
   // Trim trailing comments from preamble if they're adjacent to the next symbol
   // (no blank line gap) — those are leading comments for the symbol, not preamble
-  const nextChildIndex = preambleNodes.length;
+  const nextChildIndex = preambleIndices.length;
   const nextChild = children[nextChildIndex];
   if (nextChild) {
-    while (preambleNodes.length > 0) {
-      const last = preambleNodes[preambleNodes.length - 1]!;
-      if (last.type !== "comment") break;
-      const following = children[preambleNodes.length];
+    while (preambleIndices.length > 0) {
+      const lastIdx = preambleIndices[preambleIndices.length - 1]!;
+      const last = children[lastIdx]!;
+      if (kindOf(last) !== "comment") break;
+      const followingIdx = preambleIndices.length;
+      const following = children[followingIdx];
       if (!following || hasBlankLineGap(code, last, following)) break;
-      preambleNodes.pop();
+      preambleIndices.pop();
     }
   }
 
-  if (preambleNodes.length > 0) {
-    const first = preambleNodes[0]!;
-    const last = preambleNodes[preambleNodes.length - 1]!;
+  if (preambleIndices.length > 0) {
+    const firstIdx = preambleIndices[0]!;
+    const lastIdx = preambleIndices[preambleIndices.length - 1]!;
+    const first = children[firstIdx]!;
+    const last = children[lastIdx]!;
     chunks.push({
-      content: code.slice(first.startIndex, last.endIndex),
+      content: code.slice(first.range().start.index, last.range().end.index),
       symbolName: "_preamble",
       symbolKind: "preamble",
       filePath,
-      startLine: first.startPosition.row + 1,
-      endLine: last.endPosition.row + 1,
+      startLine: first.range().start.line + 1,
+      endLine: last.range().end.line + 1,
     });
-    for (const node of preambleNodes) {
-      consumed.add(node.id);
+    for (const idx of preambleIndices) {
+      consumed.add(idx);
     }
   }
 
@@ -153,16 +143,16 @@ async function chunkCode(code: string, filePath: string): Promise<Chunk[]> {
 
   for (let i = 0; i < children.length; i++) {
     const child = children[i]!;
-    if (consumed.has(child.id)) continue;
+    if (consumed.has(i)) continue;
 
-    let targetNode = child;
+    const targetNode = child;
     let symbolKind: string;
     let symbolName: string;
 
-    if (child.type === "export_statement") {
+    if (kindOf(child) === "export_statement") {
       const { declaration, isDefault } = unwrapExport(child);
-      if (declaration && SYMBOL_NODE_TYPES.has(declaration.type)) {
-        symbolKind = getSymbolKind(declaration.type);
+      if (declaration && SYMBOL_NODE_TYPES.has(kindOf(declaration))) {
+        symbolKind = getSymbolKind(kindOf(declaration));
         symbolName = getSymbolName(declaration);
       } else if (isDefault) {
         symbolKind = "export";
@@ -172,13 +162,13 @@ async function chunkCode(code: string, filePath: string): Promise<Chunk[]> {
         symbolKind = "export";
         symbolName = `_export_${i}`;
       }
-    } else if (SYMBOL_NODE_TYPES.has(child.type)) {
-      symbolKind = getSymbolKind(child.type);
+    } else if (SYMBOL_NODE_TYPES.has(kindOf(child))) {
+      symbolKind = getSymbolKind(kindOf(child));
       symbolName = getSymbolName(child);
-    } else if (child.type === "comment") {
+    } else if (kindOf(child) === "comment") {
       // Standalone comment not part of preamble — will be attached to next symbol or skipped
       continue;
-    } else if (child.type === "expression_statement") {
+    } else if (kindOf(child) === "expression_statement") {
       // Top-level expression statements (e.g., module.exports = ...)
       symbolKind = "expression";
       symbolName = `_expr_${i}`;
@@ -189,8 +179,8 @@ async function chunkCode(code: string, filePath: string): Promise<Chunk[]> {
     }
 
     // Collect leading comments (walk backward from current node)
-    let contentStart = targetNode.startIndex;
-    let lineStart = targetNode.startPosition.row + 1;
+    let contentStart = targetNode.range().start.index;
+    let lineStart = targetNode.range().start.line + 1;
 
     const prevIndex = i - 1;
     if (prevIndex >= 0) {
@@ -198,19 +188,19 @@ async function chunkCode(code: string, filePath: string): Promise<Chunk[]> {
       let j = prevIndex;
       while (j >= 0) {
         const prev = children[j]!;
-        if (consumed.has(prev.id)) break;
-        if (prev.type !== "comment") break;
+        if (consumed.has(j)) break;
+        if (kindOf(prev) !== "comment") break;
         if (hasBlankLineGap(code, prev, children[j + 1]!)) break;
         j--;
       }
       // Attach comments from j+1 to prevIndex
       for (let k = j + 1; k <= prevIndex; k++) {
         const commentNode = children[k]!;
-        if (commentNode.type === "comment" && !consumed.has(commentNode.id)) {
+        if (kindOf(commentNode) === "comment" && !consumed.has(k)) {
           if (!hasBlankLineGap(code, commentNode, targetNode)) {
-            contentStart = commentNode.startIndex;
-            lineStart = commentNode.startPosition.row + 1;
-            consumed.add(commentNode.id);
+            contentStart = commentNode.range().start.index;
+            lineStart = commentNode.range().start.line + 1;
+            consumed.add(k);
           }
         }
       }
@@ -222,15 +212,15 @@ async function chunkCode(code: string, filePath: string): Promise<Chunk[]> {
     const finalName = count > 0 ? `${symbolName}_${count + 1}` : symbolName;
 
     chunks.push({
-      content: code.slice(contentStart, targetNode.endIndex),
+      content: code.slice(contentStart, targetNode.range().end.index),
       symbolName: finalName,
       symbolKind,
       filePath,
       startLine: lineStart,
-      endLine: targetNode.endPosition.row + 1,
+      endLine: targetNode.range().end.line + 1,
     });
 
-    consumed.add(child.id);
+    consumed.add(i);
   }
 
   // Fallback: if no chunks were produced, return the entire file as one chunk
