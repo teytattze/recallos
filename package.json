@@ -37,6 +37,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@total-typescript/ts-reset": "^0.6.1",
     "@types/bun": "latest",
     "drizzle-kit": "^1.0.0-beta.20",
     "oxfmt": "^0.43.0",

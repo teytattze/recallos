@@ -1,4 +1,5 @@
 import type { Chunk } from "@/codebase/chunker/types";
+import { wholeFileChunk } from "@/codebase/chunker/util";
 import { typescriptChunker } from "@/codebase/chunker/typescript";
 import { markdownChunker } from "@/codebase/chunker/markdown";
 import { jsonChunker } from "@/codebase/chunker/json";
@@ -28,21 +29,8 @@ function chunkFile(content: string, filePath: string): Chunk[] {
     return chunker(content, filePath);
   }
 
-  // Fallback: whole file as a single chunk
-  const trimmed = content.trim();
-  if (trimmed.length === 0) return [];
-
-  const basename = filePath.split("/").pop() ?? filePath;
-  return [
-    {
-      content,
-      symbolName: basename,
-      symbolKind: "file",
-      filePath,
-      startLine: 1,
-      endLine: content.split("\n").length,
-    },
-  ];
+  if (content.trim().length === 0) return [];
+  return [wholeFileChunk(content, filePath)];
 }
 
 export { chunkFile, getExtension };

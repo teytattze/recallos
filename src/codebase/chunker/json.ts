@@ -1,5 +1,6 @@
 import { registerDynamicLanguage, parse } from "@ast-grep/napi";
 import json from "@ast-grep/lang-json";
+import { deduplicateName, wholeFileChunk } from "@/codebase/chunker/util";
 import type { Chunk } from "@/codebase/chunker/types";
 
 registerDynamicLanguage({ json });
@@ -32,10 +33,7 @@ function chunkCode(content: string, filePath: string): Chunk[] {
       if (!keyNode) continue;
 
       const keyText = unquote(keyNode.text());
-
-      const count = nameCount.get(keyText) ?? 0;
-      nameCount.set(keyText, count + 1);
-      const finalName = count > 0 ? `${keyText}_${count + 1}` : keyText;
+      const finalName = deduplicateName(nameCount, keyText);
 
       const range = child.range();
       chunks.push({
@@ -49,20 +47,8 @@ function chunkCode(content: string, filePath: string): Chunk[] {
     }
   }
 
-  // Fallback: array, primitive, or object with no pairs → whole file
-  if (chunks.length === 0) {
-    const trimmed = content.trim();
-    if (trimmed.length > 0) {
-      const basename = filePath.split("/").pop() ?? filePath;
-      chunks.push({
-        content,
-        symbolName: basename,
-        symbolKind: "file",
-        filePath,
-        startLine: 1,
-        endLine: content.split("\n").length,
-      });
-    }
+  if (chunks.length === 0 && content.trim().length > 0) {
+    chunks.push(wholeFileChunk(content, filePath));
   }
 
   return chunks;

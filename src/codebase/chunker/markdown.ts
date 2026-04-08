@@ -1,5 +1,6 @@
 import { marked } from "marked";
 import { parse, type SgNode } from "@ast-grep/napi";
+import { deduplicateName, wholeFileChunk } from "@/codebase/chunker/util";
 import type { Chunk } from "@/codebase/chunker/types";
 
 const HEADING_TAGS = new Set(["h1", "h2"]);
@@ -12,7 +13,6 @@ function getTagName(element: SgNode): string | null {
 }
 
 function getHeadingText(element: SgNode): string {
-  // Get text content from the element (between start_tag and end_tag)
   const textNode = element.children().find((c) => c.kind() === "text");
   return textNode?.text().trim() ?? "_untitled";
 }
@@ -22,11 +22,11 @@ function chunkCode(content: string, filePath: string): Chunk[] {
   if (trimmed.length === 0) return [];
 
   const html = marked.parse(content) as string;
+  const htmlLineCount = html.split("\n").length;
   const root = parse("html", html).root();
   const elements = root.children();
   const chunks: Chunk[] = [];
 
-  // Find indices of heading elements (h1/h2)
   const headingIndices: number[] = [];
   for (let i = 0; i < elements.length; i++) {
     const el = elements[i]!;
@@ -37,24 +37,12 @@ function chunkCode(content: string, filePath: string): Chunk[] {
     }
   }
 
-  // No headings — fallback to whole file
   if (headingIndices.length === 0) {
-    const basename = filePath.split("/").pop() ?? filePath;
-    return [
-      {
-        content: html,
-        symbolName: basename,
-        symbolKind: "file",
-        filePath,
-        startLine: 1,
-        endLine: html.split("\n").length,
-      },
-    ];
+    return [wholeFileChunk(html, filePath)];
   }
 
   const nameCount = new Map<string, number>();
 
-  // Preamble: elements before the first heading
   const firstHeadingIdx = headingIndices[0]!;
   if (firstHeadingIdx > 0) {
     const firstHeading = elements[firstHeadingIdx]!;
@@ -73,45 +61,27 @@ function chunkCode(content: string, filePath: string): Chunk[] {
     }
   }
 
-  // Extract sections: from each heading to the next heading (or EOF)
   for (let hi = 0; hi < headingIndices.length; hi++) {
     const headingIdx = headingIndices[hi]!;
     const headingEl = elements[headingIdx]!;
-    const tag = getTagName(headingEl);
     const headingText = getHeadingText(headingEl);
+    const finalName = deduplicateName(nameCount, headingText);
 
-    const count = nameCount.get(headingText) ?? 0;
-    nameCount.set(headingText, count + 1);
-    const finalName = count > 0 ? `${headingText}_${count + 1}` : headingText;
-
-    const startIndex = headingEl.range().start.index;
-    const startLine = headingEl.range().start.line + 1;
+    const headingRange = headingEl.range();
+    const startIndex = headingRange.start.index;
+    const startLine = headingRange.start.line + 1;
 
     let endIndex: number;
     let endLine: number;
 
-    if (tag === "h1") {
-      // For h1, stop at the next h2 or h1
-      const nextHeadingIdx = headingIndices[hi + 1];
-      if (nextHeadingIdx !== undefined) {
-        const nextHeading = elements[nextHeadingIdx]!;
-        endIndex = nextHeading.range().start.index;
-        endLine = nextHeading.range().start.line;
-      } else {
-        endIndex = html.length;
-        endLine = html.split("\n").length;
-      }
+    const nextHeadingIdx = headingIndices[hi + 1];
+    if (nextHeadingIdx !== undefined) {
+      const nextRange = elements[nextHeadingIdx]!.range();
+      endIndex = nextRange.start.index;
+      endLine = nextRange.start.line;
     } else {
-      // For h2, stop at the next h1 or h2
-      const nextHeadingIdx = headingIndices[hi + 1];
-      if (nextHeadingIdx !== undefined) {
-        const nextHeading = elements[nextHeadingIdx]!;
-        endIndex = nextHeading.range().start.index;
-        endLine = nextHeading.range().start.line;
-      } else {
-        endIndex = html.length;
-        endLine = html.split("\n").length;
-      }
+      endIndex = html.length;
+      endLine = htmlLineCount;
     }
 
     const sectionContent = html.slice(startIndex, endIndex);

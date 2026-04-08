@@ -1,12 +1,9 @@
 import { parse, Lang, type SgNode } from "@ast-grep/napi";
+import { deduplicateName, wholeFileChunk } from "@/codebase/chunker/util";
 import type { Chunk } from "@/codebase/chunker/types";
+import type { Kinds, TypesMap } from "@ast-grep/napi/types/staticTypes";
 
-/** Get node kind as plain string (ast-grep returns a branded type) */
-function kindOf(node: SgNode): string {
-  return node.kind() as string;
-}
-
-const SYMBOL_NODE_TYPES = new Set<string>([
+const SYMBOL_NODE_TYPES = new Set<Kinds<TypesMap>>([
   "function_declaration",
   "class_declaration",
   "interface_declaration",
@@ -15,9 +12,12 @@ const SYMBOL_NODE_TYPES = new Set<string>([
   "lexical_declaration",
 ]);
 
-const PREAMBLE_NODE_TYPES = new Set<string>(["import_statement", "comment"]);
+const PREAMBLE_NODE_TYPES = new Set<Kinds<TypesMap>>([
+  "import_statement",
+  "comment",
+]);
 
-function getSymbolKind(nodeType: string): string {
+function getSymbolKind(nodeType: Kinds<TypesMap>): string {
   switch (nodeType) {
     case "function_declaration":
       return "function";
@@ -40,10 +40,9 @@ function getSymbolName(node: SgNode): string {
   const nameNode = node.field("name");
   if (nameNode) return nameNode.text();
 
-  // For lexical_declaration, get the name from the first variable_declarator
-  if (kindOf(node) === "lexical_declaration") {
+  if (node.kind() === "lexical_declaration") {
     for (const child of node.children()) {
-      if (kindOf(child) === "variable_declarator") {
+      if (child.kind() === "variable_declarator") {
         const varName = child.field("name");
         if (varName) return varName.text();
       }
@@ -64,7 +63,7 @@ function unwrapExport(node: SgNode): {
 
   // Check for export default
   for (const child of node.children()) {
-    if (kindOf(child) === "default") {
+    if (child.kind() === "default") {
       return { declaration: null, isDefault: true };
     }
   }
@@ -97,7 +96,7 @@ function chunkCode(code: string, filePath: string): Chunk[] {
   const preambleIndices: number[] = [];
   for (let i = 0; i < children.length; i++) {
     const child = children[i]!;
-    if (PREAMBLE_NODE_TYPES.has(kindOf(child))) {
+    if (PREAMBLE_NODE_TYPES.has(child.kind())) {
       preambleIndices.push(i);
     } else {
       break;
@@ -112,7 +111,7 @@ function chunkCode(code: string, filePath: string): Chunk[] {
     while (preambleIndices.length > 0) {
       const lastIdx = preambleIndices[preambleIndices.length - 1]!;
       const last = children[lastIdx]!;
-      if (kindOf(last) !== "comment") break;
+      if (last.kind() !== "comment") break;
       const followingIdx = preambleIndices.length;
       const following = children[followingIdx];
       if (!following || hasBlankLineGap(code, last, following)) break;
@@ -125,13 +124,15 @@ function chunkCode(code: string, filePath: string): Chunk[] {
     const lastIdx = preambleIndices[preambleIndices.length - 1]!;
     const first = children[firstIdx]!;
     const last = children[lastIdx]!;
+    const firstRange = first.range();
+    const lastRange = last.range();
     chunks.push({
-      content: code.slice(first.range().start.index, last.range().end.index),
+      content: code.slice(firstRange.start.index, lastRange.end.index),
       symbolName: "_preamble",
       symbolKind: "preamble",
       filePath,
-      startLine: first.range().start.line + 1,
-      endLine: last.range().end.line + 1,
+      startLine: firstRange.start.line + 1,
+      endLine: lastRange.end.line + 1,
     });
     for (const idx of preambleIndices) {
       consumed.add(idx);
@@ -149,10 +150,10 @@ function chunkCode(code: string, filePath: string): Chunk[] {
     let symbolKind: string;
     let symbolName: string;
 
-    if (kindOf(child) === "export_statement") {
+    if (child.kind() === "export_statement") {
       const { declaration, isDefault } = unwrapExport(child);
-      if (declaration && SYMBOL_NODE_TYPES.has(kindOf(declaration))) {
-        symbolKind = getSymbolKind(kindOf(declaration));
+      if (declaration && SYMBOL_NODE_TYPES.has(declaration.kind())) {
+        symbolKind = getSymbolKind(declaration.kind());
         symbolName = getSymbolName(declaration);
       } else if (isDefault) {
         symbolKind = "export";
@@ -162,13 +163,13 @@ function chunkCode(code: string, filePath: string): Chunk[] {
         symbolKind = "export";
         symbolName = `_export_${i}`;
       }
-    } else if (SYMBOL_NODE_TYPES.has(kindOf(child))) {
-      symbolKind = getSymbolKind(kindOf(child));
+    } else if (SYMBOL_NODE_TYPES.has(child.kind())) {
+      symbolKind = getSymbolKind(child.kind());
       symbolName = getSymbolName(child);
-    } else if (kindOf(child) === "comment") {
+    } else if (child.kind() === "comment") {
       // Standalone comment not part of preamble — will be attached to next symbol or skipped
       continue;
-    } else if (kindOf(child) === "expression_statement") {
+    } else if (child.kind() === "expression_statement") {
       // Top-level expression statements (e.g., module.exports = ...)
       symbolKind = "expression";
       symbolName = `_expr_${i}`;
@@ -178,9 +179,9 @@ function chunkCode(code: string, filePath: string): Chunk[] {
       symbolName = `_stmt_${i}`;
     }
 
-    // Collect leading comments (walk backward from current node)
-    let contentStart = targetNode.range().start.index;
-    let lineStart = targetNode.range().start.line + 1;
+    const targetRange = targetNode.range();
+    let contentStart = targetRange.start.index;
+    let lineStart = targetRange.start.line + 1;
 
     const prevIndex = i - 1;
     if (prevIndex >= 0) {
@@ -189,14 +190,14 @@ function chunkCode(code: string, filePath: string): Chunk[] {
       while (j >= 0) {
         const prev = children[j]!;
         if (consumed.has(j)) break;
-        if (kindOf(prev) !== "comment") break;
+        if (prev.kind() !== "comment") break;
         if (hasBlankLineGap(code, prev, children[j + 1]!)) break;
         j--;
       }
       // Attach comments from j+1 to prevIndex
       for (let k = j + 1; k <= prevIndex; k++) {
         const commentNode = children[k]!;
-        if (kindOf(commentNode) === "comment" && !consumed.has(k)) {
+        if (commentNode.kind() === "comment" && !consumed.has(k)) {
           if (!hasBlankLineGap(code, commentNode, targetNode)) {
             contentStart = commentNode.range().start.index;
             lineStart = commentNode.range().start.line + 1;
@@ -206,37 +207,22 @@ function chunkCode(code: string, filePath: string): Chunk[] {
       }
     }
 
-    // Handle duplicate symbol names
-    const count = nameCount.get(symbolName) ?? 0;
-    nameCount.set(symbolName, count + 1);
-    const finalName = count > 0 ? `${symbolName}_${count + 1}` : symbolName;
+    const finalName = deduplicateName(nameCount, symbolName);
 
     chunks.push({
-      content: code.slice(contentStart, targetNode.range().end.index),
+      content: code.slice(contentStart, targetRange.end.index),
       symbolName: finalName,
       symbolKind,
       filePath,
       startLine: lineStart,
-      endLine: targetNode.range().end.line + 1,
+      endLine: targetRange.end.line + 1,
     });
 
     consumed.add(i);
   }
 
-  // Fallback: if no chunks were produced, return the entire file as one chunk
-  if (chunks.length === 0) {
-    const trimmed = code.trim();
-    if (trimmed.length > 0) {
-      const basename = filePath.split("/").pop() ?? filePath;
-      chunks.push({
-        content: code,
-        symbolName: basename,
-        symbolKind: "file",
-        filePath,
-        startLine: 1,
-        endLine: code.split("\n").length,
-      });
-    }
+  if (chunks.length === 0 && code.trim().length > 0) {
+    chunks.push(wholeFileChunk(code, filePath));
   }
 
   return chunks;
