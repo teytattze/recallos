@@ -1,5 +1,9 @@
 import { test, expect, describe } from "bun:test";
-import { markdownChunker } from "@/codebase/chunker/markdown";
+import { markdownAdapter } from "@/codebase/chunker/adapters/markdown";
+import { chunkWithAdapter } from "@/codebase/chunker/generic";
+
+const chunkCode = (code: string, filePath: string) =>
+  chunkWithAdapter(code, filePath, markdownAdapter);
 
 describe("markdownChunker", () => {
   test("extracts h1 sections", () => {
@@ -11,7 +15,7 @@ Some intro text.
 
 Setup instructions here.`;
 
-    const chunks = markdownChunker.chunkCode(content, "README.md");
+    const chunks = chunkCode(content, "README.md");
     expect(chunks).toHaveLength(2);
     expect(chunks[0]!.symbolName).toBe("Introduction");
     expect(chunks[0]!.symbolKind).toBe("section");
@@ -29,7 +33,7 @@ Overview content.
 
 Detail content.`;
 
-    const chunks = markdownChunker.chunkCode(content, "doc.md");
+    const chunks = chunkCode(content, "doc.md");
     expect(chunks).toHaveLength(2);
     expect(chunks[0]!.symbolName).toBe("Overview");
     expect(chunks[1]!.symbolName).toBe("Details");
@@ -48,7 +52,7 @@ Sub content A.
 
 Sub content B.`;
 
-    const chunks = markdownChunker.chunkCode(content, "doc.md");
+    const chunks = chunkCode(content, "doc.md");
     expect(chunks).toHaveLength(1);
     expect(chunks[0]!.symbolName).toBe("Main Section");
     expect(chunks[0]!.content).toContain("Subsection A");
@@ -64,7 +68,7 @@ Another paragraph.
 
 Section content.`;
 
-    const chunks = markdownChunker.chunkCode(content, "doc.md");
+    const chunks = chunkCode(content, "doc.md");
     const preamble = chunks.find((c) => c.symbolName === "_preamble");
     expect(preamble).toBeDefined();
     expect(preamble!.symbolKind).toBe("preamble");
@@ -80,7 +84,7 @@ Section content.`;
 
 And another paragraph.`;
 
-    const chunks = markdownChunker.chunkCode(content, "notes.md");
+    const chunks = chunkCode(content, "notes.md");
     expect(chunks).toHaveLength(1);
     expect(chunks[0]!.symbolKind).toBe("file");
     expect(chunks[0]!.symbolName).toBe("notes.md");
@@ -88,12 +92,12 @@ And another paragraph.`;
   });
 
   test("handles empty file", () => {
-    const chunks = markdownChunker.chunkCode("", "empty.md");
+    const chunks = chunkCode("", "empty.md");
     expect(chunks).toHaveLength(0);
   });
 
   test("handles whitespace-only file", () => {
-    const chunks = markdownChunker.chunkCode("   \n\n  ", "blank.md");
+    const chunks = chunkCode("   \n\n  ", "blank.md");
     expect(chunks).toHaveLength(0);
   });
 
@@ -106,7 +110,7 @@ First FAQ section.
 
 Second FAQ section.`;
 
-    const chunks = markdownChunker.chunkCode(content, "faq.md");
+    const chunks = chunkCode(content, "faq.md");
     expect(chunks).toHaveLength(2);
     expect(chunks[0]!.symbolName).toBe("FAQ");
     expect(chunks[1]!.symbolName).toBe("FAQ_2");
@@ -121,7 +125,7 @@ Line 3.
 
 Line 7.`;
 
-    const chunks = markdownChunker.chunkCode(content, "doc.md");
+    const chunks = chunkCode(content, "doc.md");
     expect(chunks[0]!.startLine).toBe(1);
     expect(chunks[1]!.symbolName).toBe("Second");
     // Line numbers are based on HTML output, not original markdown
@@ -133,7 +137,7 @@ Line 7.`;
 
 Content.`;
 
-    const chunks = markdownChunker.chunkCode(content, "path/to/doc.md");
+    const chunks = chunkCode(content, "path/to/doc.md");
     for (const chunk of chunks) {
       expect(chunk.filePath).toBe("path/to/doc.md");
     }
@@ -152,7 +156,7 @@ Content A.
 
 Content B.`;
 
-    const chunks = markdownChunker.chunkCode(content, "doc.md");
+    const chunks = chunkCode(content, "doc.md");
     expect(chunks).toHaveLength(3);
     expect(chunks[0]!.symbolName).toBe("Title");
     expect(chunks[1]!.symbolName).toBe("Section A");
