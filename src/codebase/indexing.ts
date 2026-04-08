@@ -1,7 +1,9 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db/db";
-import { codebaseChunk, codebaseFile } from "@/db/schema";
+import { codebaseChunk, codebaseFile, graphEdge } from "@/db/schema";
 import { chunkFile } from "@/codebase/chunker/router";
+import { extractReferences } from "@/codebase/graph/router";
+import type { RawReference } from "@/codebase/graph/types";
 import { embedTexts } from "@/codebase/embed";
 import { newBaseFieldsValue } from "@/db/util";
 import { hash, loadFiles } from "@/lib/util";
@@ -16,6 +18,16 @@ type IndexingOpts = {
   include: string[];
   exclude: string[];
   force: boolean;
+};
+
+type IndexedChunk = {
+  id: string;
+  symbolName: string;
+};
+
+type FileIndexResult = {
+  chunks: IndexedChunk[];
+  rawRefs: RawReference[];
 };
 
 function diffFiles(
@@ -47,7 +59,12 @@ function diffFiles(
   return { added, modified, deleted, unchanged };
 }
 
-async function indexFile(file: DiskFile, opts?: { deleteExisting?: boolean }) {
+async function indexFile(
+  file: DiskFile,
+  opts?: { deleteExisting?: boolean },
+): Promise<FileIndexResult> {
+  const result: FileIndexResult = { chunks: [], rawRefs: [] };
+
   await db.transaction(async (tx) => {
     // Delete existing file row first if re-indexing a modified file
     if (opts?.deleteExisting) {
@@ -87,18 +104,27 @@ async function indexFile(file: DiskFile, opts?: { deleteExisting?: boolean }) {
     }
 
     // Insert chunks with embeddings
-    await tx.insert(codebaseChunk).values(
-      chunks.map((chunk, i) => ({
-        ...newBaseFieldsValue(),
-        content: chunk.content,
-        symbolName: chunk.symbolName,
-        symbolKind: chunk.symbolKind,
-        startLine: chunk.startLine,
-        endLine: chunk.endLine,
-        embedding: embeddings[i] as number[],
-        fileId,
-      })),
-    );
+    const chunkValues = chunks.map((chunk, i) => ({
+      ...newBaseFieldsValue(),
+      content: chunk.content,
+      symbolName: chunk.symbolName,
+      symbolKind: chunk.symbolKind,
+      startLine: chunk.startLine,
+      endLine: chunk.endLine,
+      embedding: embeddings[i] as number[],
+      fileId,
+    }));
+
+    await tx.insert(codebaseChunk).values(chunkValues);
+
+    // Collect indexed chunks for graph edge resolution
+    result.chunks = chunkValues.map((v) => ({
+      id: v.id,
+      symbolName: v.symbolName,
+    }));
+
+    // Extract raw references for graph edges
+    result.rawRefs = extractReferences(file.content, file.path, chunks);
 
     // Mark file as complete
     await tx
@@ -106,6 +132,71 @@ async function indexFile(file: DiskFile, opts?: { deleteExisting?: boolean }) {
       .set({ status: "complete", indexedAt: new Date() })
       .where(eq(codebaseFile.id, fileId));
   });
+
+  return result;
+}
+
+async function resolveGraphEdges(allResults: FileIndexResult[]): Promise<void> {
+  // Build symbol name → chunk IDs lookup from all indexed files
+  const symbolToChunkIds = new Map<string, string[]>();
+  const chunkSymbolNameToId = new Map<string, string>();
+
+  for (const result of allResults) {
+    for (const chunk of result.chunks) {
+      const ids = symbolToChunkIds.get(chunk.symbolName) ?? [];
+      ids.push(chunk.id);
+      symbolToChunkIds.set(chunk.symbolName, ids);
+      chunkSymbolNameToId.set(chunk.symbolName, chunk.id);
+    }
+  }
+
+  // Also include existing chunks from DB (for cross-file references to unchanged files)
+  const existingChunks = await db
+    .select({ id: codebaseChunk.id, symbolName: codebaseChunk.symbolName })
+    .from(codebaseChunk);
+
+  for (const chunk of existingChunks) {
+    if (!chunkSymbolNameToId.has(chunk.symbolName)) {
+      const ids = symbolToChunkIds.get(chunk.symbolName) ?? [];
+      ids.push(chunk.id);
+      symbolToChunkIds.set(chunk.symbolName, ids);
+    }
+  }
+
+  // Resolve raw references to edges
+  const edges: { fromId: string; toId: string }[] = [];
+
+  for (const result of allResults) {
+    for (const ref of result.rawRefs) {
+      const fromId = chunkSymbolNameToId.get(ref.chunkSymbolName);
+      if (!fromId) continue;
+
+      for (const identifier of ref.referencedIdentifiers) {
+        const targetIds = symbolToChunkIds.get(identifier);
+        if (!targetIds) continue;
+
+        for (const toId of targetIds) {
+          if (fromId !== toId) {
+            edges.push({ fromId, toId });
+          }
+        }
+      }
+    }
+  }
+
+  if (edges.length === 0) return;
+
+  // Batch-insert edges
+  await db.insert(graphEdge).values(
+    edges.map((edge) => ({
+      ...newBaseFieldsValue(),
+      relationship: "references" as const,
+      fromId: edge.fromId,
+      toId: edge.toId,
+    })),
+  );
+
+  console.log(`Created ${edges.length} graph edges`);
 }
 
 async function startIndexing(opts: IndexingOpts): Promise<void> {
@@ -122,16 +213,19 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
     contentHashDigest: hash(f.content),
   }));
 
+  const allResults: FileIndexResult[] = [];
+
   if (opts.force) {
     console.log("Force mode: full re-index");
 
-    // Delete all files (CASCADE cleans chunks)
+    // Delete all files (CASCADE cleans chunks and edges)
     await db.delete(codebaseFile);
 
     for (const file of diskFiles) {
-      await indexFile(file);
+      allResults.push(await indexFile(file));
     }
 
+    await resolveGraphEdges(allResults);
     console.log(`Indexed ${diskFiles.length} files (force)`);
     return;
   }
@@ -163,7 +257,7 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
     dbFiles,
   );
 
-  // Delete removed files (CASCADE cleans chunks)
+  // Delete removed files (CASCADE cleans chunks and edges)
   for (const filePath of diff.deleted) {
     await db.delete(codebaseFile).where(eq(codebaseFile.filePath, filePath));
   }
@@ -172,12 +266,27 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
   const fileMap = new Map(diskFiles.map((f) => [f.path, f]));
 
   for (const filePath of diff.added) {
-    await indexFile(fileMap.get(filePath)!);
+    allResults.push(await indexFile(fileMap.get(filePath)!));
   }
 
   // Re-index modified files (delete + insert atomically in one transaction)
   for (const filePath of diff.modified) {
-    await indexFile(fileMap.get(filePath)!, { deleteExisting: true });
+    allResults.push(
+      await indexFile(fileMap.get(filePath)!, { deleteExisting: true }),
+    );
+  }
+
+  // Delete stale edges for re-indexed chunks and resolve new edges
+  if (allResults.length > 0) {
+    const reindexedChunkIds = allResults.flatMap((r) =>
+      r.chunks.map((c) => c.id),
+    );
+    if (reindexedChunkIds.length > 0) {
+      await db
+        .delete(graphEdge)
+        .where(inArray(graphEdge.fromId, reindexedChunkIds));
+    }
+    await resolveGraphEdges(allResults);
   }
 
   console.log(
