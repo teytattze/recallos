@@ -20,8 +20,10 @@ Setup instructions here.`;
     expect(chunks[0]!.symbolName).toBe("Introduction");
     expect(chunks[0]!.symbolKind).toBe("section");
     expect(chunks[0]!.content).toContain("Some intro text.");
+    expect(chunks[0]!.content).not.toMatch(/<h[12]>/);
     expect(chunks[1]!.symbolName).toBe("Getting Started");
     expect(chunks[1]!.content).toContain("Setup instructions here.");
+    expect(chunks[1]!.content).not.toMatch(/<h[12]>/);
   });
 
   test("extracts h2 sections", () => {
@@ -161,5 +163,22 @@ Content B.`;
     expect(chunks[0]!.symbolName).toBe("Title");
     expect(chunks[1]!.symbolName).toBe("Section A");
     expect(chunks[2]!.symbolName).toBe("Section B");
+  });
+
+  test("chunk content is markdown, not HTML", () => {
+    const content = `# Hello
+
+This is **bold** and *italic* text.
+
+- item one
+- item two`;
+
+    const chunks = chunkCode(content, "doc.md");
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0]!.content).toContain("**bold**");
+    expect(chunks[0]!.content).toContain("*italic*");
+    expect(chunks[0]!.content).not.toContain("<strong>");
+    expect(chunks[0]!.content).not.toContain("<em>");
+    expect(chunks[0]!.content).not.toContain("<li>");
   });
 });

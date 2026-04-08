@@ -1,7 +1,22 @@
-import { marked } from "marked";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import rehypeStringify from "rehype-stringify";
+import rehypeParse from "rehype-parse";
+import rehypeRemark from "rehype-remark";
+import remarkStringify from "remark-stringify";
 import type { SgNode } from "@ast-grep/napi";
 import { deduplicateName, wholeFileChunk } from "@/codebase/chunker/util";
 import type { LanguageAdapter } from "@/codebase/chunker/types";
+
+function htmlToMarkdown(html: string): string {
+  const result = unified()
+    .use(rehypeParse, { fragment: true })
+    .use(rehypeRemark)
+    .use(remarkStringify)
+    .processSync(html);
+  return String(result).trim();
+}
 
 function getHeadingText(element: SgNode): string {
   const textNode = element.children().find((c) => c.kind() === "text");
@@ -12,7 +27,14 @@ const markdownAdapter: LanguageAdapter = {
   lang: "html",
   extensions: [".md", ".mdx"],
 
-  preprocess: (content) => marked.parse(content) as string,
+  preprocess: (content) =>
+    String(
+      unified()
+        .use(remarkParse)
+        .use(remarkRehype)
+        .use(rehypeStringify)
+        .processSync(content),
+    ),
 
   symbolRule: {
     rule: {
@@ -43,7 +65,7 @@ const markdownAdapter: LanguageAdapter = {
       const preamble = html.slice(0, firstRange.start.index).trim();
       if (preamble.length > 0) {
         chunks.push({
-          content: preamble,
+          content: htmlToMarkdown(preamble),
           symbolName: "_preamble",
           symbolKind: "preamble",
           filePath,
@@ -65,7 +87,7 @@ const markdownAdapter: LanguageAdapter = {
       const name = deduplicateName(nameCount, headingText);
 
       chunks.push({
-        content: html.slice(startIndex, endIndex),
+        content: htmlToMarkdown(html.slice(startIndex, endIndex)),
         symbolName: name,
         symbolKind: "section",
         filePath,
@@ -75,7 +97,7 @@ const markdownAdapter: LanguageAdapter = {
     }
 
     if (chunks.length === 0 && html.trim().length > 0) {
-      return [wholeFileChunk(html, filePath)];
+      return [wholeFileChunk(htmlToMarkdown(html), filePath)];
     }
 
     return chunks;
