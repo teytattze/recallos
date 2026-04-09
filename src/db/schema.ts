@@ -42,19 +42,21 @@ const codebaseChunk = pgTable("codebase_chunks", {
     .references(() => codebaseFile.id, { onDelete: "cascade" }),
 });
 
-const graphEdge = pgTable("graph_edges", {
+const codebaseChunkGraphEdge = pgTable("codebase_chunk_graph_edges", {
   ...makeBaseFields(),
 
-  relationship: text("relationship").notNull(),
+  relationship: text("relationship", { enum: ["references"] }).notNull(),
 
-  fromId: uuid("from_id").notNull(),
-  fromKind: text("from_kind").notNull(),
-  toId: uuid("to_id").notNull(),
-  toKind: text("to_kind").notNull(),
+  fromId: uuid("from_id")
+    .notNull()
+    .references(() => codebaseChunk.id, { onDelete: "cascade" }),
+  toId: uuid("to_id")
+    .notNull()
+    .references(() => codebaseChunk.id, { onDelete: "cascade" }),
 });
 
 const relations = defineRelations(
-  { codebaseChunk, codebaseFile, graphEdge },
+  { codebaseChunk, codebaseFile, graphEdge: codebaseChunkGraphEdge },
   (r) => ({
     codebaseChunk: {
       file: r.one.codebaseFile({
@@ -66,8 +68,24 @@ const relations = defineRelations(
     codebaseFile: {
       codebaseChunk: r.many.codebaseChunk(),
     },
+
+    graphEdge: {
+      fromChunk: r.one.codebaseChunk({
+        from: r.graphEdge.fromId,
+        to: r.codebaseChunk.id,
+      }),
+      toChunk: r.one.codebaseChunk({
+        from: r.graphEdge.toId,
+        to: r.codebaseChunk.id,
+      }),
+    },
   }),
 );
 
-export { codebaseChunk, codebaseFile, graphEdge, relations };
+export {
+  codebaseChunk,
+  codebaseFile,
+  codebaseChunkGraphEdge as graphEdge,
+  relations,
+};
 export type { BaseFields };

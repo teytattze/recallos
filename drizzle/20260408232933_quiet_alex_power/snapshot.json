@@ -1,0 +1,357 @@
+{
+  "version": "8",
+  "dialect": "postgres",
+  "id": "984eb810-6fa7-4d3a-a615-2399048a11fc",
+  "prevIds": [
+    "9b521017-e049-4ace-b1b5-50ecc1d277ae"
+  ],
+  "ddl": [
+    {
+      "isRlsEnabled": false,
+      "name": "codebase_chunks",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "codebase_files",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "codebase_chunk_graph_edges",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_chunks"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "content",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_chunks"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "symbol_name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_chunks"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "symbol_kind",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_chunks"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "start_line",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_chunks"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "end_line",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_chunks"
+    },
+    {
+      "type": "vector(1024)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "embedding",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_chunks"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "file_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_chunks"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_files"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "file_path",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_files"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "content",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_files"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "content_hash_digest",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_files"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_files"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "indexed_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_files"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_chunk_graph_edges"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "relationship",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_chunk_graph_edges"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "from_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_chunk_graph_edges"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "to_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_chunk_graph_edges"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "file_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "codebase_files",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "codebase_chunks_file_id_codebase_files_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "codebase_chunks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "from_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "codebase_chunks",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "codebase_chunk_graph_edges_from_id_codebase_chunks_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "codebase_chunk_graph_edges"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "to_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "codebase_chunks",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "codebase_chunk_graph_edges_to_id_codebase_chunks_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "codebase_chunk_graph_edges"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "codebase_chunks_pkey",
+      "schema": "public",
+      "table": "codebase_chunks",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "codebase_files_pkey",
+      "schema": "public",
+      "table": "codebase_files",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "graph_edges_pkey",
+      "schema": "public",
+      "table": "codebase_chunk_graph_edges",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "file_path"
+      ],
+      "nullsNotDistinct": false,
+      "name": "codebase_files_file_path_key",
+      "schema": "public",
+      "table": "codebase_files",
+      "entityType": "uniques"
+    }
+  ],
+  "renames": [
+    "public.graph_edges->public.codebase_chunk_graph_edges"
+  ]
+}
