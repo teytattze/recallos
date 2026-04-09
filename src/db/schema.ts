@@ -68,6 +68,17 @@ const relations = defineRelations(
     codebaseFile: {
       codebaseChunk: r.many.codebaseChunk(),
     },
+
+    graphEdge: {
+      fromChunk: r.one.codebaseChunk({
+        from: r.graphEdge.fromId,
+        to: r.codebaseChunk.id,
+      }),
+      toChunk: r.one.codebaseChunk({
+        from: r.graphEdge.toId,
+        to: r.codebaseChunk.id,
+      }),
+    },
   }),
 );
 
