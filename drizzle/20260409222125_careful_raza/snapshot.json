@@ -1,8 +1,10 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "8b36494b-6af5-477b-85b6-b59078befb1a",
-  "prevIds": ["6fabe7f1-e117-4d51-a62e-dd1a0b887ab2"],
+  "id": "95cd233f-7748-411a-a059-8348d2a9ddf8",
+  "prevIds": [
+    "6fabe7f1-e117-4d51-a62e-dd1a0b887ab2"
+  ],
   "ddl": [
     {
       "isRlsEnabled": false,
@@ -18,7 +20,7 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "graph_edges",
+      "name": "codebase_file_graph_edges",
       "entityType": "tables",
       "schema": "public"
     },
@@ -103,7 +105,7 @@
     {
       "type": "vector(1024)",
       "typeSchema": null,
-      "notNull": false,
+      "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
@@ -173,7 +175,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "content_digest",
+      "name": "content_hash_digest",
       "entityType": "columns",
       "schema": "public",
       "table": "codebase_files"
@@ -209,39 +211,13 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": "gen_random_uuid()",
+      "default": null,
       "generated": null,
       "identity": null,
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "graph_edges"
-    },
-    {
-      "type": "timestamp",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "graph_edges"
-    },
-    {
-      "type": "timestamp",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "graph_edges"
+      "table": "codebase_file_graph_edges"
     },
     {
       "type": "text",
@@ -254,7 +230,7 @@
       "name": "relationship",
       "entityType": "columns",
       "schema": "public",
-      "table": "graph_edges"
+      "table": "codebase_file_graph_edges"
     },
     {
       "type": "uuid",
@@ -267,20 +243,7 @@
       "name": "from_id",
       "entityType": "columns",
       "schema": "public",
-      "table": "graph_edges"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "from_kind",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "graph_edges"
+      "table": "codebase_file_graph_edges"
     },
     {
       "type": "uuid",
@@ -293,27 +256,18 @@
       "name": "to_id",
       "entityType": "columns",
       "schema": "public",
-      "table": "graph_edges"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "to_kind",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "graph_edges"
+      "table": "codebase_file_graph_edges"
     },
     {
       "nameExplicit": false,
-      "columns": ["file_id"],
+      "columns": [
+        "file_id"
+      ],
       "schemaTo": "public",
       "tableTo": "codebase_files",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "codebase_chunks_file_id_codebase_files_id_fkey",
@@ -322,7 +276,43 @@
       "table": "codebase_chunks"
     },
     {
-      "columns": ["id"],
+      "nameExplicit": false,
+      "columns": [
+        "from_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "codebase_files",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "codebase_file_graph_edges_from_id_codebase_files_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "codebase_file_graph_edges"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "to_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "codebase_files",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "codebase_file_graph_edges_to_id_codebase_files_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "codebase_file_graph_edges"
+    },
+    {
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "codebase_chunks_pkey",
       "schema": "public",
@@ -330,7 +320,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "codebase_files_pkey",
       "schema": "public",
@@ -338,16 +330,20 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
-      "name": "graph_edges_pkey",
+      "name": "codebase_file_graph_edges_pkey",
       "schema": "public",
-      "table": "graph_edges",
+      "table": "codebase_file_graph_edges",
       "entityType": "pks"
     },
     {
       "nameExplicit": false,
-      "columns": ["file_path"],
+      "columns": [
+        "file_path"
+      ],
       "nullsNotDistinct": false,
       "name": "codebase_files_file_path_key",
       "schema": "public",

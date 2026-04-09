@@ -3,6 +3,7 @@ import { db } from "@/db/db";
 import { codebaseChunk, codebaseFile } from "@/db/schema";
 import { chunkFile } from "@/codebase/chunker/router";
 import { embedTexts } from "@/codebase/embed";
+import { buildFileGraph } from "@/codebase/graph/graph";
 import { newBaseFieldsValue } from "@/db/util";
 import { hash, loadFiles } from "@/lib/util";
 
@@ -16,6 +17,7 @@ type IndexingOpts = {
   include: string[];
   exclude: string[];
   force: boolean;
+  projectRoot: string;
 };
 
 function diffFiles(
@@ -133,56 +135,61 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
     }
 
     console.log(`Indexed ${diskFiles.length} files (force)`);
-    return;
+  } else {
+    // Clean up pending files from interrupted runs (CASCADE cleans chunks)
+    const pendingDeleted = await db
+      .delete(codebaseFile)
+      .where(eq(codebaseFile.status, "pending"))
+      .returning({ filePath: codebaseFile.filePath });
+
+    if (pendingDeleted.length > 0) {
+      console.log(`Cleaned up ${pendingDeleted.length} pending entries`);
+    }
+
+    // Load DB state and diff
+    const dbFiles = await db
+      .select({
+        filePath: codebaseFile.filePath,
+        contentDigest: codebaseFile.contentHashDigest,
+      })
+      .from(codebaseFile)
+      .where(eq(codebaseFile.status, "complete"));
+
+    const diff = diffFiles(
+      diskFiles.map((f) => ({
+        path: f.path,
+        contentHashDigest: f.contentHashDigest,
+      })),
+      dbFiles,
+    );
+
+    // Delete removed files (CASCADE cleans chunks)
+    for (const filePath of diff.deleted) {
+      await db.delete(codebaseFile).where(eq(codebaseFile.filePath, filePath));
+    }
+
+    // Index added and modified files
+    const fileMap = new Map(diskFiles.map((f) => [f.path, f]));
+
+    for (const filePath of diff.added) {
+      await indexFile(fileMap.get(filePath)!);
+    }
+
+    // Re-index modified files (delete + insert atomically in one transaction)
+    for (const filePath of diff.modified) {
+      await indexFile(fileMap.get(filePath)!, { deleteExisting: true });
+    }
+
+    console.log(
+      `Indexed ${diff.added.length} new, ${diff.modified.length} updated, ` +
+        `${diff.deleted.length} deleted, ${diff.unchanged.length} unchanged`,
+    );
   }
 
-  // Clean up pending files from interrupted runs (CASCADE cleans chunks)
-  const pendingDeleted = await db
-    .delete(codebaseFile)
-    .where(eq(codebaseFile.status, "pending"))
-    .returning({ filePath: codebaseFile.filePath });
-
-  if (pendingDeleted.length > 0) {
-    console.log(`Cleaned up ${pendingDeleted.length} pending entries`);
-  }
-
-  // Load DB state and diff
-  const dbFiles = await db
-    .select({
-      filePath: codebaseFile.filePath,
-      contentDigest: codebaseFile.contentHashDigest,
-    })
-    .from(codebaseFile)
-    .where(eq(codebaseFile.status, "complete"));
-
-  const diff = diffFiles(
-    diskFiles.map((f) => ({
-      path: f.path,
-      contentHashDigest: f.contentHashDigest,
-    })),
-    dbFiles,
-  );
-
-  // Delete removed files (CASCADE cleans chunks)
-  for (const filePath of diff.deleted) {
-    await db.delete(codebaseFile).where(eq(codebaseFile.filePath, filePath));
-  }
-
-  // Index added and modified files
-  const fileMap = new Map(diskFiles.map((f) => [f.path, f]));
-
-  for (const filePath of diff.added) {
-    await indexFile(fileMap.get(filePath)!);
-  }
-
-  // Re-index modified files (delete + insert atomically in one transaction)
-  for (const filePath of diff.modified) {
-    await indexFile(fileMap.get(filePath)!, { deleteExisting: true });
-  }
-
+  // Build file dependency graph
+  const graph = await buildFileGraph(opts.projectRoot);
   console.log(
-    `Indexed ${diff.added.length} new, ${diff.modified.length} updated, ` +
-      `${diff.deleted.length} deleted, ${diff.unchanged.length} unchanged`,
+    `Graph: ${graph.edgesCreated} edges from ${graph.filesProcessed} files`,
   );
 }
 

@@ -42,19 +42,21 @@ const codebaseChunk = pgTable("codebase_chunks", {
     .references(() => codebaseFile.id, { onDelete: "cascade" }),
 });
 
-const graphEdge = pgTable("graph_edges", {
+const codebaseFileGraphEdge = pgTable("codebase_file_graph_edges", {
   ...makeBaseFields(),
 
-  relationship: text("relationship").notNull(),
+  relationship: text("relationship", { enum: ["references"] }).notNull(),
 
-  fromId: uuid("from_id").notNull(),
-  fromKind: text("from_kind").notNull(),
-  toId: uuid("to_id").notNull(),
-  toKind: text("to_kind").notNull(),
+  fromId: uuid("from_id")
+    .notNull()
+    .references(() => codebaseFile.id),
+  toId: uuid("to_id")
+    .notNull()
+    .references(() => codebaseFile.id),
 });
 
 const relations = defineRelations(
-  { codebaseChunk, codebaseFile, graphEdge },
+  { codebaseChunk, codebaseFile, codebaseFileGraphEdge },
   (r) => ({
     codebaseChunk: {
       file: r.one.codebaseFile({
@@ -64,10 +66,41 @@ const relations = defineRelations(
     },
 
     codebaseFile: {
-      codebaseChunk: r.many.codebaseChunk(),
+      chunks: r.many.codebaseChunk({
+        from: r.codebaseFile.id,
+        to: r.codebaseChunk.fileId,
+      }),
+      outgoingEdges: r.many.codebaseFileGraphEdge({
+        from: r.codebaseFile.id,
+        to: r.codebaseFileGraphEdge.fromId,
+        alias: "from",
+      }),
+      incomingEdges: r.many.codebaseFileGraphEdge({
+        from: r.codebaseFile.id,
+        to: r.codebaseFileGraphEdge.toId,
+        alias: "to",
+      }),
+    },
+
+    codebaseFileGraphEdge: {
+      from: r.one.codebaseFile({
+        from: r.codebaseFileGraphEdge.fromId,
+        to: r.codebaseFile.id,
+        alias: "from",
+      }),
+      to: r.one.codebaseFile({
+        from: r.codebaseFileGraphEdge.toId,
+        to: r.codebaseFile.id,
+        alias: "to",
+      }),
     },
   }),
 );
 
-export { codebaseChunk, codebaseFile, graphEdge, relations };
+export {
+  codebaseChunk,
+  codebaseFile,
+  codebaseFileGraphEdge as graphEdge,
+  relations,
+};
 export type { BaseFields };
