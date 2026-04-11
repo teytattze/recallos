@@ -54,6 +54,7 @@ yargs(hideBin(process.argv))
         include: argv.include,
         exclude: argv.exclude,
         force: argv.force,
+        projectRoot: process.cwd(),
       });
     },
   )
