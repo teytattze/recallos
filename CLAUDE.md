@@ -34,7 +34,8 @@ bun run src/cli.ts index [-i "src/**/*.ts"] [-f]       # Index source files
 
 ## Architecture
 
-- `src/codebase/query.ts` -- semantic search: embeds queries via VoyageAI, cosine similarity search on pgvector
+- `src/codebase/query/vector-search.ts` -- semantic search: embeds queries via VoyageAI, cosine similarity search on pgvector
+- `src/codebase/query/graph-search.ts` -- file relationship search: traverses dependency graph via recursive CTE
 - `src/codebase/indexing.ts` -- incremental indexing with two-phase writes (pending/complete) and content-hash change detection
 - `src/codebase/embed.ts` -- VoyageAI embedding client (voyage-code-3.5, 1024 dimensions)
 - `src/codebase/chunker/` -- tree-sitter-based code chunking (TypeScript, Markdown, JSON) with extension-based router
@@ -59,6 +60,7 @@ bun run src/cli.ts index [-i "src/**/*.ts"] [-f]       # Index source files
 - **Bun only.** Use `bun` for runtime, packages, builds, and scripts. Do not use Node.js, ts-node, npm, webpack, esbuild, vite, or dotenv. Bun auto-loads `.env`.
 - **TypeScript strict.** `noUncheckedIndexedAccess: true` — indexed access returns `T | undefined`. Path alias `@/*` maps to `./src/*`.
 - **ESM modules.** `"type": "module"` in package.json.
+- **No barrel files.** Do not create `index.ts` re-export files. Import directly from source modules.
 
 ## Reference
 

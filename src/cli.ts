@@ -3,7 +3,8 @@ import readline from "node:readline/promises";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import z from "zod";
-import { searchCodebase } from "@/codebase/query";
+import { searchByText } from "@/codebase/query/vector-search";
+import { findRelatedFilesByCodebaseId } from "@/codebase/query/graph-search";
 import { startIndexing } from "@/codebase/indexing";
 import {
   ensureCodebase,
@@ -27,7 +28,34 @@ yargs(hideBin(process.argv))
     async (argv) => {
       const queries = z.string().array().parse(argv.queries);
       const config = await loadConfig();
-      const result = await searchCodebase(queries, config.codebase.id);
+      const result = await searchByText(queries, config.codebase.id);
+      console.log(JSON.stringify(result, null, 4));
+    },
+  )
+  .command(
+    "related <filePaths...>",
+    "Find related files via the dependency graph",
+    (yargs) => {
+      return yargs
+        .positional("filePaths", {
+          describe: "File paths to find relationships for",
+          default: [],
+        })
+        .option("depth", {
+          alias: "d",
+          describe: "Graph traversal depth",
+          type: "number",
+          default: 1,
+        });
+    },
+    async (argv) => {
+      const filePaths = z.string().array().parse(argv.filePaths);
+      const config = await loadConfig();
+      const result = await findRelatedFilesByCodebaseId(
+        config.codebase.id,
+        filePaths,
+        argv.depth,
+      );
       console.log(JSON.stringify(result, null, 4));
     },
   )
@@ -132,6 +160,6 @@ yargs(hideBin(process.argv))
   })
   .demandCommand(
     1,
-    "Please specify a command: setup, search, index, or codebase",
+    "Please specify a command: setup, search, related, index, or codebase",
   )
   .parse();

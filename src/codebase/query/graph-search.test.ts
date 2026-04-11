@@ -2,7 +2,7 @@ import { test, expect, beforeAll, afterAll } from "bun:test";
 import { db } from "@/db/db";
 import { codebase, codebaseFile, graphEdge } from "@/db/schema";
 import { newBaseFieldsValue } from "@/db/util";
-import { getRelatedFiles } from "@/codebase/query";
+import { findRelatedFilesByCodebaseId } from "@/codebase/query/graph-search";
 import { eq } from "drizzle-orm";
 
 const TEST_PREFIX = "__test_query_";
@@ -73,50 +73,64 @@ afterAll(async () => {
   await db.delete(codebase).where(eq(codebase.id, testCodebaseId));
 });
 
-test("getRelatedFiles: depth=0 returns empty array", async () => {
-  const result = await getRelatedFiles([fileA.id], 0);
-  expect(result).toEqual([]);
+test("findRelatedFilesByCodebaseId: depth=0 returns empty array", async () => {
+  const result = await findRelatedFilesByCodebaseId(
+    testCodebaseId,
+    [fileA.filePath],
+    0,
+  );
+  expect(result.relatedFiles).toEqual([]);
 });
 
-test("getRelatedFiles: depth=1 returns direct neighbors in both directions", async () => {
+test("findRelatedFilesByCodebaseId: depth=1 returns direct neighbors in both directions", async () => {
   // Seed on B: A references B (so A is a "references" neighbor), B references C (so C is a "referencedBy" neighbor)
-  const result = await getRelatedFiles([fileB.id], 1);
-
-  const filePaths = result.map((r) => r.filePath).sort();
-  expect(filePaths).toEqual(
-    [fileA.filePath, fileC.filePath].sort(),
+  const result = await findRelatedFilesByCodebaseId(
+    testCodebaseId,
+    [fileB.filePath],
+    1,
   );
 
-  const refToA = result.find((r) => r.filePath === fileA.filePath);
+  const filePaths = result.relatedFiles.map((r) => r.filePath).sort();
+  expect(filePaths).toEqual([fileA.filePath, fileC.filePath].sort());
+
+  const refToA = result.relatedFiles.find((r) => r.filePath === fileA.filePath);
   expect(refToA?.relationship).toBe("references");
   expect(refToA?.sourceFilePath).toBe(fileB.filePath);
 
-  const refToC = result.find((r) => r.filePath === fileC.filePath);
+  const refToC = result.relatedFiles.find((r) => r.filePath === fileC.filePath);
   expect(refToC?.relationship).toBe("referencedBy");
   expect(refToC?.sourceFilePath).toBe(fileB.filePath);
 });
 
-test("getRelatedFiles: depth=2 returns transitive neighbors", async () => {
+test("findRelatedFilesByCodebaseId: depth=2 returns transitive neighbors", async () => {
   // Seed on A: A references B (direct), B references C (transitive)
   // Also D references A, so D is direct referencedBy — but A is the seed so excluded
-  const result = await getRelatedFiles([fileA.id], 2);
+  const result = await findRelatedFilesByCodebaseId(
+    testCodebaseId,
+    [fileA.filePath],
+    2,
+  );
 
-  const filePaths = result.map((r) => r.filePath).sort();
+  const filePaths = result.relatedFiles.map((r) => r.filePath).sort();
   expect(filePaths).toContain(fileB.filePath);
   expect(filePaths).toContain(fileC.filePath);
   expect(filePaths).toContain(fileD.filePath);
 });
 
-test("getRelatedFiles: seed files are excluded from results", async () => {
+test("findRelatedFilesByCodebaseId: seed files are excluded from results", async () => {
   // Seed on both A and B — neither should appear in results
-  const result = await getRelatedFiles([fileA.id, fileB.id], 1);
+  const result = await findRelatedFilesByCodebaseId(
+    testCodebaseId,
+    [fileA.filePath, fileB.filePath],
+    1,
+  );
 
-  const filePaths = result.map((r) => r.filePath);
+  const filePaths = result.relatedFiles.map((r) => r.filePath);
   expect(filePaths).not.toContain(fileA.filePath);
   expect(filePaths).not.toContain(fileB.filePath);
 });
 
-test("getRelatedFiles: empty seed returns empty array", async () => {
-  const result = await getRelatedFiles([], 1);
-  expect(result).toEqual([]);
+test("findRelatedFilesByCodebaseId: empty seed returns empty array", async () => {
+  const result = await findRelatedFilesByCodebaseId(testCodebaseId, [], 1);
+  expect(result.relatedFiles).toEqual([]);
 });

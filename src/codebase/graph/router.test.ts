@@ -66,9 +66,6 @@ import { c } from "./foo";`;
   test("given .tsx file, parses correctly", () => {
     const code = `import React from "react";
 import { Component } from "./Component";`;
-    expect(extractImports(code, "App.tsx")).toEqual([
-      "react",
-      "./Component",
-    ]);
+    expect(extractImports(code, "App.tsx")).toEqual(["react", "./Component"]);
   });
 });

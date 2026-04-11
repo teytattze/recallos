@@ -176,9 +176,11 @@ const foo = 2;`;
     expect(names).toContain("foo_2");
   });
 
-  test("parses actual codebase/query.ts file", async () => {
-    const content = await Bun.file("src/codebase/query.ts").text();
-    const chunks = chunkCode(content, "src/codebase/query.ts");
+  test("parses actual codebase/query/vector-search.ts file", async () => {
+    const content = await Bun.file(
+      "src/codebase/query/vector-search.ts",
+    ).text();
+    const chunks = chunkCode(content, "src/codebase/query/vector-search.ts");
 
     expect(chunks.length).toBeGreaterThan(0);
 
@@ -188,12 +190,12 @@ const foo = 2;`;
 
     // Should have recognizable symbols
     const names = chunks.map((c) => c.symbolName);
-    expect(names).toContain("readInputSchema");
-    expect(names).toContain("searchCodebase");
+    expect(names).toContain("textSearchInputSchema");
+    expect(names).toContain("searchByText");
 
     // Every chunk should have valid metadata
     for (const chunk of chunks) {
-      expect(chunk.filePath).toBe("src/codebase/query.ts");
+      expect(chunk.filePath).toBe("src/codebase/query/vector-search.ts");
       expect(chunk.startLine).toBeGreaterThan(0);
       expect(chunk.endLine).toBeGreaterThanOrEqual(chunk.startLine);
       expect(chunk.content.length).toBeGreaterThan(0);
