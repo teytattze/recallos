@@ -1,134 +1,133 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect } from "bun:test";
 import { typescriptAdapter } from "@/codebase/chunker/adapters/typescript";
 import { chunkWithAdapter } from "@/codebase/chunker/generic";
 
 const chunkCode = (code: string, filePath: string) =>
   chunkWithAdapter(code, filePath, typescriptAdapter);
 
-describe("typescriptChunker", () => {
-  test("extracts preamble from imports and top comments", () => {
-    const code = `// Top comment
+test("typescriptChunker: extracts preamble from imports and top comments", () => {
+  const code = `// Top comment
 import { foo } from "bar";
 import { baz } from "qux";
 
 const x = 1;`;
 
-    const chunks = chunkCode(code, "test.ts");
-    const preamble = chunks.find((c) => c.symbolName === "_preamble");
-    expect(preamble).toBeDefined();
-    expect(preamble!.symbolKind).toBe("preamble");
-    expect(preamble!.content).toContain("// Top comment");
-    expect(preamble!.content).toContain('import { foo } from "bar"');
-    expect(preamble!.content).toContain('import { baz } from "qux"');
-  });
+  const chunks = chunkCode(code, "test.ts");
+  const preamble = chunks.find((c) => c.symbolName === "_preamble");
+  expect(preamble).toBeDefined();
+  expect(preamble!.symbolKind).toBe("preamble");
+  expect(preamble!.content).toContain("// Top comment");
+  expect(preamble!.content).toContain('import { foo } from "bar"');
+  expect(preamble!.content).toContain('import { baz } from "qux"');
+});
 
-  test("extracts function declaration", () => {
-    const code = `function greet(name: string) {
+test("typescriptChunker: extracts function declaration", () => {
+  const code = `function greet(name: string) {
   return "hello " + name;
 }`;
 
-    const chunks = chunkCode(code, "test.ts");
-    const fn = chunks.find((c) => c.symbolName === "greet");
-    expect(fn).toBeDefined();
-    expect(fn!.symbolKind).toBe("function");
-    expect(fn!.content).toContain("function greet");
-    expect(fn!.startLine).toBe(1);
-    expect(fn!.endLine).toBe(3);
-  });
+  const chunks = chunkCode(code, "test.ts");
+  const fn = chunks.find((c) => c.symbolName === "greet");
+  expect(fn).toBeDefined();
+  expect(fn!.symbolKind).toBe("function");
+  expect(fn!.content).toContain("function greet");
+  expect(fn!.startLine).toBe(1);
+  expect(fn!.endLine).toBe(3);
+});
 
-  test("extracts arrow function in const", () => {
-    const code = `const add = (a: number, b: number) => a + b;`;
+test("typescriptChunker: extracts arrow function in const", () => {
+  const code = `const add = (a: number, b: number) => a + b;`;
 
-    const chunks = chunkCode(code, "test.ts");
-    const fn = chunks.find((c) => c.symbolName === "add");
-    expect(fn).toBeDefined();
-    expect(fn!.symbolKind).toBe("variable");
-    expect(fn!.content).toContain("const add");
-  });
+  const chunks = chunkCode(code, "test.ts");
+  const fn = chunks.find((c) => c.symbolName === "add");
+  expect(fn).toBeDefined();
+  expect(fn!.symbolKind).toBe("variable");
+  expect(fn!.content).toContain("const add");
+});
 
-  test("extracts class declaration", () => {
-    const code = `class MyClass {
+test("typescriptChunker: extracts class declaration", () => {
+  const code = `class MyClass {
   constructor() {}
   method() { return 1; }
 }`;
 
-    const chunks = chunkCode(code, "test.ts");
-    const cls = chunks.find((c) => c.symbolName === "MyClass");
-    expect(cls).toBeDefined();
-    expect(cls!.symbolKind).toBe("class");
-    expect(cls!.content).toContain("class MyClass");
-  });
+  const chunks = chunkCode(code, "test.ts");
+  const cls = chunks.find((c) => c.symbolName === "MyClass");
+  expect(cls).toBeDefined();
+  expect(cls!.symbolKind).toBe("class");
+  expect(cls!.content).toContain("class MyClass");
+});
 
-  test("extracts interface declaration", () => {
-    const code = `interface User {
+test("typescriptChunker: extracts interface declaration", () => {
+  const code = `interface User {
   name: string;
   age: number;
 }`;
 
-    const chunks = chunkCode(code, "test.ts");
-    const iface = chunks.find((c) => c.symbolName === "User");
-    expect(iface).toBeDefined();
-    expect(iface!.symbolKind).toBe("interface");
-  });
+  const chunks = chunkCode(code, "test.ts");
+  const iface = chunks.find((c) => c.symbolName === "User");
+  expect(iface).toBeDefined();
+  expect(iface!.symbolKind).toBe("interface");
+});
 
-  test("extracts type alias", () => {
-    const code = `type Point = { x: number; y: number };`;
+test("typescriptChunker: extracts type alias", () => {
+  const code = `type Point = { x: number; y: number };`;
 
-    const chunks = chunkCode(code, "test.ts");
-    const t = chunks.find((c) => c.symbolName === "Point");
-    expect(t).toBeDefined();
-    expect(t!.symbolKind).toBe("type");
-  });
+  const chunks = chunkCode(code, "test.ts");
+  const t = chunks.find((c) => c.symbolName === "Point");
+  expect(t).toBeDefined();
+  expect(t!.symbolKind).toBe("type");
+});
 
-  test("extracts enum declaration", () => {
-    const code = `enum Status {
+test("typescriptChunker: extracts enum declaration", () => {
+  const code = `enum Status {
   Active,
   Inactive,
 }`;
 
-    const chunks = chunkCode(code, "test.ts");
-    const e = chunks.find((c) => c.symbolName === "Status");
-    expect(e).toBeDefined();
-    expect(e!.symbolKind).toBe("enum");
-  });
+  const chunks = chunkCode(code, "test.ts");
+  const e = chunks.find((c) => c.symbolName === "Status");
+  expect(e).toBeDefined();
+  expect(e!.symbolKind).toBe("enum");
+});
 
-  test("unwraps export statement", () => {
-    const code = `export function greet() { return "hi"; }`;
+test("typescriptChunker: unwraps export statement", () => {
+  const code = `export function greet() { return "hi"; }`;
 
-    const chunks = chunkCode(code, "test.ts");
-    const fn = chunks.find((c) => c.symbolName === "greet");
-    expect(fn).toBeDefined();
-    expect(fn!.symbolKind).toBe("function");
-    expect(fn!.content).toContain("export function greet");
-  });
+  const chunks = chunkCode(code, "test.ts");
+  const fn = chunks.find((c) => c.symbolName === "greet");
+  expect(fn).toBeDefined();
+  expect(fn!.symbolKind).toBe("function");
+  expect(fn!.content).toContain("export function greet");
+});
 
-  test("attaches leading JSDoc to symbol", () => {
-    const code = `/** Adds two numbers */
+test("typescriptChunker: attaches leading JSDoc to symbol", () => {
+  const code = `/** Adds two numbers */
 function add(a: number, b: number) {
   return a + b;
 }`;
 
-    const chunks = chunkCode(code, "test.ts");
-    const fn = chunks.find((c) => c.symbolName === "add");
-    expect(fn).toBeDefined();
-    expect(fn!.content).toContain("/** Adds two numbers */");
-    expect(fn!.content).toContain("function add");
-    expect(fn!.startLine).toBe(1);
-  });
+  const chunks = chunkCode(code, "test.ts");
+  const fn = chunks.find((c) => c.symbolName === "add");
+  expect(fn).toBeDefined();
+  expect(fn!.content).toContain("/** Adds two numbers */");
+  expect(fn!.content).toContain("function add");
+  expect(fn!.startLine).toBe(1);
+});
 
-  test("does not attach comment separated by blank line", () => {
-    const code = `// Unrelated comment
+test("typescriptChunker: does not attach comment separated by blank line", () => {
+  const code = `// Unrelated comment
 
 function foo() {}`;
 
-    const chunks = chunkCode(code, "test.ts");
-    const fn = chunks.find((c) => c.symbolName === "foo");
-    expect(fn).toBeDefined();
-    expect(fn!.content).not.toContain("// Unrelated comment");
-  });
+  const chunks = chunkCode(code, "test.ts");
+  const fn = chunks.find((c) => c.symbolName === "foo");
+  expect(fn).toBeDefined();
+  expect(fn!.content).not.toContain("// Unrelated comment");
+});
 
-  test("no content is lost between chunks", () => {
-    const code = `import { x } from "y";
+test("typescriptChunker: no content is lost between chunks", () => {
+  const code = `import { x } from "y";
 
 type Foo = { a: number };
 
@@ -136,89 +135,88 @@ const bar = 42;
 
 function baz() { return bar; }`;
 
-    const chunks = chunkCode(code, "test.ts");
-    // Every non-whitespace character in the source should appear in some chunk
-    const allChunkContent = chunks.map((c) => c.content).join("");
-    const sourceNonWs = code.replace(/\s+/g, "");
-    const chunksNonWs = allChunkContent.replace(/\s+/g, "");
-    expect(chunksNonWs).toBe(sourceNonWs);
-  });
+  const chunks = chunkCode(code, "test.ts");
+  // Every non-whitespace character in the source should appear in some chunk
+  const allChunkContent = chunks.map((c) => c.content).join("");
+  const sourceNonWs = code.replace(/\s+/g, "");
+  const chunksNonWs = allChunkContent.replace(/\s+/g, "");
+  expect(chunksNonWs).toBe(sourceNonWs);
+});
 
-  test("falls back to single chunk for empty file", () => {
-    const code = ``;
-    const chunks = chunkCode(code, "empty.ts");
-    expect(chunks.length).toBe(0);
-  });
+test("typescriptChunker: falls back to single chunk for empty file", () => {
+  const code = ``;
+  const chunks = chunkCode(code, "empty.ts");
+  expect(chunks.length).toBe(0);
+});
 
-  test("falls back to single chunk for file with only whitespace", () => {
-    const code = `   \n\n   `;
-    const chunks = chunkCode(code, "blank.ts");
-    expect(chunks.length).toBe(0);
-  });
+test("typescriptChunker: falls back to single chunk for file with only whitespace", () => {
+  const code = `   \n\n   `;
+  const chunks = chunkCode(code, "blank.ts");
+  expect(chunks.length).toBe(0);
+});
 
-  test("falls back to single chunk for file with only comments", () => {
-    const code = `// just a comment
+test("typescriptChunker: falls back to single chunk for file with only comments", () => {
+  const code = `// just a comment
 // another comment`;
 
-    const chunks = chunkCode(code, "comments.ts");
-    // Comments-only file: preamble captures them
-    expect(chunks.length).toBeGreaterThan(0);
-    expect(chunks[0]!.symbolKind).toBe("preamble");
-  });
+  const chunks = chunkCode(code, "comments.ts");
+  // Comments-only file: preamble captures them
+  expect(chunks.length).toBeGreaterThan(0);
+  expect(chunks[0]!.symbolKind).toBe("preamble");
+});
 
-  test("handles duplicate symbol names", () => {
-    const code = `const foo = 1;
+test("typescriptChunker: handles duplicate symbol names", () => {
+  const code = `const foo = 1;
 const foo = 2;`;
 
-    const chunks = chunkCode(code, "test.ts");
-    const names = chunks.map((c) => c.symbolName);
-    expect(names).toContain("foo");
-    expect(names).toContain("foo_2");
-  });
+  const chunks = chunkCode(code, "test.ts");
+  const names = chunks.map((c) => c.symbolName);
+  expect(names).toContain("foo");
+  expect(names).toContain("foo_2");
+});
 
-  test("parses actual codebase/query/vector-search.ts file", async () => {
-    const content = await Bun.file(
-      "src/codebase/query/vector-search.ts",
-    ).text();
-    const chunks = chunkCode(content, "src/codebase/query/vector-search.ts");
+test("typescriptChunker: parses actual codebase/query/vector-search.ts file", async () => {
+  const content = await Bun.file(
+    "src/codebase/query/vector-search.ts",
+  ).text();
+  const chunks = chunkCode(content, "src/codebase/query/vector-search.ts");
 
-    expect(chunks.length).toBeGreaterThan(0);
+  expect(chunks.length).toBeGreaterThan(0);
 
-    // Should have a preamble with imports
-    const preamble = chunks.find((c) => c.symbolKind === "preamble");
-    expect(preamble).toBeDefined();
+  // Should have a preamble with imports
+  const preamble = chunks.find((c) => c.symbolKind === "preamble");
+  expect(preamble).toBeDefined();
 
-    // Should have recognizable symbols
-    const names = chunks.map((c) => c.symbolName);
-    expect(names).toContain("textSearchInputSchema");
-    expect(names).toContain("searchByText");
+  // Should have recognizable symbols
+  const names = chunks.map((c) => c.symbolName);
+  expect(names).toContain("textSearchInputSchema");
+  expect(names).toContain("searchByText");
 
-    // Every chunk should have valid metadata
-    for (const chunk of chunks) {
-      expect(chunk.filePath).toBe("src/codebase/query/vector-search.ts");
-      expect(chunk.startLine).toBeGreaterThan(0);
-      expect(chunk.endLine).toBeGreaterThanOrEqual(chunk.startLine);
-      expect(chunk.content.length).toBeGreaterThan(0);
-    }
-  });
+  // Every chunk should have valid metadata
+  for (const chunk of chunks) {
+    expect(chunk.filePath).toBe("src/codebase/query/vector-search.ts");
+    expect(chunk.startLine).toBeGreaterThan(0);
+    expect(chunk.endLine).toBeGreaterThanOrEqual(chunk.startLine);
+    expect(chunk.content.length).toBeGreaterThan(0);
+  }
+});
 
-  test("handles export default", () => {
-    const code = `export default function main() {}`;
+test("typescriptChunker: handles export default", () => {
+  const code = `export default function main() {}`;
 
-    const chunks = chunkCode(code, "test.ts");
-    // The export wraps a function declaration — should unwrap it
-    const fn = chunks.find((c) => c.symbolName === "main");
-    expect(fn).toBeDefined();
-    expect(fn!.symbolKind).toBe("function");
-  });
+  const chunks = chunkCode(code, "test.ts");
+  // The export wraps a function declaration — should unwrap it
+  const fn = chunks.find((c) => c.symbolName === "main");
+  expect(fn).toBeDefined();
+  expect(fn!.symbolKind).toBe("function");
+});
 
-  test("handles bare export statement", () => {
-    const code = `const x = 1;
+test("typescriptChunker: handles bare export statement", () => {
+  const code = `const x = 1;
 export { x };`;
 
-    const chunks = chunkCode(code, "test.ts");
-    const exportChunk = chunks.find((c) => c.symbolKind === "export");
-    expect(exportChunk).toBeDefined();
-    expect(exportChunk!.content).toContain("export { x }");
-  });
+  const chunks = chunkCode(code, "test.ts");
+  const exportChunk = chunks.find((c) => c.symbolKind === "export");
+  expect(exportChunk).toBeDefined();
+  expect(exportChunk!.content).toContain("export { x }");
 });

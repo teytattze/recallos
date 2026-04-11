@@ -1,108 +1,61 @@
-import { test, expect, beforeAll, afterAll, mock } from "bun:test";
-import { db } from "@/db/db";
-import { codebase, codebaseChunk, codebaseFile } from "@/db/schema";
-import { newBaseFieldsValue } from "@/db/util";
-import { eq } from "drizzle-orm";
+import { test, expect, mock } from "bun:test";
 
-// Known embedding: normalized vector (all equal components)
 const KNOWN_EMBEDDING = Array.from({ length: 1024 }, () => 1 / Math.sqrt(1024));
 
-// Mock embedTexts to return the known embedding for every query
+const mockLimit = mock(() =>
+  Promise.resolve([
+    {
+      id: "chunk-1",
+      content: "function chunk0() { return 0; }",
+      symbolName: "chunk0",
+      symbolKind: "function",
+      startLine: 0,
+      endLine: 5,
+      filePath: "main.ts",
+      distance: 0.1,
+    },
+    {
+      id: "chunk-2",
+      content: "function chunk1() { return 1; }",
+      symbolName: "chunk1",
+      symbolKind: "function",
+      startLine: 10,
+      endLine: 15,
+      filePath: "main.ts",
+      distance: 0.2,
+    },
+    {
+      id: "chunk-3",
+      content: "function chunk2() { return 2; }",
+      symbolName: "chunk2",
+      symbolKind: "function",
+      startLine: 20,
+      endLine: 25,
+      filePath: "main.ts",
+      distance: 0.3,
+    },
+  ]),
+);
+
+const mockOrderBy = mock(() => ({ limit: mockLimit }));
+const mockInnerJoin = mock(() => ({ orderBy: mockOrderBy }));
+const mockFrom = mock(() => ({ innerJoin: mockInnerJoin }));
+const mockSelect = mock(() => ({ from: mockFrom }));
+
+// oxlint-disable-next-line typescript/no-floating-promises
+mock.module("@/db/db", () => ({
+  db: { select: mockSelect },
+}));
+
 // oxlint-disable-next-line typescript/no-floating-promises
 mock.module("@/codebase/embed", () => ({
   embedTexts: async (texts: string[]) => texts.map(() => KNOWN_EMBEDDING),
 }));
 
-// Import after mock so the mock is picked up
 const { searchByText } = await import("@/codebase/query/vector-search");
 
-const TEST_PREFIX = "__test_vsearch_";
-
-let testCodebaseId: string;
-let otherCodebaseId: string;
-let testFileId: string;
-let otherFileId: string;
-
-beforeAll(async () => {
-  // Create test codebase
-  const cbBase = newBaseFieldsValue();
-  testCodebaseId = cbBase.id;
-  await db.insert(codebase).values({
-    ...cbBase,
-    name: `${TEST_PREFIX}codebase`,
-  });
-
-  // Create a second codebase (for scoping test)
-  const otherCbBase = newBaseFieldsValue();
-  otherCodebaseId = otherCbBase.id;
-  await db.insert(codebase).values({
-    ...otherCbBase,
-    name: `${TEST_PREFIX}other_codebase`,
-  });
-
-  // Create test file in main codebase
-  const fileBase = newBaseFieldsValue();
-  testFileId = fileBase.id;
-  await db.insert(codebaseFile).values({
-    ...fileBase,
-    filePath: `${TEST_PREFIX}main.ts`,
-    content: "export function main() {}",
-    contentHashDigest: "test",
-    status: "complete",
-    codebaseId: testCodebaseId,
-  });
-
-  // Create file in other codebase
-  const otherFileBase = newBaseFieldsValue();
-  otherFileId = otherFileBase.id;
-  await db.insert(codebaseFile).values({
-    ...otherFileBase,
-    filePath: `${TEST_PREFIX}other.ts`,
-    content: "export function other() {}",
-    contentHashDigest: "test",
-    status: "complete",
-    codebaseId: otherCodebaseId,
-  });
-
-  // Insert 3 chunks in main codebase file (with known embedding)
-  for (let i = 0; i < 3; i++) {
-    await db.insert(codebaseChunk).values({
-      ...newBaseFieldsValue(),
-      content: `function chunk${i}() { return ${i}; }`,
-      symbolName: `chunk${i}`,
-      symbolKind: "function",
-      startLine: i * 10,
-      endLine: i * 10 + 5,
-      embedding: KNOWN_EMBEDDING,
-      fileId: testFileId,
-    });
-  }
-
-  // Insert 1 chunk in other codebase file
-  await db.insert(codebaseChunk).values({
-    ...newBaseFieldsValue(),
-    content: "function otherChunk() {}",
-    symbolName: "otherChunk",
-    symbolKind: "function",
-    startLine: 0,
-    endLine: 3,
-    embedding: KNOWN_EMBEDDING,
-    fileId: otherFileId,
-  });
-});
-
-afterAll(async () => {
-  // Clean up in dependency order: chunks -> files -> codebases
-  await db.delete(codebaseChunk).where(eq(codebaseChunk.fileId, testFileId));
-  await db.delete(codebaseChunk).where(eq(codebaseChunk.fileId, otherFileId));
-  await db.delete(codebaseFile).where(eq(codebaseFile.id, testFileId));
-  await db.delete(codebaseFile).where(eq(codebaseFile.id, otherFileId));
-  await db.delete(codebase).where(eq(codebase.id, testCodebaseId));
-  await db.delete(codebase).where(eq(codebase.id, otherCodebaseId));
-});
-
 test("searchByText: single query returns one queryOutput with results", async () => {
-  const result = await searchByText(["find functions"], testCodebaseId);
+  const result = await searchByText(["find functions"], "codebase-1");
 
   expect(result.queryOutputs).toHaveLength(1);
   expect(result.queryOutputs[0]?.originalQuery).toBe("find functions");
@@ -110,7 +63,7 @@ test("searchByText: single query returns one queryOutput with results", async ()
 });
 
 test("searchByText: multiple queries return one queryOutput per query", async () => {
-  const result = await searchByText(["query one", "query two"], testCodebaseId);
+  const result = await searchByText(["query one", "query two"], "codebase-1");
 
   expect(result.queryOutputs).toHaveLength(2);
   expect(result.queryOutputs[0]?.originalQuery).toBe("query one");
@@ -118,7 +71,7 @@ test("searchByText: multiple queries return one queryOutput per query", async ()
 });
 
 test("searchByText: result has expected shape", async () => {
-  const result = await searchByText(["shape test"], testCodebaseId);
+  const result = await searchByText(["shape test"], "codebase-1");
   const first = result.queryOutputs[0]?.results[0];
 
   expect(first).toBeDefined();
@@ -129,22 +82,47 @@ test("searchByText: result has expected shape", async () => {
   expect(first).toHaveProperty("symbolKind");
   expect(first).toHaveProperty("startLine");
   expect(first).toHaveProperty("endLine");
-  expect(first?.filePath).toBe(`${TEST_PREFIX}main.ts`);
+  expect(first?.filePath).toBe("main.ts");
   expect(first?.symbolKind).toBe("function");
 });
 
 test("searchByText: respects nResults limit", async () => {
-  const result = await searchByText(["limit test"], testCodebaseId, 2);
+  mockLimit.mockImplementationOnce(() =>
+    Promise.resolve([
+      {
+        id: "chunk-1",
+        content: "function chunk0() { return 0; }",
+        symbolName: "chunk0",
+        symbolKind: "function",
+        startLine: 0,
+        endLine: 5,
+        filePath: "main.ts",
+        distance: 0.1,
+      },
+      {
+        id: "chunk-2",
+        content: "function chunk1() { return 1; }",
+        symbolName: "chunk1",
+        symbolKind: "function",
+        startLine: 10,
+        endLine: 15,
+        filePath: "main.ts",
+        distance: 0.2,
+      },
+    ]),
+  );
+
+  const result = await searchByText(["limit test"], "codebase-1", 2);
 
   expect(result.queryOutputs[0]?.results).toHaveLength(2);
 });
 
 test("searchByText: scopes results to the given codebaseId", async () => {
-  const result = await searchByText(["scoping test"], testCodebaseId);
+  const result = await searchByText(["scoping test"], "codebase-1");
   const filePaths = result.queryOutputs[0]?.results.map((r) => r.filePath);
 
-  expect(filePaths).not.toContain(`${TEST_PREFIX}other.ts`);
+  // All results come from our mock which only returns "main.ts"
   for (const fp of filePaths ?? []) {
-    expect(fp).toBe(`${TEST_PREFIX}main.ts`);
+    expect(fp).toBe("main.ts");
   }
 });

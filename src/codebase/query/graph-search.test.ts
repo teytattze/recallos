@@ -1,136 +1,125 @@
-import { test, expect, beforeAll, afterAll } from "bun:test";
-import { db } from "@/db/db";
-import { codebase, codebaseFile, graphEdge } from "@/db/schema";
-import { newBaseFieldsValue } from "@/db/util";
-import { findRelatedFilesByCodebaseId } from "@/codebase/query/graph-search";
-import { eq } from "drizzle-orm";
+import { test, expect, mock } from "bun:test";
 
-const TEST_PREFIX = "__test_query_";
+const mockWhere = mock(() => Promise.resolve([{ id: "file-a" }]));
+const mockFrom = mock(() => ({ where: mockWhere }));
+const mockSelect = mock(() => ({ from: mockFrom }));
+const mockExecute = mock(
+  () =>
+    Promise.resolve([] as { file_path: string; relationship: string; source_file_path: string }[]),
+);
 
-type TestFile = { id: string; filePath: string };
+// oxlint-disable-next-line typescript/no-floating-promises
+mock.module("@/db/db", () => ({
+  db: { select: mockSelect, execute: mockExecute },
+}));
 
-let testCodebaseId: string;
+const { findRelatedFilesByCodebaseId } = await import(
+  "@/codebase/query/graph-search"
+);
 
-async function createTestFile(filePath: string): Promise<TestFile> {
-  const base = newBaseFieldsValue();
-  await db.insert(codebaseFile).values({
-    ...base,
-    filePath,
-    content: "",
-    contentHashDigest: "test",
-    status: "complete",
-    codebaseId: testCodebaseId,
-  });
-  return { id: base.id, filePath };
-}
-
-async function createTestEdge(fromId: string, toId: string) {
-  await db.insert(graphEdge).values({
-    ...newBaseFieldsValue(),
-    relationship: "references",
-    fromId,
-    toId,
-  });
-}
-
-let fileA: TestFile;
-let fileB: TestFile;
-let fileC: TestFile;
-let fileD: TestFile;
-
-beforeAll(async () => {
-  // Create test codebase
-  const cbBase = newBaseFieldsValue();
-  testCodebaseId = cbBase.id;
-  await db.insert(codebase).values({
-    ...cbBase,
-    name: `${TEST_PREFIX}codebase`,
-  });
-
-  // Create test files: A -> B -> C, D -> A
-  fileA = await createTestFile(`${TEST_PREFIX}a.ts`);
-  fileB = await createTestFile(`${TEST_PREFIX}b.ts`);
-  fileC = await createTestFile(`${TEST_PREFIX}c.ts`);
-  fileD = await createTestFile(`${TEST_PREFIX}d.ts`);
-
-  // A references B (A imports B)
-  await createTestEdge(fileA.id, fileB.id);
-  // B references C (B imports C)
-  await createTestEdge(fileB.id, fileC.id);
-  // D references A (D imports A)
-  await createTestEdge(fileD.id, fileA.id);
-});
-
-afterAll(async () => {
-  // Clean up edges first (FK constraints)
-  for (const file of [fileA, fileB, fileC, fileD]) {
-    await db.delete(graphEdge).where(eq(graphEdge.fromId, file.id));
-    await db.delete(graphEdge).where(eq(graphEdge.toId, file.id));
-  }
-  for (const file of [fileA, fileB, fileC, fileD]) {
-    await db.delete(codebaseFile).where(eq(codebaseFile.id, file.id));
-  }
-  await db.delete(codebase).where(eq(codebase.id, testCodebaseId));
-});
-
-test("findRelatedFilesByCodebaseId: depth=0 returns empty array", async () => {
-  const result = await findRelatedFilesByCodebaseId(
-    testCodebaseId,
-    [fileA.filePath],
-    0,
+test("findRelatedFilesByCodebaseId: given depth=0, returns empty array", async () => {
+  mockWhere.mockImplementationOnce(() =>
+    Promise.resolve([{ id: "file-a" }]),
   );
+  // depth=0 causes getRelatedFiles to return early — db.execute is never called
+
+  const result = await findRelatedFilesByCodebaseId("cb-1", ["a.ts"], 0);
   expect(result.relatedFiles).toEqual([]);
 });
 
-test("findRelatedFilesByCodebaseId: depth=1 returns direct neighbors in both directions", async () => {
-  // Seed on B: A references B (so A is a "references" neighbor), B references C (so C is a "referencedBy" neighbor)
-  const result = await findRelatedFilesByCodebaseId(
-    testCodebaseId,
-    [fileB.filePath],
-    1,
+test("findRelatedFilesByCodebaseId: given depth=1, returns direct neighbors in both directions", async () => {
+  mockWhere.mockImplementationOnce(() =>
+    Promise.resolve([{ id: "file-b" }]),
+  );
+  mockExecute.mockImplementationOnce(() =>
+    Promise.resolve([
+      {
+        file_path: "a.ts",
+        relationship: "references" as const,
+        source_file_path: "b.ts",
+      },
+      {
+        file_path: "c.ts",
+        relationship: "referencedBy" as const,
+        source_file_path: "b.ts",
+      },
+    ]),
   );
 
-  const filePaths = result.relatedFiles.map((r) => r.filePath).sort();
-  expect(filePaths).toEqual([fileA.filePath, fileC.filePath].sort());
+  const result = await findRelatedFilesByCodebaseId("cb-1", ["b.ts"], 1);
 
-  const refToA = result.relatedFiles.find((r) => r.filePath === fileA.filePath);
+  const filePaths = result.relatedFiles.map((r) => r.filePath).sort();
+  expect(filePaths).toEqual(["a.ts", "c.ts"]);
+
+  const refToA = result.relatedFiles.find((r) => r.filePath === "a.ts");
   expect(refToA?.relationship).toBe("references");
-  expect(refToA?.sourceFilePath).toBe(fileB.filePath);
+  expect(refToA?.sourceFilePath).toBe("b.ts");
 
-  const refToC = result.relatedFiles.find((r) => r.filePath === fileC.filePath);
+  const refToC = result.relatedFiles.find((r) => r.filePath === "c.ts");
   expect(refToC?.relationship).toBe("referencedBy");
-  expect(refToC?.sourceFilePath).toBe(fileB.filePath);
+  expect(refToC?.sourceFilePath).toBe("b.ts");
 });
 
-test("findRelatedFilesByCodebaseId: depth=2 returns transitive neighbors", async () => {
-  // Seed on A: A references B (direct), B references C (transitive)
-  // Also D references A, so D is direct referencedBy — but A is the seed so excluded
-  const result = await findRelatedFilesByCodebaseId(
-    testCodebaseId,
-    [fileA.filePath],
-    2,
+test("findRelatedFilesByCodebaseId: given depth=2, returns transitive neighbors", async () => {
+  mockWhere.mockImplementationOnce(() =>
+    Promise.resolve([{ id: "file-a" }]),
+  );
+  mockExecute.mockImplementationOnce(() =>
+    Promise.resolve([
+      {
+        file_path: "b.ts",
+        relationship: "referencedBy" as const,
+        source_file_path: "a.ts",
+      },
+      {
+        file_path: "c.ts",
+        relationship: "referencedBy" as const,
+        source_file_path: "b.ts",
+      },
+      {
+        file_path: "d.ts",
+        relationship: "references" as const,
+        source_file_path: "a.ts",
+      },
+    ]),
   );
 
+  const result = await findRelatedFilesByCodebaseId("cb-1", ["a.ts"], 2);
+
   const filePaths = result.relatedFiles.map((r) => r.filePath).sort();
-  expect(filePaths).toContain(fileB.filePath);
-  expect(filePaths).toContain(fileC.filePath);
-  expect(filePaths).toContain(fileD.filePath);
+  expect(filePaths).toContain("b.ts");
+  expect(filePaths).toContain("c.ts");
+  expect(filePaths).toContain("d.ts");
 });
 
-test("findRelatedFilesByCodebaseId: seed files are excluded from results", async () => {
-  // Seed on both A and B — neither should appear in results
+test("findRelatedFilesByCodebaseId: given seed files, they are excluded from results", async () => {
+  mockWhere.mockImplementationOnce(() =>
+    Promise.resolve([{ id: "file-a" }, { id: "file-b" }]),
+  );
+  mockExecute.mockImplementationOnce(() =>
+    Promise.resolve([
+      {
+        file_path: "c.ts",
+        relationship: "referencedBy" as const,
+        source_file_path: "b.ts",
+      },
+    ]),
+  );
+
   const result = await findRelatedFilesByCodebaseId(
-    testCodebaseId,
-    [fileA.filePath, fileB.filePath],
+    "cb-1",
+    ["a.ts", "b.ts"],
     1,
   );
 
   const filePaths = result.relatedFiles.map((r) => r.filePath);
-  expect(filePaths).not.toContain(fileA.filePath);
-  expect(filePaths).not.toContain(fileB.filePath);
+  expect(filePaths).not.toContain("a.ts");
+  expect(filePaths).not.toContain("b.ts");
 });
 
-test("findRelatedFilesByCodebaseId: empty seed returns empty array", async () => {
-  const result = await findRelatedFilesByCodebaseId(testCodebaseId, [], 1);
+test("findRelatedFilesByCodebaseId: given empty seed, returns empty array", async () => {
+  mockWhere.mockImplementationOnce(() => Promise.resolve([]));
+
+  const result = await findRelatedFilesByCodebaseId("cb-1", [], 1);
   expect(result.relatedFiles).toEqual([]);
 });
