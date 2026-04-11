@@ -55,9 +55,7 @@ async function buildFileGraph(
   await db.transaction(async (tx) => {
     // Only delete edges belonging to this codebase's files
     if (fileIds.length > 0) {
-      await tx
-        .delete(graphEdge)
-        .where(inArray(graphEdge.fromId, fileIds));
+      await tx.delete(graphEdge).where(inArray(graphEdge.fromId, fileIds));
     }
 
     if (edges.length > 0) {

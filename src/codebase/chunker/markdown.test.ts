@@ -1,13 +1,12 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect } from "bun:test";
 import { markdownAdapter } from "@/codebase/chunker/adapters/markdown";
 import { chunkWithAdapter } from "@/codebase/chunker/generic";
 
 const chunkCode = (code: string, filePath: string) =>
   chunkWithAdapter(code, filePath, markdownAdapter);
 
-describe("markdownChunker", () => {
-  test("extracts h1 sections", () => {
-    const content = `# Introduction
+test("markdownChunker: extracts h1 sections", () => {
+  const content = `# Introduction
 
 Some intro text.
 
@@ -15,19 +14,19 @@ Some intro text.
 
 Setup instructions here.`;
 
-    const chunks = chunkCode(content, "README.md");
-    expect(chunks).toHaveLength(2);
-    expect(chunks[0]!.symbolName).toBe("Introduction");
-    expect(chunks[0]!.symbolKind).toBe("section");
-    expect(chunks[0]!.content).toContain("Some intro text.");
-    expect(chunks[0]!.content).not.toMatch(/<h[12]>/);
-    expect(chunks[1]!.symbolName).toBe("Getting Started");
-    expect(chunks[1]!.content).toContain("Setup instructions here.");
-    expect(chunks[1]!.content).not.toMatch(/<h[12]>/);
-  });
+  const chunks = chunkCode(content, "README.md");
+  expect(chunks).toHaveLength(2);
+  expect(chunks[0]!.symbolName).toBe("Introduction");
+  expect(chunks[0]!.symbolKind).toBe("section");
+  expect(chunks[0]!.content).toContain("Some intro text.");
+  expect(chunks[0]!.content).not.toMatch(/<h[12]>/);
+  expect(chunks[1]!.symbolName).toBe("Getting Started");
+  expect(chunks[1]!.content).toContain("Setup instructions here.");
+  expect(chunks[1]!.content).not.toMatch(/<h[12]>/);
+});
 
-  test("extracts h2 sections", () => {
-    const content = `## Overview
+test("markdownChunker: extracts h2 sections", () => {
+  const content = `## Overview
 
 Overview content.
 
@@ -35,14 +34,14 @@ Overview content.
 
 Detail content.`;
 
-    const chunks = chunkCode(content, "doc.md");
-    expect(chunks).toHaveLength(2);
-    expect(chunks[0]!.symbolName).toBe("Overview");
-    expect(chunks[1]!.symbolName).toBe("Details");
-  });
+  const chunks = chunkCode(content, "doc.md");
+  expect(chunks).toHaveLength(2);
+  expect(chunks[0]!.symbolName).toBe("Overview");
+  expect(chunks[1]!.symbolName).toBe("Details");
+});
 
-  test("keeps h3+ content within parent h1/h2 section", () => {
-    const content = `# Main Section
+test("markdownChunker: keeps h3+ content within parent h1/h2 section", () => {
+  const content = `# Main Section
 
 Intro.
 
@@ -54,15 +53,15 @@ Sub content A.
 
 Sub content B.`;
 
-    const chunks = chunkCode(content, "doc.md");
-    expect(chunks).toHaveLength(1);
-    expect(chunks[0]!.symbolName).toBe("Main Section");
-    expect(chunks[0]!.content).toContain("Subsection A");
-    expect(chunks[0]!.content).toContain("Sub content B");
-  });
+  const chunks = chunkCode(content, "doc.md");
+  expect(chunks).toHaveLength(1);
+  expect(chunks[0]!.symbolName).toBe("Main Section");
+  expect(chunks[0]!.content).toContain("Subsection A");
+  expect(chunks[0]!.content).toContain("Sub content B");
+});
 
-  test("extracts preamble before first heading", () => {
-    const content = `Some intro paragraph before any heading.
+test("markdownChunker: extracts preamble before first heading", () => {
+  const content = `Some intro paragraph before any heading.
 
 Another paragraph.
 
@@ -70,41 +69,41 @@ Another paragraph.
 
 Section content.`;
 
-    const chunks = chunkCode(content, "doc.md");
-    const preamble = chunks.find((c) => c.symbolName === "_preamble");
-    expect(preamble).toBeDefined();
-    expect(preamble!.symbolKind).toBe("preamble");
-    expect(preamble!.content).toContain("Some intro paragraph");
-    expect(preamble!.content).toContain("Another paragraph");
+  const chunks = chunkCode(content, "doc.md");
+  const preamble = chunks.find((c) => c.symbolName === "_preamble");
+  expect(preamble).toBeDefined();
+  expect(preamble!.symbolKind).toBe("preamble");
+  expect(preamble!.content).toContain("Some intro paragraph");
+  expect(preamble!.content).toContain("Another paragraph");
 
-    const section = chunks.find((c) => c.symbolName === "First Section");
-    expect(section).toBeDefined();
-  });
+  const section = chunks.find((c) => c.symbolName === "First Section");
+  expect(section).toBeDefined();
+});
 
-  test("handles no headings - falls back to whole file", () => {
-    const content = `Just some plain text without any headings.
+test("markdownChunker: handles no headings - falls back to whole file", () => {
+  const content = `Just some plain text without any headings.
 
 And another paragraph.`;
 
-    const chunks = chunkCode(content, "notes.md");
-    expect(chunks).toHaveLength(1);
-    expect(chunks[0]!.symbolKind).toBe("file");
-    expect(chunks[0]!.symbolName).toBe("notes.md");
-    expect(chunks[0]!.content).toContain("Just some plain text");
-  });
+  const chunks = chunkCode(content, "notes.md");
+  expect(chunks).toHaveLength(1);
+  expect(chunks[0]!.symbolKind).toBe("file");
+  expect(chunks[0]!.symbolName).toBe("notes.md");
+  expect(chunks[0]!.content).toContain("Just some plain text");
+});
 
-  test("handles empty file", () => {
-    const chunks = chunkCode("", "empty.md");
-    expect(chunks).toHaveLength(0);
-  });
+test("markdownChunker: handles empty file", () => {
+  const chunks = chunkCode("", "empty.md");
+  expect(chunks).toHaveLength(0);
+});
 
-  test("handles whitespace-only file", () => {
-    const chunks = chunkCode("   \n\n  ", "blank.md");
-    expect(chunks).toHaveLength(0);
-  });
+test("markdownChunker: handles whitespace-only file", () => {
+  const chunks = chunkCode("   \n\n  ", "blank.md");
+  expect(chunks).toHaveLength(0);
+});
 
-  test("handles duplicate heading names", () => {
-    const content = `# FAQ
+test("markdownChunker: handles duplicate heading names", () => {
+  const content = `# FAQ
 
 First FAQ section.
 
@@ -112,14 +111,14 @@ First FAQ section.
 
 Second FAQ section.`;
 
-    const chunks = chunkCode(content, "faq.md");
-    expect(chunks).toHaveLength(2);
-    expect(chunks[0]!.symbolName).toBe("FAQ");
-    expect(chunks[1]!.symbolName).toBe("FAQ_2");
-  });
+  const chunks = chunkCode(content, "faq.md");
+  expect(chunks).toHaveLength(2);
+  expect(chunks[0]!.symbolName).toBe("FAQ");
+  expect(chunks[1]!.symbolName).toBe("FAQ_2");
+});
 
-  test("sets correct line numbers", () => {
-    const content = `# First
+test("markdownChunker: sets correct line numbers", () => {
+  const content = `# First
 
 Line 3.
 
@@ -127,26 +126,26 @@ Line 3.
 
 Line 7.`;
 
-    const chunks = chunkCode(content, "doc.md");
-    expect(chunks[0]!.startLine).toBe(1);
-    expect(chunks[1]!.symbolName).toBe("Second");
-    // Line numbers are based on HTML output, not original markdown
-    expect(chunks[1]!.startLine).toBeGreaterThan(1);
-  });
+  const chunks = chunkCode(content, "doc.md");
+  expect(chunks[0]!.startLine).toBe(1);
+  expect(chunks[1]!.symbolName).toBe("Second");
+  // Line numbers are based on HTML output, not original markdown
+  expect(chunks[1]!.startLine).toBeGreaterThan(1);
+});
 
-  test("sets filePath on all chunks", () => {
-    const content = `# Section
+test("markdownChunker: sets filePath on all chunks", () => {
+  const content = `# Section
 
 Content.`;
 
-    const chunks = chunkCode(content, "path/to/doc.md");
-    for (const chunk of chunks) {
-      expect(chunk.filePath).toBe("path/to/doc.md");
-    }
-  });
+  const chunks = chunkCode(content, "path/to/doc.md");
+  for (const chunk of chunks) {
+    expect(chunk.filePath).toBe("path/to/doc.md");
+  }
+});
 
-  test("mixed h1 and h2 headings", () => {
-    const content = `# Title
+test("markdownChunker: mixed h1 and h2 headings", () => {
+  const content = `# Title
 
 Intro.
 
@@ -158,27 +157,26 @@ Content A.
 
 Content B.`;
 
-    const chunks = chunkCode(content, "doc.md");
-    expect(chunks).toHaveLength(3);
-    expect(chunks[0]!.symbolName).toBe("Title");
-    expect(chunks[1]!.symbolName).toBe("Section A");
-    expect(chunks[2]!.symbolName).toBe("Section B");
-  });
+  const chunks = chunkCode(content, "doc.md");
+  expect(chunks).toHaveLength(3);
+  expect(chunks[0]!.symbolName).toBe("Title");
+  expect(chunks[1]!.symbolName).toBe("Section A");
+  expect(chunks[2]!.symbolName).toBe("Section B");
+});
 
-  test("chunk content is markdown, not HTML", () => {
-    const content = `# Hello
+test("markdownChunker: chunk content is markdown, not HTML", () => {
+  const content = `# Hello
 
 This is **bold** and *italic* text.
 
 - item one
 - item two`;
 
-    const chunks = chunkCode(content, "doc.md");
-    expect(chunks).toHaveLength(1);
-    expect(chunks[0]!.content).toContain("**bold**");
-    expect(chunks[0]!.content).toContain("*italic*");
-    expect(chunks[0]!.content).not.toContain("<strong>");
-    expect(chunks[0]!.content).not.toContain("<em>");
-    expect(chunks[0]!.content).not.toContain("<li>");
-  });
+  const chunks = chunkCode(content, "doc.md");
+  expect(chunks).toHaveLength(1);
+  expect(chunks[0]!.content).toContain("**bold**");
+  expect(chunks[0]!.content).toContain("*italic*");
+  expect(chunks[0]!.content).not.toContain("<strong>");
+  expect(chunks[0]!.content).not.toContain("<em>");
+  expect(chunks[0]!.content).not.toContain("<li>");
 });
