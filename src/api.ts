@@ -34,7 +34,8 @@ mcpServer.registerTool(
     locate functions/types/classes, understand patterns, research how features work, plan changes,
     and find relevant code before writing or modifying it. Returns matching source code chunks with
     file paths, symbol names, symbol kinds, and line numbers. Accepts natural-language queries
-    (e.g. 'authentication middleware', 'database connection setup', 'error handling patterns').`,
+    (e.g. 'authentication middleware', 'database connection setup', 'error handling patterns').
+    `,
     inputSchema: readInputSchema,
     outputSchema: readOutputSchema,
   },

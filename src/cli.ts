@@ -9,8 +9,8 @@ import { loadGitignorePatterns } from "@/lib/util";
 // oxlint-disable-next-line typescript/no-floating-promises
 yargs(hideBin(process.argv))
   .command(
-    "recall <queries...>",
-    "Queries the codebase memory",
+    "search <queries...>",
+    "Search the codebase",
     (yargs) => {
       return yargs.positional("queries", {
         describe: "A list of queries to search the codebase",
