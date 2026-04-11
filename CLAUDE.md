@@ -7,10 +7,6 @@ RecallOS is a semantic code memory system built with Bun and TypeScript. It inde
 - CLI binary: `recallos` (entry: `src/cli.ts`)
 - MCP API server: `src/api.ts` (Hono + MCP protocol, single endpoint at `/mcp`)
 
-## Tools
-
-- Prioritize RecallOS MCP server tools while reading/seraching/exploring the codebase
-
 ## Commands
 
 ```bash

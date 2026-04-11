@@ -1,0 +1,6 @@
+{
+  "codebase": {
+    "id": "019d7e95-68b0-7000-9250-a04d537c5d23"
+  },
+  "excludePattern": ["drizzle/**/*", "package-lock.json"]
+}

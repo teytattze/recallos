@@ -1,6 +1,6 @@
 import { test, expect, beforeAll, afterAll } from "bun:test";
 import { db } from "@/db/db";
-import { codebaseFile, graphEdge } from "@/db/schema";
+import { codebase, codebaseFile, graphEdge } from "@/db/schema";
 import { newBaseFieldsValue } from "@/db/util";
 import { getRelatedFiles } from "@/codebase/query";
 import { eq } from "drizzle-orm";
@@ -8,6 +8,8 @@ import { eq } from "drizzle-orm";
 const TEST_PREFIX = "__test_query_";
 
 type TestFile = { id: string; filePath: string };
+
+let testCodebaseId: string;
 
 async function createTestFile(filePath: string): Promise<TestFile> {
   const base = newBaseFieldsValue();
@@ -17,6 +19,7 @@ async function createTestFile(filePath: string): Promise<TestFile> {
     content: "",
     contentHashDigest: "test",
     status: "complete",
+    codebaseId: testCodebaseId,
   });
   return { id: base.id, filePath };
 }
@@ -36,6 +39,14 @@ let fileC: TestFile;
 let fileD: TestFile;
 
 beforeAll(async () => {
+  // Create test codebase
+  const cbBase = newBaseFieldsValue();
+  testCodebaseId = cbBase.id;
+  await db.insert(codebase).values({
+    ...cbBase,
+    name: `${TEST_PREFIX}codebase`,
+  });
+
   // Create test files: A -> B -> C, D -> A
   fileA = await createTestFile(`${TEST_PREFIX}a.ts`);
   fileB = await createTestFile(`${TEST_PREFIX}b.ts`);
@@ -59,6 +70,7 @@ afterAll(async () => {
   for (const file of [fileA, fileB, fileC, fileD]) {
     await db.delete(codebaseFile).where(eq(codebaseFile.id, file.id));
   }
+  await db.delete(codebase).where(eq(codebase.id, testCodebaseId));
 });
 
 test("getRelatedFiles: depth=0 returns empty array", async () => {

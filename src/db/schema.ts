@@ -3,6 +3,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
   vector,
 } from "drizzle-orm/pg-core";
@@ -17,15 +18,28 @@ type BaseFields = {
   id: string;
 };
 
-const codebaseFile = pgTable("codebase_files", {
+const codebase = pgTable("codebases", {
   ...makeBaseFields(),
-
-  filePath: text("file_path").notNull().unique(),
-  content: text("content").notNull(),
-  contentHashDigest: text("content_hash_digest").notNull(),
-  status: text("status").notNull().default("pending"),
-  indexedAt: timestamp("indexed_at"),
+  name: text("name").notNull().unique(),
 });
+
+const codebaseFile = pgTable(
+  "codebase_files",
+  {
+    ...makeBaseFields(),
+
+    filePath: text("file_path").notNull(),
+    content: text("content").notNull(),
+    contentHashDigest: text("content_hash_digest").notNull(),
+    status: text("status").notNull().default("pending"),
+    indexedAt: timestamp("indexed_at"),
+
+    codebaseId: uuid("codebase_id")
+      .notNull()
+      .references(() => codebase.id, { onDelete: "cascade" }),
+  },
+  (t) => [unique().on(t.codebaseId, t.filePath)],
+);
 
 const codebaseChunk = pgTable("codebase_chunks", {
   ...makeBaseFields(),
@@ -49,15 +63,22 @@ const codebaseFileGraphEdge = pgTable("codebase_file_graph_edges", {
 
   fromId: uuid("from_id")
     .notNull()
-    .references(() => codebaseFile.id),
+    .references(() => codebaseFile.id, { onDelete: "cascade" }),
   toId: uuid("to_id")
     .notNull()
-    .references(() => codebaseFile.id),
+    .references(() => codebaseFile.id, { onDelete: "cascade" }),
 });
 
 const relations = defineRelations(
-  { codebaseChunk, codebaseFile, codebaseFileGraphEdge },
+  { codebase, codebaseChunk, codebaseFile, codebaseFileGraphEdge },
   (r) => ({
+    codebase: {
+      files: r.many.codebaseFile({
+        from: r.codebase.id,
+        to: r.codebaseFile.codebaseId,
+      }),
+    },
+
     codebaseChunk: {
       file: r.one.codebaseFile({
         from: r.codebaseChunk.fileId,
@@ -66,6 +87,10 @@ const relations = defineRelations(
     },
 
     codebaseFile: {
+      codebase: r.one.codebase({
+        from: r.codebaseFile.codebaseId,
+        to: r.codebase.id,
+      }),
       chunks: r.many.codebaseChunk({
         from: r.codebaseFile.id,
         to: r.codebaseChunk.fileId,
@@ -98,6 +123,7 @@ const relations = defineRelations(
 );
 
 export {
+  codebase,
   codebaseChunk,
   codebaseFile,
   codebaseFileGraphEdge as graphEdge,
