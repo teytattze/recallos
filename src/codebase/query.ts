@@ -1,5 +1,5 @@
 import z from "zod";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { cosineDistance, sql } from "drizzle-orm";
 import { db } from "@/db/db";
 import { codebaseChunk, codebaseFile, graphEdge } from "@/db/schema";
@@ -9,6 +9,9 @@ import { embedTexts } from "@/codebase/embed";
 
 const readInputSchema = z.object({
   kind: z.literal("codebase").describe("The memory kind to read from"),
+  codebase: z
+    .string()
+    .describe("The name of the codebase to search in"),
   queries: z
     .string()
     .array()
@@ -152,6 +155,7 @@ async function getRelatedFiles(
 
 async function searchCodebase(
   queries: string[],
+  codebaseId: string,
   nResults = 7,
   graphDepth = 1,
 ): Promise<SearchResult> {
@@ -175,7 +179,13 @@ async function searchCodebase(
           distance: sql`${distance}`,
         })
         .from(codebaseChunk)
-        .innerJoin(codebaseFile, eq(codebaseChunk.fileId, codebaseFile.id))
+        .innerJoin(
+          codebaseFile,
+          and(
+            eq(codebaseChunk.fileId, codebaseFile.id),
+            eq(codebaseFile.codebaseId, codebaseId),
+          ),
+        )
         .orderBy(distance)
         .limit(nResults);
 

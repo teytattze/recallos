@@ -4,6 +4,7 @@ import {
   readInputSchema,
   readOutputSchema,
 } from "@/codebase/query";
+import { ensureCodebase } from "@/codebase/codebase";
 import { StreamableHTTPTransport } from "@hono/mcp";
 import { Hono } from "hono";
 import { timeout } from "hono/timeout";
@@ -40,7 +41,8 @@ mcpServer.registerTool(
     outputSchema: readOutputSchema,
   },
   async (input) => {
-    const output = await searchCodebase(input.queries);
+    const cb = await ensureCodebase(input.codebase);
+    const output = await searchCodebase(input.queries, cb.id);
     return {
       content: [{ type: "text", text: JSON.stringify(output) }],
       structuredContent: output,

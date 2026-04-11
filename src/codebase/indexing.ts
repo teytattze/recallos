@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/db";
 import { codebaseChunk, codebaseFile } from "@/db/schema";
 import { chunkFile } from "@/codebase/chunker/router";
@@ -18,6 +18,7 @@ type IndexingOpts = {
   exclude: string[];
   force: boolean;
   projectRoot: string;
+  codebaseId: string;
 };
 
 function diffFiles(
@@ -49,7 +50,11 @@ function diffFiles(
   return { added, modified, deleted, unchanged };
 }
 
-async function indexFile(file: DiskFile, opts?: { deleteExisting?: boolean }) {
+async function indexFile(
+  file: DiskFile,
+  codebaseId: string,
+  opts?: { deleteExisting?: boolean },
+) {
   await db.transaction(async (tx) => {
     // Delete existing file row first if re-indexing a modified file
     if (opts?.deleteExisting) {
@@ -65,6 +70,7 @@ async function indexFile(file: DiskFile, opts?: { deleteExisting?: boolean }) {
         content: file.content,
         contentHashDigest: file.contentHashDigest,
         status: "pending",
+        codebaseId,
       })
       .returning({ id: codebaseFile.id });
 
@@ -127,11 +133,13 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
   if (opts.force) {
     console.log("Force mode: full re-index");
 
-    // Delete all files (CASCADE cleans chunks)
-    await db.delete(codebaseFile);
+    // Delete all files for this codebase (CASCADE cleans chunks)
+    await db
+      .delete(codebaseFile)
+      .where(eq(codebaseFile.codebaseId, opts.codebaseId));
 
     for (const file of diskFiles) {
-      await indexFile(file);
+      await indexFile(file, opts.codebaseId);
     }
 
     console.log(`Indexed ${diskFiles.length} files (force)`);
@@ -139,7 +147,12 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
     // Clean up pending files from interrupted runs (CASCADE cleans chunks)
     const pendingDeleted = await db
       .delete(codebaseFile)
-      .where(eq(codebaseFile.status, "pending"))
+      .where(
+        and(
+          eq(codebaseFile.codebaseId, opts.codebaseId),
+          eq(codebaseFile.status, "pending"),
+        ),
+      )
       .returning({ filePath: codebaseFile.filePath });
 
     if (pendingDeleted.length > 0) {
@@ -153,7 +166,12 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
         contentDigest: codebaseFile.contentHashDigest,
       })
       .from(codebaseFile)
-      .where(eq(codebaseFile.status, "complete"));
+      .where(
+        and(
+          eq(codebaseFile.codebaseId, opts.codebaseId),
+          eq(codebaseFile.status, "complete"),
+        ),
+      );
 
     const diff = diffFiles(
       diskFiles.map((f) => ({
@@ -172,12 +190,14 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
     const fileMap = new Map(diskFiles.map((f) => [f.path, f]));
 
     for (const filePath of diff.added) {
-      await indexFile(fileMap.get(filePath)!);
+      await indexFile(fileMap.get(filePath)!, opts.codebaseId);
     }
 
     // Re-index modified files (delete + insert atomically in one transaction)
     for (const filePath of diff.modified) {
-      await indexFile(fileMap.get(filePath)!, { deleteExisting: true });
+      await indexFile(fileMap.get(filePath)!, opts.codebaseId, {
+        deleteExisting: true,
+      });
     }
 
     console.log(
@@ -187,7 +207,7 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
   }
 
   // Build file dependency graph
-  const graph = await buildFileGraph(opts.projectRoot);
+  const graph = await buildFileGraph(opts.projectRoot, opts.codebaseId);
   console.log(
     `Graph: ${graph.edgesCreated} edges from ${graph.filesProcessed} files`,
   );

@@ -1,11 +1,14 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/db";
 import { codebaseFile, graphEdge } from "@/db/schema";
 import { newBaseFieldsValue } from "@/db/util";
 import { extractImports } from "@/codebase/graph/router";
 import { resolveSpecifier } from "@/codebase/graph/resolver";
 
-async function buildFileGraph(projectRoot: string): Promise<{
+async function buildFileGraph(
+  projectRoot: string,
+  codebaseId: string,
+): Promise<{
   edgesCreated: number;
   filesProcessed: number;
 }> {
@@ -16,7 +19,12 @@ async function buildFileGraph(projectRoot: string): Promise<{
       content: codebaseFile.content,
     })
     .from(codebaseFile)
-    .where(eq(codebaseFile.status, "complete"));
+    .where(
+      and(
+        eq(codebaseFile.codebaseId, codebaseId),
+        eq(codebaseFile.status, "complete"),
+      ),
+    );
 
   const pathToId = new Map<string, string>();
   for (const file of files) {
@@ -42,8 +50,15 @@ async function buildFileGraph(projectRoot: string): Promise<{
     }
   }
 
+  const fileIds = files.map((f) => f.id);
+
   await db.transaction(async (tx) => {
-    await tx.delete(graphEdge).where(eq(graphEdge.relationship, "references"));
+    // Only delete edges belonging to this codebase's files
+    if (fileIds.length > 0) {
+      await tx
+        .delete(graphEdge)
+        .where(inArray(graphEdge.fromId, fileIds));
+    }
 
     if (edges.length > 0) {
       const BATCH_SIZE = 500;

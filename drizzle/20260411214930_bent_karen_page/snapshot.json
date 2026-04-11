@@ -1,11 +1,17 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "95cd233f-7748-411a-a059-8348d2a9ddf8",
+  "id": "0ffd4f47-ccb8-44cc-99cd-a62203541162",
   "prevIds": [
     "6fabe7f1-e117-4d51-a62e-dd1a0b887ab2"
   ],
   "ddl": [
+    {
+      "isRlsEnabled": false,
+      "name": "codebases",
+      "entityType": "tables",
+      "schema": "public"
+    },
     {
       "isRlsEnabled": false,
       "name": "codebase_chunks",
@@ -23,6 +29,32 @@
       "name": "codebase_file_graph_edges",
       "entityType": "tables",
       "schema": "public"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebases"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebases"
     },
     {
       "type": "uuid",
@@ -214,6 +246,19 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "codebase_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "codebase_files"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "id",
       "entityType": "columns",
       "schema": "public",
@@ -278,6 +323,23 @@
     {
       "nameExplicit": false,
       "columns": [
+        "codebase_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "codebases",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "codebase_files_codebase_id_codebases_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "codebase_files"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "from_id"
       ],
       "schemaTo": "public",
@@ -314,6 +376,16 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "codebases_pkey",
+      "schema": "public",
+      "table": "codebases",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "codebase_chunks_pkey",
       "schema": "public",
       "table": "codebase_chunks",
@@ -342,12 +414,24 @@
     {
       "nameExplicit": false,
       "columns": [
+        "codebase_id",
         "file_path"
       ],
       "nullsNotDistinct": false,
-      "name": "codebase_files_file_path_key",
+      "name": "codebase_files_codebase_id_file_path_unique",
+      "entityType": "uniques",
       "schema": "public",
-      "table": "codebase_files",
+      "table": "codebase_files"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "name"
+      ],
+      "nullsNotDistinct": false,
+      "name": "codebases_name_key",
+      "schema": "public",
+      "table": "codebases",
       "entityType": "uniques"
     }
   ],
