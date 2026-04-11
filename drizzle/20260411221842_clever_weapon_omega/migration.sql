@@ -1,0 +1,2 @@
+ALTER TABLE "codebase_file_graph_edges" DROP CONSTRAINT "codebase_file_graph_edges_from_id_codebase_files_id_fkey", ADD CONSTRAINT "codebase_file_graph_edges_from_id_codebase_files_id_fkey" FOREIGN KEY ("from_id") REFERENCES "codebase_files"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "codebase_file_graph_edges" DROP CONSTRAINT "codebase_file_graph_edges_to_id_codebase_files_id_fkey", ADD CONSTRAINT "codebase_file_graph_edges_to_id_codebase_files_id_fkey" FOREIGN KEY ("to_id") REFERENCES "codebase_files"("id") ON DELETE CASCADE;

@@ -63,10 +63,10 @@ const codebaseFileGraphEdge = pgTable("codebase_file_graph_edges", {
 
   fromId: uuid("from_id")
     .notNull()
-    .references(() => codebaseFile.id),
+    .references(() => codebaseFile.id, { onDelete: "cascade" }),
   toId: uuid("to_id")
     .notNull()
-    .references(() => codebaseFile.id),
+    .references(() => codebaseFile.id, { onDelete: "cascade" }),
 });
 
 const relations = defineRelations(
