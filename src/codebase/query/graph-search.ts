@@ -2,13 +2,17 @@ import z from "zod";
 import { and, eq, inArray } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { db } from "@/db/db";
-import { codebaseFile, graphEdge } from "@/db/schema";
+import { codebaseFileTable, codebaseFileGraphEdgeTable } from "@/db/schema";
 import { ensureCodebase } from "@/codebase/codebase";
 
 // -- Schemas --
 
 const relationshipSearchInputSchema = z.object({
-  codebase: z.string().describe("The name of the codebase to search in"),
+  codebaseId: z
+    .uuidv7()
+    .describe(
+      "The ID of the codebase to search in. Get the ID from .recallos.json",
+    ),
   filePaths: z
     .string()
     .array()
@@ -69,22 +73,22 @@ async function getRelatedFiles(
   }>(sql`
     WITH RECURSIVE neighbors AS (
       SELECT
-        ${graphEdge.fromId} AS file_id,
-        ${graphEdge.toId} AS source_id,
+        ${codebaseFileGraphEdgeTable.fromId} AS file_id,
+        ${codebaseFileGraphEdgeTable.toId} AS source_id,
         'references'::text AS relationship,
         1 AS depth
-      FROM ${graphEdge}
-      WHERE ${graphEdge.toId} = ANY(${seedArray})
+      FROM ${codebaseFileGraphEdgeTable}
+      WHERE ${codebaseFileGraphEdgeTable.toId} = ANY(${seedArray})
 
       UNION ALL
 
       SELECT
-        ${graphEdge.toId} AS file_id,
-        ${graphEdge.fromId} AS source_id,
+        ${codebaseFileGraphEdgeTable.toId} AS file_id,
+        ${codebaseFileGraphEdgeTable.fromId} AS source_id,
         'referencedBy'::text AS relationship,
         1 AS depth
-      FROM ${graphEdge}
-      WHERE ${graphEdge.fromId} = ANY(${seedArray})
+      FROM ${codebaseFileGraphEdgeTable}
+      WHERE ${codebaseFileGraphEdgeTable.fromId} = ANY(${seedArray})
 
       UNION ALL
 
@@ -94,7 +98,7 @@ async function getRelatedFiles(
         CASE WHEN e.to_id = n.file_id THEN 'references'::text ELSE 'referencedBy'::text END AS relationship,
         n.depth + 1 AS depth
       FROM neighbors n
-      JOIN ${graphEdge} e ON e.to_id = n.file_id OR e.from_id = n.file_id
+      JOIN ${codebaseFileGraphEdgeTable} e ON e.to_id = n.file_id OR e.from_id = n.file_id
       WHERE n.depth < ${graphDepth}
     )
     SELECT DISTINCT
@@ -102,8 +106,8 @@ async function getRelatedFiles(
       n.relationship,
       sf.file_path AS source_file_path
     FROM neighbors n
-    JOIN ${codebaseFile} f ON f.id = n.file_id
-    JOIN ${codebaseFile} sf ON sf.id = n.source_id
+    JOIN ${codebaseFileTable} f ON f.id = n.file_id
+    JOIN ${codebaseFileTable} sf ON sf.id = n.source_id
     WHERE n.file_id != ALL(${seedArray})
   `);
 
@@ -120,12 +124,12 @@ async function findRelatedFilesByCodebaseId(
   graphDepth = 1,
 ): Promise<RelationshipSearchResult> {
   const files = await db
-    .select({ id: codebaseFile.id })
-    .from(codebaseFile)
+    .select({ id: codebaseFileTable.id })
+    .from(codebaseFileTable)
     .where(
       and(
-        inArray(codebaseFile.filePath, filePaths),
-        eq(codebaseFile.codebaseId, codebaseId),
+        inArray(codebaseFileTable.filePath, filePaths),
+        eq(codebaseFileTable.codebaseId, codebaseId),
       ),
     );
 

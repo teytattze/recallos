@@ -1,38 +1,48 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db/db";
-import { codebase } from "@/db/schema";
+import { codebaseTable, type SelectCodebase } from "@/db/schema";
 import { newBaseFieldsValue } from "@/db/util";
+
+async function getCodebaseById(id: string): Promise<SelectCodebase | null> {
+  const [codebase] = await db
+    .select()
+    .from(codebaseTable)
+    .where(eq(codebaseTable.id, id));
+  return codebase ?? null;
+}
 
 async function ensureCodebase(
   name: string,
 ): Promise<{ id: string; name: string }> {
   const [existing] = await db
-    .select({ id: codebase.id, name: codebase.name })
-    .from(codebase)
-    .where(eq(codebase.name, name))
+    .select({ id: codebaseTable.id, name: codebaseTable.name })
+    .from(codebaseTable)
+    .where(eq(codebaseTable.name, name))
     .limit(1);
 
   if (existing) return existing;
 
   const [inserted] = await db
-    .insert(codebase)
+    .insert(codebaseTable)
     .values({ ...newBaseFieldsValue(), name })
-    .returning({ id: codebase.id, name: codebase.name });
+    .returning({ id: codebaseTable.id, name: codebaseTable.name });
 
   return inserted!;
 }
 
 async function listCodebases(): Promise<{ id: string; name: string }[]> {
-  return db.select({ id: codebase.id, name: codebase.name }).from(codebase);
+  return db
+    .select({ id: codebaseTable.id, name: codebaseTable.name })
+    .from(codebaseTable);
 }
 
 async function deleteCodebase(name: string): Promise<boolean> {
   const deleted = await db
-    .delete(codebase)
-    .where(eq(codebase.name, name))
-    .returning({ id: codebase.id });
+    .delete(codebaseTable)
+    .where(eq(codebaseTable.name, name))
+    .returning({ id: codebaseTable.id });
 
   return deleted.length > 0;
 }
 
-export { ensureCodebase, listCodebases, deleteCodebase };
+export { getCodebaseById, ensureCodebase, listCodebases, deleteCodebase };

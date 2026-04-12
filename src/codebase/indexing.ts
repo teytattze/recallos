@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/db";
-import { codebaseChunk, codebaseFile } from "@/db/schema";
+import { codebaseChunkTable, codebaseFileTable } from "@/db/schema";
 import { chunkFile } from "@/codebase/chunker/router";
 import { embedTexts } from "@/codebase/embed";
 import { buildFileGraph } from "@/codebase/graph/graph";
@@ -58,12 +58,14 @@ async function indexFile(
   await db.transaction(async (tx) => {
     // Delete existing file row first if re-indexing a modified file
     if (opts?.deleteExisting) {
-      await tx.delete(codebaseFile).where(eq(codebaseFile.filePath, file.path));
+      await tx
+        .delete(codebaseFileTable)
+        .where(eq(codebaseFileTable.filePath, file.path));
     }
 
     // Insert file as pending
     const [inserted] = await tx
-      .insert(codebaseFile)
+      .insert(codebaseFileTable)
       .values({
         ...newBaseFieldsValue(),
         filePath: file.path,
@@ -72,7 +74,7 @@ async function indexFile(
         status: "pending",
         codebaseId,
       })
-      .returning({ id: codebaseFile.id });
+      .returning({ id: codebaseFileTable.id });
 
     const fileId = inserted!.id;
 
@@ -81,9 +83,9 @@ async function indexFile(
 
     if (chunks.length === 0) {
       await tx
-        .update(codebaseFile)
+        .update(codebaseFileTable)
         .set({ status: "complete", indexedAt: new Date() })
-        .where(eq(codebaseFile.id, fileId));
+        .where(eq(codebaseFileTable.id, fileId));
       return;
     }
 
@@ -95,7 +97,7 @@ async function indexFile(
     }
 
     // Insert chunks with embeddings
-    await tx.insert(codebaseChunk).values(
+    await tx.insert(codebaseChunkTable).values(
       chunks.map((chunk, i) => ({
         ...newBaseFieldsValue(),
         content: chunk.content,
@@ -110,9 +112,9 @@ async function indexFile(
 
     // Mark file as complete
     await tx
-      .update(codebaseFile)
+      .update(codebaseFileTable)
       .set({ status: "complete", indexedAt: new Date() })
-      .where(eq(codebaseFile.id, fileId));
+      .where(eq(codebaseFileTable.id, fileId));
   });
 }
 
@@ -135,8 +137,8 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
 
     // Delete all files for this codebase (CASCADE cleans chunks)
     await db
-      .delete(codebaseFile)
-      .where(eq(codebaseFile.codebaseId, opts.codebaseId));
+      .delete(codebaseFileTable)
+      .where(eq(codebaseFileTable.codebaseId, opts.codebaseId));
 
     for (const file of diskFiles) {
       await indexFile(file, opts.codebaseId);
@@ -146,14 +148,14 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
   } else {
     // Clean up pending files from interrupted runs (CASCADE cleans chunks)
     const pendingDeleted = await db
-      .delete(codebaseFile)
+      .delete(codebaseFileTable)
       .where(
         and(
-          eq(codebaseFile.codebaseId, opts.codebaseId),
-          eq(codebaseFile.status, "pending"),
+          eq(codebaseFileTable.codebaseId, opts.codebaseId),
+          eq(codebaseFileTable.status, "pending"),
         ),
       )
-      .returning({ filePath: codebaseFile.filePath });
+      .returning({ filePath: codebaseFileTable.filePath });
 
     if (pendingDeleted.length > 0) {
       console.log(`Cleaned up ${pendingDeleted.length} pending entries`);
@@ -162,14 +164,14 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
     // Load DB state and diff
     const dbFiles = await db
       .select({
-        filePath: codebaseFile.filePath,
-        contentDigest: codebaseFile.contentHashDigest,
+        filePath: codebaseFileTable.filePath,
+        contentDigest: codebaseFileTable.contentHashDigest,
       })
-      .from(codebaseFile)
+      .from(codebaseFileTable)
       .where(
         and(
-          eq(codebaseFile.codebaseId, opts.codebaseId),
-          eq(codebaseFile.status, "complete"),
+          eq(codebaseFileTable.codebaseId, opts.codebaseId),
+          eq(codebaseFileTable.status, "complete"),
         ),
       );
 
@@ -183,7 +185,9 @@ async function startIndexing(opts: IndexingOpts): Promise<void> {
 
     // Delete removed files (CASCADE cleans chunks)
     for (const filePath of diff.deleted) {
-      await db.delete(codebaseFile).where(eq(codebaseFile.filePath, filePath));
+      await db
+        .delete(codebaseFileTable)
+        .where(eq(codebaseFileTable.filePath, filePath));
     }
 
     // Index added and modified files

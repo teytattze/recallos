@@ -18,12 +18,13 @@ type BaseFields = {
   id: string;
 };
 
-const codebase = pgTable("codebases", {
+const codebaseTable = pgTable("codebases", {
   ...makeBaseFields(),
   name: text("name").notNull().unique(),
 });
+type SelectCodebase = typeof codebaseTable.$inferSelect;
 
-const codebaseFile = pgTable(
+const codebaseFileTable = pgTable(
   "codebase_files",
   {
     ...makeBaseFields(),
@@ -36,12 +37,12 @@ const codebaseFile = pgTable(
 
     codebaseId: uuid("codebase_id")
       .notNull()
-      .references(() => codebase.id, { onDelete: "cascade" }),
+      .references(() => codebaseTable.id, { onDelete: "cascade" }),
   },
   (t) => [unique().on(t.codebaseId, t.filePath)],
 );
 
-const codebaseChunk = pgTable("codebase_chunks", {
+const codebaseChunkTable = pgTable("codebase_chunks", {
   ...makeBaseFields(),
 
   content: text("content").notNull(),
@@ -53,24 +54,29 @@ const codebaseChunk = pgTable("codebase_chunks", {
 
   fileId: uuid("file_id")
     .notNull()
-    .references(() => codebaseFile.id, { onDelete: "cascade" }),
+    .references(() => codebaseFileTable.id, { onDelete: "cascade" }),
 });
 
-const codebaseFileGraphEdge = pgTable("codebase_file_graph_edges", {
+const codebaseFileGraphEdgeTable = pgTable("codebase_file_graph_edges", {
   ...makeBaseFields(),
 
   relationship: text("relationship", { enum: ["references"] }).notNull(),
 
   fromId: uuid("from_id")
     .notNull()
-    .references(() => codebaseFile.id, { onDelete: "cascade" }),
+    .references(() => codebaseFileTable.id, { onDelete: "cascade" }),
   toId: uuid("to_id")
     .notNull()
-    .references(() => codebaseFile.id, { onDelete: "cascade" }),
+    .references(() => codebaseFileTable.id, { onDelete: "cascade" }),
 });
 
 const relations = defineRelations(
-  { codebase, codebaseChunk, codebaseFile, codebaseFileGraphEdge },
+  {
+    codebase: codebaseTable,
+    codebaseChunk: codebaseChunkTable,
+    codebaseFile: codebaseFileTable,
+    codebaseFileGraphEdge: codebaseFileGraphEdgeTable,
+  },
   (r) => ({
     codebase: {
       files: r.many.codebaseFile({
@@ -123,10 +129,10 @@ const relations = defineRelations(
 );
 
 export {
-  codebase,
-  codebaseChunk,
-  codebaseFile,
-  codebaseFileGraphEdge as graphEdge,
+  codebaseTable,
+  codebaseChunkTable,
+  codebaseFileTable,
+  codebaseFileGraphEdgeTable,
   relations,
 };
-export type { BaseFields };
+export type { BaseFields, SelectCodebase };

@@ -2,13 +2,17 @@ import z from "zod";
 import { and, eq } from "drizzle-orm";
 import { cosineDistance, sql } from "drizzle-orm";
 import { db } from "@/db/db";
-import { codebaseChunk, codebaseFile } from "@/db/schema";
+import { codebaseChunkTable, codebaseFileTable } from "@/db/schema";
 import { embedTexts } from "@/codebase/embed";
 
 // -- Schemas --
 
 const textSearchInputSchema = z.object({
-  codebase: z.string().describe("The name of the codebase to search in"),
+  codebaseId: z
+    .uuidv7()
+    .describe(
+      "The ID of the codebase to search in. Get the ID from .recallos.json",
+    ),
   queries: z
     .string()
     .array()
@@ -72,25 +76,28 @@ async function searchByText(
   const queryOutputs = await Promise.all(
     queries.map(async (query, i) => {
       const queryEmbedding = embeddings[i] ?? [];
-      const distance = cosineDistance(codebaseChunk.embedding, queryEmbedding);
+      const distance = cosineDistance(
+        codebaseChunkTable.embedding,
+        queryEmbedding,
+      );
 
       const rows = await db
         .select({
-          id: codebaseChunk.id,
-          content: codebaseChunk.content,
-          symbolName: codebaseChunk.symbolName,
-          symbolKind: codebaseChunk.symbolKind,
-          startLine: codebaseChunk.startLine,
-          endLine: codebaseChunk.endLine,
-          filePath: codebaseFile.filePath,
+          id: codebaseChunkTable.id,
+          content: codebaseChunkTable.content,
+          symbolName: codebaseChunkTable.symbolName,
+          symbolKind: codebaseChunkTable.symbolKind,
+          startLine: codebaseChunkTable.startLine,
+          endLine: codebaseChunkTable.endLine,
+          filePath: codebaseFileTable.filePath,
           distance: sql`${distance}`,
         })
-        .from(codebaseChunk)
+        .from(codebaseChunkTable)
         .innerJoin(
-          codebaseFile,
+          codebaseFileTable,
           and(
-            eq(codebaseChunk.fileId, codebaseFile.id),
-            eq(codebaseFile.codebaseId, codebaseId),
+            eq(codebaseChunkTable.fileId, codebaseFileTable.id),
+            eq(codebaseFileTable.codebaseId, codebaseId),
           ),
         )
         .orderBy(distance)

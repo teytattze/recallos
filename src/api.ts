@@ -9,7 +9,7 @@ import {
   relationshipSearchOutputSchema,
   findRelatedFilesByCodebaseId,
 } from "@/codebase/query/graph-search";
-import { ensureCodebase } from "@/codebase/codebase";
+import { getCodebaseById } from "@/codebase/codebase";
 import { StreamableHTTPTransport } from "@hono/mcp";
 import { Hono } from "hono";
 import { timeout } from "hono/timeout";
@@ -50,8 +50,13 @@ mcpServer.registerTool(
     outputSchema: textSearchOutputSchema,
   },
   async (input) => {
-    const cb = await ensureCodebase(input.codebase);
+    const cb = await getCodebaseById(input.codebaseId);
+
+    if (cb === null) {
+      throw new Error(`Codebase not found, ID: ${input.codebaseId}`);
+    }
     const output = await searchByText(input.queries, cb.id);
+
     return {
       content: [{ type: "text", text: JSON.stringify(output) }],
       structuredContent: output,
@@ -78,12 +83,17 @@ mcpServer.registerTool(
     outputSchema: relationshipSearchOutputSchema,
   },
   async (input) => {
-    const cb = await ensureCodebase(input.codebase);
+    const cb = await getCodebaseById(input.codebaseId);
+
+    if (cb === null) {
+      throw new Error(`Codebase not found, ID: ${input.codebaseId}`);
+    }
     const output = await findRelatedFilesByCodebaseId(
       cb.id,
       input.filePaths,
       input.graphDepth,
     );
+
     return {
       content: [{ type: "text", text: JSON.stringify(output) }],
       structuredContent: output,

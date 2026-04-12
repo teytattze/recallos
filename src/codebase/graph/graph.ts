@@ -1,6 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/db";
-import { codebaseFile, graphEdge } from "@/db/schema";
+import { codebaseFileTable, codebaseFileGraphEdgeTable } from "@/db/schema";
 import { newBaseFieldsValue } from "@/db/util";
 import { extractImports } from "@/codebase/graph/router";
 import { resolveSpecifier } from "@/codebase/graph/resolver";
@@ -14,15 +14,15 @@ async function buildFileGraph(
 }> {
   const files = await db
     .select({
-      id: codebaseFile.id,
-      filePath: codebaseFile.filePath,
-      content: codebaseFile.content,
+      id: codebaseFileTable.id,
+      filePath: codebaseFileTable.filePath,
+      content: codebaseFileTable.content,
     })
-    .from(codebaseFile)
+    .from(codebaseFileTable)
     .where(
       and(
-        eq(codebaseFile.codebaseId, codebaseId),
-        eq(codebaseFile.status, "complete"),
+        eq(codebaseFileTable.codebaseId, codebaseId),
+        eq(codebaseFileTable.status, "complete"),
       ),
     );
 
@@ -55,14 +55,16 @@ async function buildFileGraph(
   await db.transaction(async (tx) => {
     // Only delete edges belonging to this codebase's files
     if (fileIds.length > 0) {
-      await tx.delete(graphEdge).where(inArray(graphEdge.fromId, fileIds));
+      await tx
+        .delete(codebaseFileGraphEdgeTable)
+        .where(inArray(codebaseFileGraphEdgeTable.fromId, fileIds));
     }
 
     if (edges.length > 0) {
       const BATCH_SIZE = 500;
       for (let i = 0; i < edges.length; i += BATCH_SIZE) {
         const batch = edges.slice(i, i + BATCH_SIZE);
-        await tx.insert(graphEdge).values(
+        await tx.insert(codebaseFileGraphEdgeTable).values(
           batch.map((edge) => ({
             ...newBaseFieldsValue(),
             relationship: "references" as const,
