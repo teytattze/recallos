@@ -113,7 +113,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -f docker/Dockerfile.${{ matrix.app }} \
+            -f dockers/Dockerfile.${{ matrix.app }} \
             -t ${{ vars.AWS_ECR_REPOSITORY }}/${{ matrix.app }}:${{ steps.extract-version.outputs.version }} \
             apps/${{ matrix.app }}
 
