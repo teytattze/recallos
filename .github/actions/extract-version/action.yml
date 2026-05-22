@@ -1,0 +1,19 @@
+name: "Extract version"
+description: "Extract the current version from the release tag or commit"
+outputs:
+  version:
+    description: "The current version"
+    value: ${{ steps.extract-version.outputs.version }}
+runs:
+  using: "composite"
+  steps:
+    - id: extract-version
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        elif [[ $GITHUB_REF == refs/heads/main ]]; then
+          echo "version=main-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+        else
+          echo "version=branch-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
