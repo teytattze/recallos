@@ -21,7 +21,7 @@ RecallOS is a pipeline; ingestion only owns the first step:
 ```
 capture  →  enrich  →  relate  →  recall
  Service     Worker     Worker     Service
- [done]      (needs the event)     
+ [done]      (needs the event)
             ▲
             └── this doc: how the event crosses from Service to Worker
 ```
@@ -35,16 +35,16 @@ hand-off must not drop facts on the floor.
 > **Principle:** publishing **decouples capture from enrichment**. The Service
 > returns the moment the event is durably recorded; the Worker is notified
 > asynchronously. The **events table is the source of truth** — the intermediary
-> carries a *notification that a fact landed*, never the only copy of it.
+> carries a _notification that a fact landed_, never the only copy of it.
 
 This is the seam named in `feature-event-ingestion.md` §7: the aggregate raises a
 kernel `EventRecorded` `DomainEvent`, the use case publishes it through an
 `EventPublisher` outbound port, and that kicks off **enrich → relate**.
 
-> **Naming nuance (carried over from ingestion §2):** the `Event` *aggregate* is a
+> **Naming nuance (carried over from ingestion §2):** the `Event` _aggregate_ is a
 > captured occurrence; `EventRecorded` is a kernel `DomainEvent` — the
-> publish/subscribe building block. The aggregate is *what happened*; the domain
-> event is *the announcement that we recorded it*.
+> publish/subscribe building block. The aggregate is _what happened_; the domain
+> event is _the announcement that we recorded it_.
 
 ---
 
@@ -53,8 +53,8 @@ kernel `EventRecorded` `DomainEvent`, the use case publishes it through an
 The naive use case does two writes to two systems:
 
 ```ts
-await events.append(event);          // (1) Postgres: durable
-await publisher.publish(recorded);   // (2) the broker: durable elsewhere
+await events.append(event); // (1) Postgres: durable
+await publisher.publish(recorded); // (2) the broker: durable elsewhere
 ```
 
 There is no transaction spanning both. Two failure modes follow:
@@ -69,7 +69,7 @@ falls out of this:
 
 > **Requirement:** **at-least-once** delivery, with the **events table as the
 > single source of truth**, consumed by an **idempotent** Worker. We accept
-> *duplicate* deliveries (cheap to dedup) and refuse *lost* ones. Exactly-once is
+> _duplicate_ deliveries (cheap to dedup) and refuse _lost_ ones. Exactly-once is
 > explicitly **not** pursued (§9).
 
 Every solution in §4 is judged on how it closes this gap.
@@ -134,7 +134,7 @@ export interface EventPublisher {
 ```
 
 **`IngestEventUseCase`** — append, then hand the buffered domain events to the
-publisher. The use case still has no idea *how* publishing is made reliable; that
+publisher. The use case still has no idea _how_ publishing is made reliable; that
 is the adapter's job (§4/§6).
 
 ```ts
@@ -146,7 +146,7 @@ async execute(input: IngestEventInput): Promise<void> {
 }
 ```
 
-**Worker side (the consumer).** A *driving* adapter in `apps/worker/src/jobs/`
+**Worker side (the consumer).** A _driving_ adapter in `apps/worker/src/jobs/`
 receives the message and drives a new `EnrichEvent` use case, which loads the full
 `Event` from the `EventLogRepository` and builds the graph via the knowledge-graph
 context's `CreateNode` / `GraphRelation.relate` (see
@@ -170,20 +170,20 @@ wired (§4) is a one-line composition-root decision (`project-structure.md` §5)
 Five ways to satisfy the §2 requirement. These are about **reliability/topology**;
 the broker technology is orthogonal and compared in §5.
 
-| Option | Where it runs | Strengths | Trade-offs / risks | Delivery |
-|---|---|---|---|---|
-| **S1 — In-process direct publish** | use case calls broker right after `append` | Trivial; no extra table or relay; lowest latency | **Dual-write (§2) unsolved** — crash between append and publish loses the event; broker outage fails ingest or drops the notice | ~at-most-once |
-| **S2 — Transactional Outbox + relay** *(recommended)* | `event_outbox` row written in the **same tx** as the `events` insert; a separate **relay** publishes it | Atomic with the event (one Postgres tx) → **no lost events**; broker can be down without losing data; relay retries freely | Needs an outbox table, a relay process, and an idempotent consumer; events visible to Worker only after relay runs (small lag) | at-least-once |
-| **S3 — Postgres-as-queue** | no broker; Worker polls `event_outbox`/`events` with `SELECT … FOR UPDATE SKIP LOCKED` | **Zero new infrastructure** — leanest possible; same engine, same backup; trivial local dev | Couples Worker scaling to the Service DB; polling adds latency/load; you reimplement retry/DLQ/visibility yourself | at-least-once |
-| **S4 — LISTEN/NOTIFY** | `NOTIFY` in the tx; Worker holds a `LISTEN` connection | DB-native push; very low latency; no broker | **At-most-once** — a notification fired while no one listens is **gone**; payload size limited; needs a sticky connection ⇒ **must** be paired with a catch-up poll (degenerates into S3) | at-most-once (alone) |
-| **S5 — CDC** (logical replication / Debezium) | stream the `events` table WAL → Kinesis/MSK | **No application change**; captures every commit exactly as persisted; replayable from the log | Heavy ops (replication slots, connector, stream); schema-change handling; biggest moving part for a small team | at-least-once |
+| Option                                                | Where it runs                                                                                           | Strengths                                                                                                                  | Trade-offs / risks                                                                                                                                                                        | Delivery             |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| **S1 — In-process direct publish**                    | use case calls broker right after `append`                                                              | Trivial; no extra table or relay; lowest latency                                                                           | **Dual-write (§2) unsolved** — crash between append and publish loses the event; broker outage fails ingest or drops the notice                                                           | ~at-most-once        |
+| **S2 — Transactional Outbox + relay** _(recommended)_ | `event_outbox` row written in the **same tx** as the `events` insert; a separate **relay** publishes it | Atomic with the event (one Postgres tx) → **no lost events**; broker can be down without losing data; relay retries freely | Needs an outbox table, a relay process, and an idempotent consumer; events visible to Worker only after relay runs (small lag)                                                            | at-least-once        |
+| **S3 — Postgres-as-queue**                            | no broker; Worker polls `event_outbox`/`events` with `SELECT … FOR UPDATE SKIP LOCKED`                  | **Zero new infrastructure** — leanest possible; same engine, same backup; trivial local dev                                | Couples Worker scaling to the Service DB; polling adds latency/load; you reimplement retry/DLQ/visibility yourself                                                                        | at-least-once        |
+| **S4 — LISTEN/NOTIFY**                                | `NOTIFY` in the tx; Worker holds a `LISTEN` connection                                                  | DB-native push; very low latency; no broker                                                                                | **At-most-once** — a notification fired while no one listens is **gone**; payload size limited; needs a sticky connection ⇒ **must** be paired with a catch-up poll (degenerates into S3) | at-most-once (alone) |
+| **S5 — CDC** (logical replication / Debezium)         | stream the `events` table WAL → Kinesis/MSK                                                             | **No application change**; captures every commit exactly as persisted; replayable from the log                             | Heavy ops (replication slots, connector, stream); schema-change handling; biggest moving part for a small team                                                                            | at-least-once        |
 
 > **Why S2.** The outbox is the only option that makes "the event is recorded" and
 > "the Worker will be told" a **single atomic fact** without standing up CDC
 > infrastructure. It lives entirely inside the Aurora Postgres we already run
 > (`database-tradeoffs.md` §6), turns the §2 dual-write into one local transaction,
 > and isolates the broker behind a relay that can retry through outages. S1 is the
-> thing we are explicitly avoiding; S3 is S2 minus the broker (a fine *fallback*,
+> thing we are explicitly avoiding; S3 is S2 minus the broker (a fine _fallback_,
 > §6); S4 alone is unsafe; S5 is a Phase-2 graduation when app-side publishing
 > becomes a burden.
 
@@ -209,21 +209,21 @@ Given S2/S3 put a durable, ordered record in Postgres, the broker's job is
 **fan-out + back-pressure + retry/DLQ** to the Worker. Bias is AWS-managed first
 (`database-tradeoffs.md` preamble), OSS/SaaS noted.
 
-| Option | Hosting | Strengths | Trade-offs / risks | AWS lock-in |
-|---|---|---|---|---|
-| **Amazon SQS** (standard / FIFO) | AWS-managed | Dead simple; cheap; managed retries + **DLQ**; standard = high throughput, FIFO = ordering + 5-min dedup; perfect single-consumer fit | One logical consumer per queue (fan-out needs SNS); no replay/history; FIFO has throughput limits | Medium |
-| **Amazon SNS → SQS fan-out** | AWS-managed | One publish → many independent SQS queues (graph builder, embeddings, audit), each with its own retry/DLQ | Two services to wire; still no long replay; per-message size limits | Medium |
-| **Amazon Kinesis Data Streams** | AWS-managed | Ordered per-shard; **replayable** within retention; multiple consumers; high sustained throughput | Shard capacity planning; consumer checkpointing; pricier/heavier than SQS | Medium-High |
-| **Amazon MSK (managed Kafka)** | AWS-managed | Durable log + long retention + replay; rich ecosystem; natural CDC sink (S5) | Heaviest ops + cost; overkill at small scale | Medium |
-| Redis Streams / **BullMQ** | OSS / self-host / Elasticache | Fits the **Bun/Node** stack; great DX; consumer groups, retries, delayed jobs | You run Redis; persistence/HA is on you; another data plane | None / vendor |
-| NATS JetStream | OSS / SaaS | Lightweight, fast, at-least-once with replay | Smaller ecosystem; another system to operate | None / vendor |
-| RabbitMQ | OSS / SaaS (MQ) | Mature routing/topologies; flexible | Broker to operate (or Amazon MQ cost); heavier than SQS | None / vendor |
+| Option                           | Hosting                       | Strengths                                                                                                                             | Trade-offs / risks                                                                                | AWS lock-in   |
+| -------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------- |
+| **Amazon SQS** (standard / FIFO) | AWS-managed                   | Dead simple; cheap; managed retries + **DLQ**; standard = high throughput, FIFO = ordering + 5-min dedup; perfect single-consumer fit | One logical consumer per queue (fan-out needs SNS); no replay/history; FIFO has throughput limits | Medium        |
+| **Amazon SNS → SQS fan-out**     | AWS-managed                   | One publish → many independent SQS queues (graph builder, embeddings, audit), each with its own retry/DLQ                             | Two services to wire; still no long replay; per-message size limits                               | Medium        |
+| **Amazon Kinesis Data Streams**  | AWS-managed                   | Ordered per-shard; **replayable** within retention; multiple consumers; high sustained throughput                                     | Shard capacity planning; consumer checkpointing; pricier/heavier than SQS                         | Medium-High   |
+| **Amazon MSK (managed Kafka)**   | AWS-managed                   | Durable log + long retention + replay; rich ecosystem; natural CDC sink (S5)                                                          | Heaviest ops + cost; overkill at small scale                                                      | Medium        |
+| Redis Streams / **BullMQ**       | OSS / self-host / Elasticache | Fits the **Bun/Node** stack; great DX; consumer groups, retries, delayed jobs                                                         | You run Redis; persistence/HA is on you; another data plane                                       | None / vendor |
+| NATS JetStream                   | OSS / SaaS                    | Lightweight, fast, at-least-once with replay                                                                                          | Smaller ecosystem; another system to operate                                                      | None / vendor |
+| RabbitMQ                         | OSS / SaaS (MQ)               | Mature routing/topologies; flexible                                                                                                   | Broker to operate (or Amazon MQ cost); heavier than SQS                                           | None / vendor |
 
 > **Why SQS first.** A single Worker consumer draining recorded events is exactly
 > the SQS sweet spot: managed, near-zero ops, built-in retry + DLQ, pennies at our
 > scale. We don't yet need replay (the **events table already is the replay log** —
 > re-enqueue from it) or multi-consumer fan-out (one consumer today). Those wants
-> map cleanly onto SNS, Kinesis, or MSK *later*, behind the same port.
+> map cleanly onto SNS, Kinesis, or MSK _later_, behind the same port.
 
 ---
 
@@ -232,6 +232,7 @@ Given S2/S3 put a durable, ordered record in Postgres, the broker's job is
 **Start with an outbox into SQS; graduate by evidence.**
 
 **Phase 0 (now): Transactional Outbox (S2) → Amazon SQS.**
+
 - `OutboxEventPublisher` writes an `event_outbox` row in the **same transaction**
   as the `events` insert (shared `@repo/platform` unit-of-work) — closing the §2
   dual-write entirely inside the Aurora Postgres we already run.
@@ -246,17 +247,18 @@ Given S2/S3 put a durable, ordered record in Postgres, the broker's job is
 
 > **Leanest fallback (S3).** If even SQS feels premature, skip the broker: have the
 > Worker poll `event_outbox` directly with `SKIP LOCKED`. Zero new infra. We
-> *recommend SQS over this* because it decouples Worker scaling from the Service DB
+> _recommend SQS over this_ because it decouples Worker scaling from the Service DB
 > and gives retry + DLQ for free — but S3 is a legitimate day-one shortcut, and
 > because the seam is the `EventPublisher` port, moving S3 → SQS is an adapter swap.
 
 **Phase 1+ (graduate the hand-off, each behind a concrete trigger):**
-- **SNS → SQS fan-out** — *trigger:* a **second independent consumer** appears
+
+- **SNS → SQS fan-out** — _trigger:_ a **second independent consumer** appears
   (e.g. embeddings pipeline separate from graph building, or an audit sink).
-- **Kinesis / MSK** — *trigger:* need to **replay/reprocess** historical events
+- **Kinesis / MSK** — _trigger:_ need to **replay/reprocess** historical events
   through new enrichment logic at scale, or sustained throughput where SQS+relay
   lag hurts.
-- **CDC (S5)** — *trigger:* maintaining the outbox + relay becomes a burden and we
+- **CDC (S5)** — _trigger:_ maintaining the outbox + relay becomes a burden and we
   want publishing to fall out of the WAL with no app code.
 
 Because the contract is the `EventPublisher` port (and a thin `EventConsumer` on
@@ -292,18 +294,18 @@ Following the suffixes (`project-structure.md` §9) and layout (§4). The pure c
 gains only interfaces + a domain event; all technology lives in `-infra`, the apps,
 or `@repo/platform`.
 
-| Artifact | Path | Layer |
-|---|---|---|
-| `EventRecorded` domain event | `packages/ingestion/src/domain/events/event-recorded.event.ts` | domain (pure) |
-| `EventPublisher` outbound port | `packages/ingestion/src/application/ports/outbound/event-publisher.ts` | application (pure) |
-| `IngestEventUseCase` (publish after append) | `packages/ingestion/src/application/use-cases/ingest-event.use-case.ts` | application (pure) |
-| `OutboxEventPublisher` (writes outbox in UoW tx) | `packages/ingestion-infra/src/persistence/event-outbox.repository.pg.ts` | `-infra` adapter |
-| `event_outbox` table DDL | ingestion-infra migration | `-infra` |
-| SQS publisher (used by the relay) | `packages/ingestion-infra/src/gateways/sqs-event-publisher.ts` | `-infra` adapter |
-| Outbox relay (poll → SQS → mark sent) | `apps/worker/src/jobs/outbox-relay.job.ts` | worker (driving) |
-| Enrich consumer (SQS → use case) | `apps/worker/src/jobs/enrich-event.job.ts` | worker (driving) |
-| `EnrichEvent` use case + inbound port | `packages/knowledge-graph/src/application/use-cases/enrich-event.use-case.ts` | application (pure) |
-| Unit-of-work, SQS client config | `packages/platform/src/` | platform |
+| Artifact                                         | Path                                                                          | Layer              |
+| ------------------------------------------------ | ----------------------------------------------------------------------------- | ------------------ |
+| `EventRecorded` domain event                     | `packages/ingestion/src/domain/events/event-recorded.event.ts`                | domain (pure)      |
+| `EventPublisher` outbound port                   | `packages/ingestion/src/application/ports/outbound/event-publisher.ts`        | application (pure) |
+| `IngestEventUseCase` (publish after append)      | `packages/ingestion/src/application/use-cases/ingest-event.use-case.ts`       | application (pure) |
+| `OutboxEventPublisher` (writes outbox in UoW tx) | `packages/ingestion-infra/src/persistence/event-outbox.repository.pg.ts`      | `-infra` adapter   |
+| `event_outbox` table DDL                         | ingestion-infra migration                                                     | `-infra`           |
+| SQS publisher (used by the relay)                | `packages/ingestion-infra/src/gateways/sqs-event-publisher.ts`                | `-infra` adapter   |
+| Outbox relay (poll → SQS → mark sent)            | `apps/worker/src/jobs/outbox-relay.job.ts`                                    | worker (driving)   |
+| Enrich consumer (SQS → use case)                 | `apps/worker/src/jobs/enrich-event.job.ts`                                    | worker (driving)   |
+| `EnrichEvent` use case + inbound port            | `packages/knowledge-graph/src/application/use-cases/enrich-event.use-case.ts` | application (pure) |
+| Unit-of-work, SQS client config                  | `packages/platform/src/`                                                      | platform           |
 
 ---
 
@@ -315,7 +317,7 @@ Named so the seams are visible, but **not** designed here:
   scheduling/deployment, `event_outbox` migration.
 - **`EnrichEvent` extraction logic** — turning a `body` into nodes/edges (entity
   extraction, embedding calls). Its own enrichment discovery; this doc only
-  delivers the *event* to it.
+  delivers the _event_ to it.
 - **Exactly-once** — intentionally not pursued; idempotent at-least-once is simpler
   and sufficient (§2/§7).
 - **Published-event contract & versioning** — the on-the-wire schema of

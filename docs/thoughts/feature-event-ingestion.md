@@ -4,7 +4,7 @@ Designs the **Domain** and **Application** layers for the first feature RecallOS
 captures: **event ingestion**. Builds on the layout in
 [`project-structure.md`](./project-structure.md) and the storage decisions in
 [`database-tradeoffs.md`](./database-tradeoffs.md). This is the first concrete
-*bounded context*, so it also fixes a name the structure doc deliberately deferred:
+_bounded context_, so it also fixes a name the structure doc deliberately deferred:
 **`ingestion`** (`@repo/ingestion` + `@repo/ingestion-infra`). Scope here is the pure
 core only — the domain model, the inbound port, the outbound persistence port, and
 the use case that ties them together. Adapters (Postgres, HTTP) are named as seams in
@@ -39,7 +39,7 @@ This shapes every decision below: the event is **immutable** (a fact that happen
 the body is **opaque** (not parsed at capture time), and the only outbound dependency
 is "append this to the log."
 
-> **Naming nuance:** the `Event` *aggregate* defined here is a **captured
+> **Naming nuance:** the `Event` _aggregate_ defined here is a **captured
 > occurrence** — a domain noun. It is **not** the kernel `DomainEvent` (the
 > publish/subscribe building block in `@repo/kernel`). The two share a word, not a
 > concept; §7 notes where a real `DomainEvent` (`EventRecorded`) would later appear.
@@ -52,15 +52,16 @@ Lives in `packages/ingestion/src/domain/`, depends only on `@repo/kernel`. The
 aggregate is **immutable once recorded** — this context offers no update or delete,
 because you cannot un-happen a fact. Corrections are new events.
 
-| Field | Type | Meaning |
-|---|---|---|
-| `id` | `EventId` | Identity, generated at capture. |
-| `occurredAt` | `Date` | When the event happened **at the source** (from the payload). |
-| `recordedAt` | `Date` | When RecallOS **captured** it (from the `Clock` port — §4). |
-| `tags` | `Tags` | Key→value **metadata** envelope: `source`, `type`, …. What the Worker routes on. |
-| `body` | `EventBody` | The **opaque** source payload; stored, not interpreted. |
+| Field        | Type        | Meaning                                                                          |
+| ------------ | ----------- | -------------------------------------------------------------------------------- |
+| `id`         | `EventId`   | Identity, generated at capture.                                                  |
+| `occurredAt` | `Date`      | When the event happened **at the source** (from the payload).                    |
+| `recordedAt` | `Date`      | When RecallOS **captured** it (from the `Clock` port — §4).                      |
+| `tags`       | `Tags`      | Key→value **metadata** envelope: `source`, `type`, …. What the Worker routes on. |
+| `body`       | `EventBody` | The **opaque** source payload; stored, not interpreted.                          |
 
 **`EventId`** — value object wrapping a kernel `Id`, generated on creation.
+
 ```ts
 // packages/ingestion/src/domain/event-id.value-object.ts
 import { Id } from "@repo/kernel";
@@ -75,10 +76,13 @@ export class EventId extends Id {
 **`Tags`** — value object over a normalized `Record<string, string>`. This is the
 metadata carrier (no separate `source`/`type` fields on the aggregate); the Worker
 reads it to decide how to interpret the body and where to attach it in the graph.
+
 ```ts
 // packages/ingestion/src/domain/tags.value-object.ts
 export class Tags {
-  private constructor(private readonly entries: Readonly<Record<string, string>>) {}
+  private constructor(
+    private readonly entries: Readonly<Record<string, string>>,
+  ) {}
 
   static create(input: Record<string, string>): Tags {
     const normalized: Record<string, string> = {};
@@ -104,10 +108,13 @@ export class Tags {
 that something is present; it **deliberately does not validate the shape**, because
 ingestion is generic across sources (messages, documents, processes) and shape is the
 enrichment context's concern.
+
 ```ts
 // packages/ingestion/src/domain/event-body.value-object.ts
 export class EventBody {
-  private constructor(private readonly value: Readonly<Record<string, unknown>>) {}
+  private constructor(
+    private readonly value: Readonly<Record<string, unknown>>,
+  ) {}
 
   static create(value: Record<string, unknown>): EventBody {
     if (Object.keys(value).length === 0) {
@@ -124,6 +131,7 @@ export class EventBody {
 
 **`Event`** — the aggregate root. A single static factory `record(...)` enforces the
 invariants; there is no public constructor and no setters.
+
 ```ts
 // packages/ingestion/src/domain/event.aggregate.ts
 import { AggregateRoot } from "@repo/kernel";
@@ -184,12 +192,13 @@ implementation in `packages/ingestion/src/application/use-cases/`.
 ```ts
 // packages/ingestion/src/application/use-cases/ingest-event.use-case.ts
 export interface IngestEventInput {
-  occurredAt: Date;                 // source time, supplied by the caller
-  tags: Record<string, string>;     // metadata: source, type, …
-  body: Record<string, unknown>;    // opaque payload
+  occurredAt: Date; // source time, supplied by the caller
+  tags: Record<string, string>; // metadata: source, type, …
+  body: Record<string, unknown>; // opaque payload
 }
 
-export interface IngestEvent {       // driving port
+export interface IngestEvent {
+  // driving port
   execute(input: IngestEventInput): Promise<void>;
 }
 ```
@@ -212,6 +221,7 @@ interfaces in `packages/ingestion/src/application/ports/outbound/` and implement
 **`EventLogRepository`** — the append-only persistence port. It accepts the domain
 model and returns `void`. The name matches the `EventLogRepository` already mapped to
 the TimeseriesDB in project-structure.md §7.
+
 ```ts
 // packages/ingestion/src/application/ports/outbound/event-log.repository.ts
 import type { Event } from "../../../domain/event.aggregate";
@@ -220,6 +230,7 @@ export interface EventLogRepository {
   append(event: Event): Promise<void>;
 }
 ```
+
 `append` (not `save`) names the contract honestly: this is an immutable log, not a
 mutable store. Its Postgres implementation (§7) inserts one row into the
 time-partitioned `events` table.
@@ -227,12 +238,14 @@ time-partitioned `events` table.
 **`Clock`** — supplied by `@repo/kernel` (listed there as a building block and an
 example outbound port). It exists so the domain stays pure: the use case reads
 `recordedAt` from the clock instead of the domain calling `Date.now()`.
+
 ```ts
 // from @repo/kernel
 export interface Clock {
   now(): Date;
 }
 ```
+
 Tests inject a fixed clock; production wires the platform `SystemClock`. Splitting it
 out is what lets §2's `Event.record` take `recordedAt` as a parameter.
 
@@ -253,13 +266,13 @@ import type { EventLogRepository } from "../ports/outbound/event-log.repository"
 
 export class IngestEventUseCase implements IngestEvent {
   constructor(
-    private readonly events: EventLogRepository,   // outbound PORT, not a DB
-    private readonly clock: Clock,                  // outbound PORT, not Date.now()
+    private readonly events: EventLogRepository, // outbound PORT, not a DB
+    private readonly clock: Clock, // outbound PORT, not Date.now()
   ) {}
 
   async execute(input: IngestEventInput): Promise<void> {
     const event = Event.record(input, this.clock.now()); // domain enforces invariants
-    await this.events.append(event);                     // persist via port
+    await this.events.append(event); // persist via port
   }
 }
 ```
@@ -277,17 +290,17 @@ here is inside the pure `@repo/ingestion` package, whose `package.json` lists **
 `@repo/kernel` — the dependency rule is mechanically enforced (§8 of the structure
 doc).
 
-| Artifact | Path |
-|---|---|
-| `Event` aggregate root | `packages/ingestion/src/domain/event.aggregate.ts` |
-| `EventId` value object | `packages/ingestion/src/domain/event-id.value-object.ts` |
-| `Tags` value object | `packages/ingestion/src/domain/tags.value-object.ts` |
-| `EventBody` value object | `packages/ingestion/src/domain/event-body.value-object.ts` |
-| `InvalidEventError` | `packages/ingestion/src/domain/invalid-event.error.ts` |
-| `IngestEvent` port + `IngestEventUseCase` | `packages/ingestion/src/application/use-cases/ingest-event.use-case.ts` |
-| `EventLogRepository` port | `packages/ingestion/src/application/ports/outbound/event-log.repository.ts` |
-| `Clock` port | `@repo/kernel` (shared) |
-| Public surface | `packages/ingestion/src/index.ts` (exports the use case, ports, and domain types) |
+| Artifact                                  | Path                                                                              |
+| ----------------------------------------- | --------------------------------------------------------------------------------- |
+| `Event` aggregate root                    | `packages/ingestion/src/domain/event.aggregate.ts`                                |
+| `EventId` value object                    | `packages/ingestion/src/domain/event-id.value-object.ts`                          |
+| `Tags` value object                       | `packages/ingestion/src/domain/tags.value-object.ts`                              |
+| `EventBody` value object                  | `packages/ingestion/src/domain/event-body.value-object.ts`                        |
+| `InvalidEventError`                       | `packages/ingestion/src/domain/invalid-event.error.ts`                            |
+| `IngestEvent` port + `IngestEventUseCase` | `packages/ingestion/src/application/use-cases/ingest-event.use-case.ts`           |
+| `EventLogRepository` port                 | `packages/ingestion/src/application/ports/outbound/event-log.repository.ts`       |
+| `Clock` port                              | `@repo/kernel` (shared)                                                           |
+| Public surface                            | `packages/ingestion/src/index.ts` (exports the use case, ports, and domain types) |
 
 ---
 
@@ -306,7 +319,7 @@ Named here so the seams are visible, but **not** built in this feature:
   `new IngestEventUseCase(new PgEventLogRepository(db), systemClock)` and hands the
   port to the HTTP layer.
 - **`EventRecorded` domain event** — the seam to the rest of the pipeline. When
-  capture later needs to *notify* the Worker that a fact landed, the aggregate raises
+  capture later needs to _notify_ the Worker that a fact landed, the aggregate raises
   a kernel `DomainEvent` (`EventRecorded`) and the use case publishes it through an
   `EventPublisher` outbound port. That is what kicks off **enrich → relate** and
   turns raw events into the knowledge graph — a separate context, a separate

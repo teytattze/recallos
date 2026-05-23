@@ -1,6 +1,6 @@
 # RecallOS — Project Structure (Hexagonal Architecture + DDD)
 
-Derived from `docs/diagrams/architecture.excalidraw` and built on the storage decisions in [`database-tradeoffs.md`](./database-tradeoffs.md). Defines the **target** monorepo layout RecallOS will grow into. It is the structural blueprint, not yet the code on disk — `apps/service` today is a single Hono `/api/v1/health` route. Concrete bounded-context names are deliberately left for a later discovery; this doc fixes the *shape*, not the *contents*.
+Derived from `docs/diagrams/architecture.excalidraw` and built on the storage decisions in [`database-tradeoffs.md`](./database-tradeoffs.md). Defines the **target** monorepo layout RecallOS will grow into. It is the structural blueprint, not yet the code on disk — `apps/service` today is a single Hono `/api/v1/health` route. Concrete bounded-context names are deliberately left for a later discovery; this doc fixes the _shape_, not the _contents_.
 
 ---
 
@@ -8,8 +8,8 @@ Derived from `docs/diagrams/architecture.excalidraw` and built on the storage de
 
 RecallOS is org-wide memory: ingest from many external sources, relate everything, and serve recall to humans and AI agents through one API. Two forces make ports & adapters the right fit:
 
-- **The datastores are deliberately undecided.** `database-tradeoffs.md` recommends *starting consolidated on one Postgres (pgvector + partitioned events + edge tables) and graduating the hottest store later* (→ OpenSearch / Neptune / Timestream). That only stays cheap if business logic never names a database. Hexagonal architecture makes "swap the store" mean "write a new adapter" — the domain doesn't move.
-- **Two runtimes share one brain.** The diagram has a `Service` (HTTP ingest + read API) and a cron-driven `Worker`. They must apply the *same* rules (what an event is, how entities relate, what a valid recall query is). DDD puts those rules in a pure core that both runtimes import; the `Service` and `Worker` are just two different ways to *drive* it.
+- **The datastores are deliberately undecided.** `database-tradeoffs.md` recommends _starting consolidated on one Postgres (pgvector + partitioned events + edge tables) and graduating the hottest store later_ (→ OpenSearch / Neptune / Timestream). That only stays cheap if business logic never names a database. Hexagonal architecture makes "swap the store" mean "write a new adapter" — the domain doesn't move.
+- **Two runtimes share one brain.** The diagram has a `Service` (HTTP ingest + read API) and a cron-driven `Worker`. They must apply the _same_ rules (what an event is, how entities relate, what a valid recall query is). DDD puts those rules in a pure core that both runtimes import; the `Service` and `Worker` are just two different ways to _drive_ it.
 
 > **Principle:** the domain is a pure library with zero I/O. Everything that touches the network, a database, a clock, or a framework is an adapter plugged into a port.
 
@@ -41,25 +41,25 @@ shared kernel         (kernel)
 - **`platform` is sideways infrastructure**, not an inner layer. Adapters and apps use it; the domain never does.
 - **Apps never import each other.** `service` and `worker` are siblings; anything they share lives in a package.
 
-The package graph *is* the enforcement: an inner package simply does not list an outer package (or a driver) in its `package.json`, so the import is impossible. See §8.
+The package graph _is_ the enforcement: an inner package simply does not list an outer package (or a driver) in its `package.json`, so the import is impossible. See §8.
 
 ---
 
 ## 3. The layers
 
-| Layer | Package | Responsibility | May depend on | Must NOT contain |
-|---|---|---|---|---|
-| **Domain** | `@repo/<context>` (`domain/`) | Entities, value objects, aggregates, domain events, domain services, invariants | `@repo/kernel` | I/O, frameworks, SQL, env, wall-clock reads |
-| **Application** | `@repo/<context>` (`application/`) | Use cases that orchestrate the domain; transaction boundaries; defines ports | own `domain/`, `@repo/kernel` | concrete DBs/HTTP; knowledge of *which* adapter is wired |
-| **Inbound ports** (driving) | `@repo/<context>` (`application/ports/inbound/`) | Interfaces describing *what the app can do* — one per use case | — | implementation |
-| **Outbound ports** (driven) | `@repo/<context>` (`application/ports/outbound/`) | Interfaces the app *needs* — repositories, gateways, clock, event publisher | — | implementation |
-| **Inbound adapters** (driving) | `apps/service` (`http/`), `apps/worker` (`jobs/`) | Translate HTTP/cron/queue into inbound-port calls; validate transport input | `@repo/<context>`, `@repo/platform`, `hono` | business rules |
-| **Outbound adapters** (driven) | `@repo/<context>-infra` | Implement outbound ports against real tech (Postgres, external APIs) | `@repo/<context>`, `@repo/platform`, drivers | business rules |
-| **Composition root** | `apps/*` (`composition/`) | The *only* place that knows concrete adapters; wires them to use cases (DI) | everything | business rules |
-| **Shared kernel** | `@repo/kernel` | DDD building blocks: `Entity`, `AggregateRoot`, `ValueObject`, `DomainEvent`, `Id`, `Result`, `DomainError`, `Clock` | nothing | I/O, context-specific types |
-| **Platform** | `@repo/platform` | Cross-cutting infra primitives: pg pool, `zod` config, `pino` logger, event bus, unit-of-work | drivers | domain types, business rules |
+| Layer                          | Package                                           | Responsibility                                                                                                       | May depend on                                | Must NOT contain                                         |
+| ------------------------------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | -------------------------------------------------------- |
+| **Domain**                     | `@repo/<context>` (`domain/`)                     | Entities, value objects, aggregates, domain events, domain services, invariants                                      | `@repo/kernel`                               | I/O, frameworks, SQL, env, wall-clock reads              |
+| **Application**                | `@repo/<context>` (`application/`)                | Use cases that orchestrate the domain; transaction boundaries; defines ports                                         | own `domain/`, `@repo/kernel`                | concrete DBs/HTTP; knowledge of _which_ adapter is wired |
+| **Inbound ports** (driving)    | `@repo/<context>` (`application/ports/inbound/`)  | Interfaces describing _what the app can do_ — one per use case                                                       | —                                            | implementation                                           |
+| **Outbound ports** (driven)    | `@repo/<context>` (`application/ports/outbound/`) | Interfaces the app _needs_ — repositories, gateways, clock, event publisher                                          | —                                            | implementation                                           |
+| **Inbound adapters** (driving) | `apps/service` (`http/`), `apps/worker` (`jobs/`) | Translate HTTP/cron/queue into inbound-port calls; validate transport input                                          | `@repo/<context>`, `@repo/platform`, `hono`  | business rules                                           |
+| **Outbound adapters** (driven) | `@repo/<context>-infra`                           | Implement outbound ports against real tech (Postgres, external APIs)                                                 | `@repo/<context>`, `@repo/platform`, drivers | business rules                                           |
+| **Composition root**           | `apps/*` (`composition/`)                         | The _only_ place that knows concrete adapters; wires them to use cases (DI)                                          | everything                                   | business rules                                           |
+| **Shared kernel**              | `@repo/kernel`                                    | DDD building blocks: `Entity`, `AggregateRoot`, `ValueObject`, `DomainEvent`, `Id`, `Result`, `DomainError`, `Clock` | nothing                                      | I/O, context-specific types                              |
+| **Platform**                   | `@repo/platform`                                  | Cross-cutting infra primitives: pg pool, `zod` config, `pino` logger, event bus, unit-of-work                        | drivers                                      | domain types, business rules                             |
 
-The split inside the hexagon is the classic one: **driving ports** are how the world calls *in* (use-case interfaces), **driven ports** are how the app calls *out* (repositories/gateways). Adapters sit on the two opposite edges of the hexagon and never talk to each other directly — only through the core.
+The split inside the hexagon is the classic one: **driving ports** are how the world calls _in_ (use-case interfaces), **driven ports** are how the app calls _out_ (repositories/gateways). Adapters sit on the two opposite edges of the hexagon and never talk to each other directly — only through the core.
 
 ---
 
@@ -103,15 +103,16 @@ recallos/
 
 `<context>` is a placeholder for each bounded context (e.g. an ingestion context, a recall context, …). One context = one pure package `@repo/<context>` **plus** one adapter package `@repo/<context>-infra`. Apps stay thin: inbound adapters + a composition root, nothing else.
 
-**Why two packages per context?** The pure package must stay installable with *zero* infra dependencies so the dependency rule is mechanically guaranteed. Splitting the adapters into `@repo/<context>-infra` keeps drivers (`pg`, SDK clients) out of the core's `package.json` entirely, and lets both `service` and `worker` reuse the same outbound adapters.
+**Why two packages per context?** The pure package must stay installable with _zero_ infra dependencies so the dependency rule is mechanically guaranteed. Splitting the adapters into `@repo/<context>-infra` keeps drivers (`pg`, SDK clients) out of the core's `package.json` entirely, and lets both `service` and `worker` reuse the same outbound adapters.
 
 ---
 
 ## 5. Worked example (placeholder context)
 
-A use case for *capturing an item into memory*, shown end-to-end. Names are illustrative — substitute real bounded contexts later.
+A use case for _capturing an item into memory_, shown end-to-end. Names are illustrative — substitute real bounded contexts later.
 
 **Outbound port** — `packages/<context>/src/application/ports/outbound/memory-item.repository.ts`
+
 ```ts
 import type { MemoryItem } from "../../../domain/memory-item.aggregate";
 
@@ -122,47 +123,58 @@ export interface MemoryItemRepository {
 ```
 
 **Inbound port + use case** — `packages/<context>/src/application/use-cases/capture-item.use-case.ts`
+
 ```ts
-export interface CaptureItem {            // driving port
+export interface CaptureItem {
+  // driving port
   execute(input: CaptureItemInput): Promise<Result<MemoryItemId>>;
 }
 
 export class CaptureItemUseCase implements CaptureItem {
-  constructor(private readonly repo: MemoryItemRepository) {}   // outbound PORT, not a DB
+  constructor(private readonly repo: MemoryItemRepository) {} // outbound PORT, not a DB
   async execute(input: CaptureItemInput) {
-    const item = MemoryItem.create(input);   // domain enforces invariants
+    const item = MemoryItem.create(input); // domain enforces invariants
     await this.repo.save(item);
     return Result.ok(item.id);
   }
 }
 ```
+
 Note the use case depends on the **interface** `MemoryItemRepository`. It has no idea Postgres exists.
 
 **Outbound adapter** — `packages/<context>-infra/src/persistence/memory-item.repository.pg.ts`
+
 ```ts
 export class PgMemoryItemRepository implements MemoryItemRepository {
-  constructor(private readonly db: Db) {}   // from @repo/platform
-  async save(item: MemoryItem) { /* map aggregate → rows, INSERT via pgvector + edges */ }
-  async findById(id: MemoryItemId) { /* SELECT → reconstitute aggregate */ }
+  constructor(private readonly db: Db) {} // from @repo/platform
+  async save(item: MemoryItem) {
+    /* map aggregate → rows, INSERT via pgvector + edges */
+  }
+  async findById(id: MemoryItemId) {
+    /* SELECT → reconstitute aggregate */
+  }
 }
 ```
 
 **Composition root** — `apps/service/src/composition/`
+
 ```ts
-const db = createDb(config);                          // @repo/platform
-const repo = new PgMemoryItemRepository(db);          // @repo/<context>-infra
-const captureItem = new CaptureItemUseCase(repo);     // @repo/<context>
+const db = createDb(config); // @repo/platform
+const repo = new PgMemoryItemRepository(db); // @repo/<context>-infra
+const captureItem = new CaptureItemUseCase(repo); // @repo/<context>
 // captureItem is then handed to the HTTP layer
 ```
-This is the *one* file that names both the use case and the concrete adapter. Swapping Postgres for OpenSearch later is a new class in `-infra` + one line here; §5 of `database-tradeoffs.md` is exactly this swap.
+
+This is the _one_ file that names both the use case and the concrete adapter. Swapping Postgres for OpenSearch later is a new class in `-infra` + one line here; §5 of `database-tradeoffs.md` is exactly this swap.
 
 ---
 
 ## 6. Inbound adapters & runtime flows
 
-Both runtimes are *driving* adapters over the same core. Mapping the diagram's arrows:
+Both runtimes are _driving_ adapters over the same core. Mapping the diagram's arrows:
 
 **Service** (`apps/service`) — ingest + read API:
+
 ```
 External --webhook--> http/ adapter --> CaptureItem (inbound port)
                                           └─> MemoryItemRepository (outbound port)
@@ -174,13 +186,14 @@ Client --query--> http/ adapter --> RecallItems (inbound port)
 ```
 
 **Worker** (`apps/worker`) — cron-driven enrichment:
+
 ```
 Cron --trigger--> jobs/ adapter --> EnrichMemory (inbound port)
                                       └─> reads TimeseriesDB, writes VectorDB + GraphDB
                                             (all via outbound ports → <context>-infra)
 ```
 
-The read/write split per store matches `database-tradeoffs.md` §1: `Service` writes Timeseries and reads Vector/Graph; `Worker` reads Timeseries and read/writes Vector/Graph. None of that directionality lives in the domain — it's expressed by *which ports each runtime's composition root wires*.
+The read/write split per store matches `database-tradeoffs.md` §1: `Service` writes Timeseries and reads Vector/Graph; `Worker` reads Timeseries and read/writes Vector/Graph. None of that directionality lives in the domain — it's expressed by _which ports each runtime's composition root wires_.
 
 ---
 
@@ -188,11 +201,11 @@ The read/write split per store matches `database-tradeoffs.md` §1: `Service` wr
 
 Outbound ports are declared in `packages/<context>/src/application/ports/outbound/`; their implementations live in `packages/<context>-infra/src/persistence/`. The domain sees `MemoryItemRepository`, `VectorIndex`, `RelationshipGraph` — never a database name.
 
-| Diagram store | Outbound port (example) | Adapter today (per `database-tradeoffs.md`) | Graduation = new adapter only |
-|---|---|---|---|
-| **TimeseriesDB** | `EventLogRepository` | Aurora Postgres, time-partitioned `events` table | Timestream for InfluxDB |
-| **VectorDB** | `VectorIndex` | Aurora Postgres + `pgvector` (HNSW) | OpenSearch k-NN / S3 Vectors |
-| **GraphDB** | `RelationshipGraph` | Postgres edge table + recursive CTEs | Neptune (openCypher) / Neo4j |
+| Diagram store    | Outbound port (example) | Adapter today (per `database-tradeoffs.md`)      | Graduation = new adapter only |
+| ---------------- | ----------------------- | ------------------------------------------------ | ----------------------------- |
+| **TimeseriesDB** | `EventLogRepository`    | Aurora Postgres, time-partitioned `events` table | Timestream for InfluxDB       |
+| **VectorDB**     | `VectorIndex`           | Aurora Postgres + `pgvector` (HNSW)              | OpenSearch k-NN / S3 Vectors  |
+| **GraphDB**      | `RelationshipGraph`     | Postgres edge table + recursive CTEs             | Neptune (openCypher) / Neo4j  |
 
 > Because the contract is the port, "start consolidated, graduate by evidence" (the DB doc's recommendation) costs **zero** domain changes. Each store is split out by replacing one class in `-infra` and one line in a composition root.
 
@@ -204,7 +217,7 @@ Outbound ports are declared in `packages/<context>/src/application/ports/outboun
 
 Three guards, strongest first:
 
-1. **Package boundaries (primary).** The rule is enforced by *what each `package.json` declares*. `@repo/<context>` lists only `@repo/kernel` — it cannot import `pg` or `@repo/platform` because they aren't installed for it. This makes violations a build error, not a review nit.
+1. **Package boundaries (primary).** The rule is enforced by _what each `package.json` declares_. `@repo/<context>` lists only `@repo/kernel` — it cannot import `pg` or `@repo/platform` because they aren't installed for it. This makes violations a build error, not a review nit.
 2. **Lint.** `oxlint.config.ts` already enables the `import` plugin; add `import/no-cycle` and boundary rules so a stray relative import across packages is caught.
 3. **TypeScript.** Each package extends `@repo/typescript-config/bun.json` and sets its own `paths` (the `@/*` → `./src/*` alias already used by `apps/service`). Project references keep `domain`/`application` compiling without any infra types in scope.
 
@@ -231,18 +244,18 @@ A quick smell test for any PR: open the `package.json` of a `domain`/`applicatio
 
 ## 10. "Where does this go?" cheat-sheet
 
-| I'm adding… | It goes in… |
-|---|---|
-| A new entity / business invariant | `packages/<context>/src/domain/` |
-| A new operation the system can perform | `packages/<context>/src/application/use-cases/` (+ inbound port) |
-| "The app needs to read/write X" | a new **outbound port** in `application/ports/outbound/`, impl in `<context>-infra` |
-| A SQL query / `pgvector` call | `packages/<context>-infra/src/persistence/` |
-| A call to an external API | `packages/<context>-infra/src/gateways/` |
-| A new HTTP route / webhook | `apps/service/src/http/` |
-| A new cron / queue consumer | `apps/worker/src/jobs/` |
-| Wiring a use case to its adapters (DI) | `apps/*/src/composition/` |
-| An env var / the pg pool / logger | `packages/platform/src/` |
-| A base class shared by all contexts | `packages/kernel/src/` |
+| I'm adding…                            | It goes in…                                                                         |
+| -------------------------------------- | ----------------------------------------------------------------------------------- |
+| A new entity / business invariant      | `packages/<context>/src/domain/`                                                    |
+| A new operation the system can perform | `packages/<context>/src/application/use-cases/` (+ inbound port)                    |
+| "The app needs to read/write X"        | a new **outbound port** in `application/ports/outbound/`, impl in `<context>-infra` |
+| A SQL query / `pgvector` call          | `packages/<context>-infra/src/persistence/`                                         |
+| A call to an external API              | `packages/<context>-infra/src/gateways/`                                            |
+| A new HTTP route / webhook             | `apps/service/src/http/`                                                            |
+| A new cron / queue consumer            | `apps/worker/src/jobs/`                                                             |
+| Wiring a use case to its adapters (DI) | `apps/*/src/composition/`                                                           |
+| An env var / the pg pool / logger      | `packages/platform/src/`                                                            |
+| A base class shared by all contexts    | `packages/kernel/src/`                                                              |
 
 ---
 
