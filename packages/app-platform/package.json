@@ -1,0 +1,13 @@
+{
+  "name": "app-platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "oxlint",
+    "test": "bun test --randomize"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*"
+  }
+}
