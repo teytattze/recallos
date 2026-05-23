@@ -96,7 +96,7 @@ recallos/
 │  └─ typescript-config/            # existing — shared strict tsconfig (@repo/typescript-config)
 └─ docs/
    ├─ diagrams/architecture.excalidraw
-   └─ discoveries/
+   └─ thoughts/
       ├─ database-tradeoffs.md
       └─ project-structure.md       # ← this doc
 ```

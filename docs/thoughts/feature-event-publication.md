@@ -363,5 +363,5 @@ Named so the seams are visible, but **not** designed here:
 - **Why it stays adapter-local:** the events table is the source of truth and the
   hand-off is a port, so "SQS today, SNS/Kinesis/MSK/CDC later" is an `-infra`
   change — the domain never moves (`project-structure.md` §7).
-- **This doc is design, not code on disk** — like its siblings in `discoveries/`,
+- **This doc is design, not code on disk** — like its siblings in `thoughts/`,
   it is the contract the ingestion/worker packages should converge toward.
