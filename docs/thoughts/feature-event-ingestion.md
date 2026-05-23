@@ -322,5 +322,5 @@ Named here so the seams are visible, but **not** built in this feature:
 - **Why it stays small:** every line obeys the dependency rule, so the storage and
   transport choices (Postgres today, something else later; HTTP today, a queue later)
   remain adapter-local. The domain never moves.
-- **This doc is design, not code on disk** — like its siblings in `discoveries/`, it
+- **This doc is design, not code on disk** — like its siblings in `thoughts/`, it
   is the contract the `@repo/ingestion` package should converge toward.
