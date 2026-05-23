@@ -1,6 +1,6 @@
 # RecallOS — Database Technology Trade-offs
 
-Derived from `docs/architecture.excalidraw`. Bias: **AWS-managed first** (CI builds and pushes to AWS ECR), with OSS/SaaS alternatives noted. Captures the state of AWS offerings as of 2026-05; see *Verify-before-build* at the end, because managed-extension and service availability shifts.
+Derived from `docs/diagrams/architecture.excalidraw`. Bias: **AWS-managed first** (CI builds and pushes to AWS ECR), with OSS/SaaS alternatives noted. Captures the state of AWS offerings as of 2026-05; see *Verify-before-build* at the end, because managed-extension and service availability shifts.
 
 ---
 
