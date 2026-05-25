@@ -1,13 +1,8 @@
 import { z } from "zod";
 
 /**
- * The environment a runtime boots into. Both the `service` and `worker` parse
- * their config through this schema at startup, so process env is validated once,
- * in one place, and the rest of the code receives a typed {@link AppConfig}
- * instead of reaching into `process.env`.
- *
- * `PORT` is coerced from its string env value to a number. `LOG_LEVEL` mirrors
- * pino's levels so {@link createLogger} can consume it directly.
+ * Parsed once at startup by both `service` and `worker`, so the rest of the
+ * code receives a typed {@link AppConfig} instead of reaching into `process.env`.
  */
 const configSchema = z.object({
   NODE_ENV: z
@@ -22,10 +17,8 @@ const configSchema = z.object({
 export type AppConfig = z.infer<typeof configSchema>;
 
 /**
- * Parse and validate process env into an {@link AppConfig}. Invalid or missing
- * config is an exceptional fault the runtime cannot recover from, not an
- * expected domain failure — so this **throws** (fail-fast at boot) rather than
- * returning a `Result`. The thrown error names every offending variable.
+ * Invalid or missing config is an unrecoverable fault, not an expected domain
+ * failure — so this **throws** (fail-fast at boot) rather than returning a `Result`.
  */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const result = configSchema.safeParse(env);

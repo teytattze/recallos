@@ -1,12 +1,15 @@
 {
-  "name": "server-ingestion",
+  "name": "@repo/server-ingestion",
   "private": true,
   "type": "module",
   "scripts": {
     "lint": "oxlint",
     "test": "bun test --randomize"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@repo/server-kernel": "workspace:*",
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*"
   }

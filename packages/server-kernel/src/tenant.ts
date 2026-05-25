@@ -3,7 +3,6 @@ import { z } from "zod";
 import { parsePropsOrThrow } from "./schema.ts";
 import { ValueObject } from "./value-object.ts";
 
-/** Whether a tenant is an individual user or an organization. */
 export type TenantType = "user" | "organization";
 
 const tenantSchema = z.object({
@@ -13,20 +12,10 @@ const tenantSchema = z.object({
 
 /**
  * The owner an {@link AggregateRoot} belongs to — the access boundary for
- * RecallOS's memory. A tenant is either a single `user` or an `organization`,
- * identified by `id` (the `org_id`/`user_id` an authenticated request resolves
- * to). Modelled as a {@link ValueObject}: two tenants are equal when both `type`
- * and `id` match.
- *
- * The same boundary is enforced at the row level in the database (RLS) so an
- * application bug can't cross tenants. An empty `id` is an impossible state, not
- * a domain failure, so construction runs `tenantSchema` through
- * {@link parsePropsOrThrow} and **throws** rather than returning a `Result`.
- *
- * ```ts
- * const t = Tenant.organization(orgId);
- * t.type; // "organization"
- * ```
+ * RecallOS's memory. Identified by `id` (the `org_id`/`user_id` an authenticated
+ * request resolves to); the same boundary is mirrored at the row level (RLS). An
+ * empty `id` is an impossible state, so construction runs through
+ * {@link parsePropsOrThrow} and **throws** rather than returning a {@link Result}.
  */
 export class Tenant extends ValueObject<{ type: TenantType; id: string }> {
   private constructor(type: TenantType, id: string) {

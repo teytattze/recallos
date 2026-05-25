@@ -1,5 +1,5 @@
 {
-  "name": "server-knowledge",
+  "name": "@repo/server-knowledge",
   "private": true,
   "type": "module",
   "scripts": {
