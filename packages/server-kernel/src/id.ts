@@ -46,6 +46,6 @@ export abstract class Id extends ValueObject<{ value: string }> {
    * ids, inject an id-generator port instead of calling this.
    */
   protected static newValue(): string {
-    return crypto.randomUUID();
+    return Bun.randomUUIDv7();
   }
 }

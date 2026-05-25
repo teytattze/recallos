@@ -54,3 +54,7 @@ The server side follows **hexagonal architecture + DDD**. Dependencies point inw
 - **Platform** (`server-platform`): sideways cross-cutting infra (config, logger, pg pool, event bus); never imported by the domain.
 
 The dependency rule is enforced primarily by what each `package.json` declares — a pure package simply does not list a driver or `@repo/server-platform`. Each context is two packages: pure `@repo/server-<context>` + adapter `@repo/server-<context>-infra`.
+
+## Principles
+
+- Keep it simple

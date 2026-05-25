@@ -7,7 +7,7 @@ paths:
 
 # Objective
 
-Keep unit tests cheap to maintain.
+Keep unit tests readable & cheap to maintain.
 
 # Rules
 
