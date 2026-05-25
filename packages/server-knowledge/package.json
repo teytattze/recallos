@@ -6,7 +6,10 @@
     "lint": "oxlint",
     "test": "bun test --randomize"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@repo/server-kernel": "workspace:*",
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*"
   }
