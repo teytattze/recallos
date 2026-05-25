@@ -14,7 +14,7 @@
       },
     },
     "apps/service": {
-      "name": "service",
+      "name": "@repo/service",
       "dependencies": {
         "hono": "catalog:",
       },
@@ -23,7 +23,7 @@
       },
     },
     "apps/worker": {
-      "name": "worker",
+      "name": "@repo/worker",
       "dependencies": {
         "hono": "catalog:",
       },
@@ -32,16 +32,17 @@
       },
     },
     "packages/server-ingestion": {
-      "name": "server-ingestion",
+      "name": "@repo/server-ingestion",
       "dependencies": {
         "@repo/server-kernel": "workspace:*",
+        "zod": "catalog:",
       },
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
       },
     },
     "packages/server-ingestion-infra": {
-      "name": "server-ingestion-infra",
+      "name": "@repo/server-ingestion-infra",
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
       },
@@ -57,19 +58,19 @@
       },
     },
     "packages/server-knowledge": {
-      "name": "server-knowledge",
+      "name": "@repo/server-knowledge",
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
       },
     },
     "packages/server-knowledge-infra": {
-      "name": "server-knowledge-infra",
+      "name": "@repo/server-knowledge-infra",
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
       },
     },
     "packages/server-platform": {
-      "name": "server-platform",
+      "name": "@repo/server-platform",
       "dependencies": {
         "pino": "catalog:",
         "pino-pretty": "catalog:",
@@ -193,9 +194,23 @@
 
     "@pinojs/redact": ["@pinojs/redact@0.4.0", "", {}, "sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg=="],
 
+    "@repo/server-ingestion": ["@repo/server-ingestion@workspace:packages/server-ingestion"],
+
+    "@repo/server-ingestion-infra": ["@repo/server-ingestion-infra@workspace:packages/server-ingestion-infra"],
+
     "@repo/server-kernel": ["@repo/server-kernel@workspace:packages/server-kernel"],
 
+    "@repo/server-knowledge": ["@repo/server-knowledge@workspace:packages/server-knowledge"],
+
+    "@repo/server-knowledge-infra": ["@repo/server-knowledge-infra@workspace:packages/server-knowledge-infra"],
+
+    "@repo/server-platform": ["@repo/server-platform@workspace:packages/server-platform"],
+
+    "@repo/service": ["@repo/service@workspace:apps/service"],
+
     "@repo/typescript-config": ["@repo/typescript-config@workspace:packages/typescript-config"],
+
+    "@repo/worker": ["@repo/worker@workspace:apps/worker"],
 
     "@turbo/darwin-64": ["@turbo/darwin-64@2.9.14", "", { "os": "darwin", "cpu": "x64" }, "sha512-t7QiPflaEyBE4oayeZtSmu4mEfjgIrcNlNNl1z1dmIVPqEdtA7+CfTf8d7KXsOGPh6aNgWjKxyvQg9uGfDQF+A=="],
 
@@ -267,18 +282,6 @@
 
     "secure-json-parse": ["secure-json-parse@4.1.0", "", {}, "sha512-l4KnYfEyqYJxDwlNVyRfO2E4NTHfMKAWdUuA8J0yve2Dz/E/PdBepY03RvyJpssIpRFwJoCD55wA+mEDs6ByWA=="],
 
-    "server-ingestion": ["server-ingestion@workspace:packages/server-ingestion"],
-
-    "server-ingestion-infra": ["server-ingestion-infra@workspace:packages/server-ingestion-infra"],
-
-    "server-knowledge": ["server-knowledge@workspace:packages/server-knowledge"],
-
-    "server-knowledge-infra": ["server-knowledge-infra@workspace:packages/server-knowledge-infra"],
-
-    "server-platform": ["server-platform@workspace:packages/server-platform"],
-
-    "service": ["service@workspace:apps/service"],
-
     "sonic-boom": ["sonic-boom@4.2.1", "", { "dependencies": { "atomic-sleep": "^1.0.0" } }, "sha512-w6AxtubXa2wTXAUsZMMWERrsIRAdrK0Sc+FUytWvYAhBJLyuI4llrMIC1DtlNSdI99EI86KZum2MMq3EAZlF9Q=="],
 
     "split2": ["split2@4.2.0", "", {}, "sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg=="],
@@ -294,8 +297,6 @@
     "typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 
     "undici-types": ["undici-types@7.24.6", "", {}, "sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg=="],
-
-    "worker": ["worker@workspace:apps/worker"],
 
     "wrappy": ["wrappy@1.0.2", "", {}, "sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ=="],
 

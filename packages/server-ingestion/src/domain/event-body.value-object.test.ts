@@ -8,8 +8,6 @@ test("EventBody.create: given a non-empty payload, it should return ok", () => {
 
   // THEN
   expect(result.ok).toBe(true);
-  if (!result.ok) return;
-  expect(result.value.toJSON()).toEqual({ text: "hello" });
 });
 
 test("EventBody.create: given an empty payload, it should return an InvalidEvent error", () => {
@@ -23,15 +21,19 @@ test("EventBody.create: given an empty payload, it should return an InvalidEvent
   expect(result.error.category).toBe("validation");
 });
 
-test("EventBody.toJSON: given a returned object, it should be a copy", () => {
+test("EventBody.restore: given a stored body, it should equal the same EventBody.create value", () => {
   // GIVEN
-  const result = EventBody.create({ text: "hello" });
-  if (!result.ok) throw new Error("expected ok");
+  const created = EventBody.create({ text: "hello" });
+  if (!created.ok) throw new Error("expected ok");
 
   // WHEN
-  const json = result.value.toJSON();
-  json.text = "mutated";
+  const restored = EventBody.restore({ text: "hello" });
 
   // THEN
-  expect(result.value.toJSON()).toEqual({ text: "hello" });
+  expect(restored.equals(created.value)).toBe(true);
+});
+
+test("EventBody.restore: given an empty body, it should throw", () => {
+  // GIVEN / WHEN / THEN
+  expect(() => EventBody.restore({})).toThrow();
 });

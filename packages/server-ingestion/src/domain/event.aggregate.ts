@@ -1,21 +1,40 @@
-import { AggregateRoot, EntityMetadata, Result } from "@repo/server-kernel";
+import {
+  AggregateRoot,
+  EntityMetadata,
+  Result,
+  parseProps,
+  parsePropsOrThrow,
+} from "@repo/server-kernel";
+import { z } from "zod";
 
 import { EventBody } from "./event-body.value-object.ts";
 import { EventId } from "./event-id.value-object.ts";
 import { InvalidEvent } from "./invalid-event.error.ts";
 import { Tags } from "./tags.value-object.ts";
 
-export type RecordEventProps = {
+export type CreateEventInput = {
+  recordedAt: Date;
   occurredAt: Date;
   tags: Record<string, string>;
   body: Record<string, unknown>;
 };
 
-type EventProps = {
+export type RestoreEventInput = {
+  id: string;
+  recordedAt: Date;
+  updatedAt: Date;
   occurredAt: Date;
-  tags: Tags;
-  body: EventBody;
+  tags: Record<string, string>;
+  body: Record<string, unknown>;
 };
+
+const eventPropsSchema = z.object({
+  occurredAt: z.date(),
+  tags: z.custom<Tags>((v) => v instanceof Tags),
+  body: z.custom<EventBody>((v) => v instanceof EventBody),
+});
+
+type EventProps = z.infer<typeof eventPropsSchema>;
 
 export class Event extends AggregateRoot<EventId, EventProps> {
   private constructor(
@@ -26,44 +45,46 @@ export class Event extends AggregateRoot<EventId, EventProps> {
     super(id, metadata, props);
   }
 
-  get occurredAt(): Date {
-    return this._props.occurredAt;
-  }
+  static create(input: CreateEventInput): Result<Event> {
+    const createTagsResult = Tags.create(input.tags);
+    if (!createTagsResult.ok) return createTagsResult;
 
-  // When RecallOS captured the event — the creation instant from the Clock.
-  get recordedAt(): Date {
-    return this._metadata.createdAt;
-  }
+    const createBodyResult = EventBody.create(input.body);
+    if (!createBodyResult.ok) return createBodyResult;
 
-  get tags(): Tags {
-    return this._props.tags;
-  }
+    const parsePropsResult = parseProps(
+      eventPropsSchema,
+      {
+        occurredAt: input.occurredAt,
+        tags: createTagsResult.value,
+        body: createBodyResult.value,
+      },
+      InvalidEvent,
+    );
+    if (!parsePropsResult.ok) return parsePropsResult;
 
-  get body(): EventBody {
-    return this._props.body;
-  }
-
-  // `recordedAt` is supplied by the caller (the Clock port) — the domain never
-  // reads the wall clock.
-  static record(props: RecordEventProps, recordedAt: Date): Result<Event> {
-    if (Number.isNaN(props.occurredAt.getTime())) {
-      return Result.err(InvalidEvent("occurredAt is not a valid date"));
-    }
-    if (props.occurredAt.getTime() > recordedAt.getTime()) {
+    const eventProps = parsePropsResult.value;
+    if (eventProps.occurredAt.getTime() > input.recordedAt.getTime()) {
       return Result.err(InvalidEvent("occurredAt cannot be in the future"));
     }
 
-    const tags = Tags.create(props.tags);
-    if (!tags.ok) return tags;
-
-    const body = EventBody.create(props.body);
-    if (!body.ok) return body;
-
     return Result.ok(
-      new Event(EventId.generate(), EntityMetadata.create(recordedAt), {
-        occurredAt: props.occurredAt,
-        tags: tags.value,
-        body: body.value,
+      new Event(
+        EventId.create(),
+        EntityMetadata.create(input.recordedAt),
+        eventProps,
+      ),
+    );
+  }
+
+  static restore(input: RestoreEventInput): Event {
+    return new Event(
+      EventId.restore(input.id),
+      EntityMetadata.restore(input.recordedAt, input.updatedAt),
+      parsePropsOrThrow(eventPropsSchema, {
+        occurredAt: input.occurredAt,
+        tags: Tags.restore(input.tags),
+        body: EventBody.restore(input.body),
       }),
     );
   }

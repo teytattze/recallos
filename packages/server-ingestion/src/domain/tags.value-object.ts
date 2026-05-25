@@ -1,10 +1,21 @@
-import { Result, ValueObject } from "@repo/server-kernel";
+import {
+  Result,
+  ValueObject,
+  parseProps,
+  parsePropsOrThrow,
+} from "@repo/server-kernel";
+import { z } from "zod";
 
 import { InvalidEvent } from "./invalid-event.error.ts";
 
-type TagsProps = {
-  entries: Readonly<Record<string, string>>;
-};
+const tagsPropsSchema = z.object({
+  entries: z.record(
+    z.string().trim().toLowerCase().min(1, "tag keys must be non-empty"),
+    z.string().trim(),
+  ),
+});
+
+type TagsProps = z.infer<typeof tagsPropsSchema>;
 
 export class Tags extends ValueObject<TagsProps> {
   private constructor(props: TagsProps) {
@@ -12,22 +23,13 @@ export class Tags extends ValueObject<TagsProps> {
   }
 
   static create(input: Record<string, string>): Result<Tags> {
-    const entries: Record<string, string> = {};
-    for (const [rawKey, rawValue] of Object.entries(input)) {
-      const key = rawKey.trim().toLowerCase();
-      if (key === "") {
-        return Result.err(InvalidEvent("tag keys must be non-empty"));
-      }
-      entries[key] = rawValue.trim();
-    }
-    return Result.ok(new Tags({ entries }));
+    return Result.map(
+      parseProps(tagsPropsSchema, { entries: input }, InvalidEvent),
+      (props) => new Tags(props),
+    );
   }
 
-  get(key: string): string | undefined {
-    return this._props.entries[key.trim().toLowerCase()];
-  }
-
-  toRecord(): Record<string, string> {
-    return { ...this._props.entries };
+  static restore(entries: Record<string, string>): Tags {
+    return new Tags(parsePropsOrThrow(tagsPropsSchema, { entries }));
   }
 }
