@@ -35,10 +35,12 @@ export const Result = {
     return { ok: false, error };
   },
 
+  /** Narrow a `Result` to its success branch. */
   isOk<T, E>(result: Result<T, E>): result is Ok<T> {
     return result.ok;
   },
 
+  /** Narrow a `Result` to its failure branch. */
   isErr<T, E>(result: Result<T, E>): result is Err<E> {
     return !result.ok;
   },

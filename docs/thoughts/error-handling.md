@@ -1,6 +1,6 @@
 # RecallOS — Error Handling (Result vs Throw)
 
-Companion to [`project-structure.md`](./project-structure.md). It fixes _how failures move through the hexagon_: which layer returns a value and which one throws, and where the two are reconciled. The primitives live in `@repo/app-kernel` (`result.ts`, `domain-error.ts`).
+Companion to [`project-structure.md`](./project-structure.md). It fixes _how failures move through the hexagon_: which layer returns a value and which one throws, and where the two are reconciled. The primitives live in `@repo/server-kernel` (`result.ts`, `domain-error.ts`).
 
 ---
 
@@ -19,12 +19,12 @@ The split is not "errors as values vs exceptions" as a matter of taste — it is
 
 ## 2. Per-layer rules
 
-| Layer                                         | Strategy                                                                                                                                                                   | Rationale                                                                                                                                      |
-| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Domain** (value objects, aggregates)        | `Result` for anticipated validation (`Email.create(raw): Result<Email>`); `throw` for defensive asserts on invariants the application layer should already have guaranteed | Construction failure is an expected outcome; a violated post-condition is a bug, not a branch                                                  |
-| **Application** (use cases / inbound ports)   | **`Result<T, DomainError>`** — this _is_ the inbound-port contract                                                                                                         | A use case's failures are business outcomes the caller routes on. Matches `execute(input): Promise<Result<MemoryItemId>>` in the structure doc |
-| **Outbound adapters** (`app-<context>-infra`) | `throw` on infra faults; map _expected_ absence to `null` or `Result` at the port boundary                                                                                 | A dropped connection is exceptional; "no row" is often normal and belongs in the contract                                                      |
-| **Inbound adapters** (`http/`, `jobs/`)       | The **single reconciliation point**: `catch` thrown faults _and_ unwrap `Result` into a transport response (HTTP status / retry decision)                                  | One place owns "domain failure → 4xx, unexpected throw → 500/retry." Nothing inside relies on `throw` for control flow                         |
+| Layer                                            | Strategy                                                                                                                                                                   | Rationale                                                                                                                                      |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Domain** (value objects, aggregates)           | `Result` for anticipated validation (`Email.create(raw): Result<Email>`); `throw` for defensive asserts on invariants the application layer should already have guaranteed | Construction failure is an expected outcome; a violated post-condition is a bug, not a branch                                                  |
+| **Application** (use cases / inbound ports)      | **`Result<T, DomainError>`** — this _is_ the inbound-port contract                                                                                                         | A use case's failures are business outcomes the caller routes on. Matches `execute(input): Promise<Result<MemoryItemId>>` in the structure doc |
+| **Outbound adapters** (`server-<context>-infra`) | `throw` on infra faults; map _expected_ absence to `null` or `Result` at the port boundary                                                                                 | A dropped connection is exceptional; "no row" is often normal and belongs in the contract                                                      |
+| **Inbound adapters** (`http/`, `jobs/`)          | The **single reconciliation point**: `catch` thrown faults _and_ unwrap `Result` into a transport response (HTTP status / retry decision)                                  | One place owns "domain failure → 4xx, unexpected throw → 500/retry." Nothing inside relies on `throw` for control flow                         |
 
 The architectural payoff: everything _inside_ the hexagon returns `Result` for business failures; anything that `throw`s is, by definition, a fault the boundary logs and converts — never flow the domain depends on.
 
@@ -32,7 +32,7 @@ The architectural payoff: everything _inside_ the hexagon returns `Result` for b
 
 ## 3. The kernel primitives
 
-`@repo/app-kernel` stays zero-dependency, so these are hand-rolled (no `neverthrow`/`fp-ts`).
+`@repo/server-kernel` stays zero-dependency, so these are hand-rolled (no `neverthrow`/`fp-ts`).
 
 **`Result<T, E = DomainError>`** — a discriminated union plus combinators (`result.ts`):
 

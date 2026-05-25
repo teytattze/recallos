@@ -1,0 +1,17 @@
+{
+  "name": "server-platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "oxlint",
+    "test": "bun test --randomize"
+  },
+  "dependencies": {
+    "pino": "catalog:",
+    "pino-pretty": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*"
+  }
+}

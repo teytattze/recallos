@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 20260523
 - **Deciders:** Liam Tat Tze Tey
-- **Scope:** Every bounded context in the backend — all hexagonal layers (domain, application, outbound/inbound adapters) and the `@repo/app-kernel` primitives they share. Excludes frontend and transport-specific status-mapping tables (deferred to per-adapter follow-ups).
+- **Scope:** Every bounded context in the backend — all hexagonal layers (domain, application, outbound/inbound adapters) and the `@repo/server-kernel` primitives they share. Excludes frontend and transport-specific status-mapping tables (deferred to per-adapter follow-ups).
 
 ---
 
@@ -12,7 +12,7 @@
 - Failures must move through the hexagonal architecture consistently, but two propagation styles compete: errors-as-values (`Result`) and exceptions (`throw`). Choosing per-case by taste produces inconsistent signatures across layers.
 - The real axis is not "values vs exceptions" but **who can act on the failure**: a caller that is supposed to branch on an outcome needs it in the type signature; a fault nobody downstream can sensibly handle should bubble to a boundary.
 - `Result` everywhere threads infra concerns (connection-pool exhaustion, timeouts) through every signature as noise. `throw` everywhere hides the domain's real failure modes from the type system.
-- Fixed constraint: `@repo/app-kernel` stays zero-dependency, so the primitives are hand-rolled (no `neverthrow`/`fp-ts`). Assumed: zod is permitted in the pure core.
+- Fixed constraint: `@repo/server-kernel` stays zero-dependency, so the primitives are hand-rolled (no `neverthrow`/`fp-ts`). Assumed: zod is permitted in the pure core.
 
 ## Decision
 
@@ -23,7 +23,7 @@
 - Per-layer rules:
   - **Domain:** `Result` for anticipated validation (`Email.create(raw)`); `throw` for defensive asserts on invariants the application layer should already guarantee.
   - **Application (use cases / inbound ports):** `Result<T, DomainError>` _is_ the inbound-port contract.
-  - **Outbound adapters (`app-<context>-infra`):** `throw` on infra faults; map expected absence to `null`/`Result` at the port boundary.
+  - **Outbound adapters (`server-<context>-infra`):** `throw` on infra faults; map expected absence to `null`/`Result` at the port boundary.
   - **Inbound adapters (`http/`, `jobs/`):** the single reconciliation point — `catch` thrown faults _and_ unwrap `Result` into a transport response.
 - `DomainError` is a **tagged union**, not a class hierarchy: a `kind` discriminant enables exhaustive `switch`; a `category` (`validation | not-found | conflict | forbidden | unexpected`) carries domain semantics that the inbound adapter maps to transport (e.g. `validation → 422`), so adapters never enumerate every concrete `kind`.
 
@@ -37,5 +37,5 @@
 
 - **`Result` everywhere** — maximizes explicitness; loses because it threads unactionable infra faults through every signature as noise, drowning the domain's real failure modes.
 - **`throw` everywhere** — minimal signatures; loses because it hides anticipated business failures from the type system, so callers can't be forced to handle them.
-- **`neverthrow` / `fp-ts` for the primitives** — mature combinators; loses because it breaks the zero-dependency constraint on `@repo/app-kernel`.
+- **`neverthrow` / `fp-ts` for the primitives** — mature combinators; loses because it breaks the zero-dependency constraint on `@repo/server-kernel`.
 - **Class-hierarchy `DomainError` with `instanceof`** — familiar OO shape; loses because `instanceof` chains can't be checked exhaustively and rot as the hierarchy grows, where a tagged union lets TypeScript flag unhandled cases.
