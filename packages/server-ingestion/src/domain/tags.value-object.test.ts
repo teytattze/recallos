@@ -8,9 +8,9 @@ test("Tags.create: given mixed-case, padded keys, it should normalize them to tr
   const canonical = Tags.create({ source: "slack" });
 
   // THEN
-  expect(padded.ok && canonical.ok && padded.value.equals(canonical.value)).toBe(
-    true,
-  );
+  expect(
+    padded.ok && canonical.ok && padded.value.equals(canonical.value),
+  ).toBe(true);
 });
 
 test("Tags.create: given padded values, it should trim them", () => {
@@ -19,9 +19,9 @@ test("Tags.create: given padded values, it should trim them", () => {
   const canonical = Tags.create({ type: "message" });
 
   // THEN
-  expect(padded.ok && canonical.ok && padded.value.equals(canonical.value)).toBe(
-    true,
-  );
+  expect(
+    padded.ok && canonical.ok && padded.value.equals(canonical.value),
+  ).toBe(true);
 });
 
 test("Tags.create: given an empty input, it should return ok", () => {

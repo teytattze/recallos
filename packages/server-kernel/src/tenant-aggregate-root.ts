@@ -5,15 +5,11 @@ import { EntityMetadata } from "./metadata.ts";
 import { Tenant } from "./tenant.ts";
 
 /**
- * An {@link AggregateRoot} owned by a {@link Tenant} — the access boundary for
- * RecallOS's memory. Extend this (instead of {@link AggregateRoot}) for any root
- * scoped to a user or organization; the `tenant` is then guaranteed present at
- * the type level, so callers never null-check it and a global root can never
- * accidentally carry one.
- *
- * `tenant` is set once at creation and immutable, like the id. The same boundary
- * is enforced at the row level in the database (RLS) so an application bug can't
- * cross tenants.
+ * An {@link AggregateRoot} owned by a {@link Tenant}. Extend this instead of
+ * {@link AggregateRoot} for a root scoped to a user or organization: `tenant` is
+ * guaranteed at the type level, so callers never null-check it and a global root
+ * can't accidentally carry one. Set once and immutable, like the id; the same
+ * boundary is mirrored at the row level in the database (RLS).
  */
 export abstract class TenantAggregateRoot<
   TId extends Id,

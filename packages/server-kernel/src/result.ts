@@ -1,30 +1,20 @@
 import type { DomainError } from "./domain-error.ts";
 
-/**
- * Success branch of a {@link Result}.
- */
 export type Ok<T> = { readonly ok: true; readonly value: T };
 
-/**
- * Failure branch of a {@link Result}.
- */
 export type Err<E> = { readonly ok: false; readonly error: E };
 
 /**
- * A value that is either a success (`Ok`) or an expected, domain-meaningful
- * failure (`Err`). Use it as the return type for anything inside the hexagon
- * whose failure modes are part of the contract — value-object construction and
- * every use case. Truly exceptional faults (infra down, impossible state) should
- * `throw` instead and be reconciled at the inbound adapter.
- *
- * `E` defaults to {@link DomainError} so a use case can be typed as
- * `Result<MemoryItemId>` when its errors are the standard domain shape.
+ * Either a success or an *expected*, domain-meaningful failure. Return type for
+ * anything in the hexagon whose failure modes are part of its contract (VO
+ * construction, use cases); truly exceptional faults `throw` instead and are
+ * reconciled at the inbound adapter. `E` defaults to {@link DomainError}.
  */
 export type Result<T, E = DomainError> = Ok<T> | Err<E>;
 
 /**
- * Constructors and combinators for {@link Result}. Shares its name with the
- * type (type-space vs value-space), so `Result<T>` and `Result.ok(x)` coexist.
+ * Constructors and combinators for {@link Result}. Shares the type's name so
+ * `Result<T>` and `Result.ok(x)` coexist.
  */
 export const Result = {
   ok<T>(value: T): Ok<T> {
