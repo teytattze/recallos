@@ -33,6 +33,9 @@
     },
     "packages/server-ingestion": {
       "name": "server-ingestion",
+      "dependencies": {
+        "@repo/server-kernel": "workspace:*",
+      },
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
       },
@@ -44,7 +47,7 @@
       },
     },
     "packages/server-kernel": {
-      "name": "server-kernel",
+      "name": "@repo/server-kernel",
       "dependencies": {
         "es-toolkit": "catalog:",
         "zod": "catalog:",
@@ -190,6 +193,8 @@
 
     "@pinojs/redact": ["@pinojs/redact@0.4.0", "", {}, "sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg=="],
 
+    "@repo/server-kernel": ["@repo/server-kernel@workspace:packages/server-kernel"],
+
     "@repo/typescript-config": ["@repo/typescript-config@workspace:packages/typescript-config"],
 
     "@turbo/darwin-64": ["@turbo/darwin-64@2.9.14", "", { "os": "darwin", "cpu": "x64" }, "sha512-t7QiPflaEyBE4oayeZtSmu4mEfjgIrcNlNNl1z1dmIVPqEdtA7+CfTf8d7KXsOGPh6aNgWjKxyvQg9uGfDQF+A=="],
@@ -265,8 +270,6 @@
     "server-ingestion": ["server-ingestion@workspace:packages/server-ingestion"],
 
     "server-ingestion-infra": ["server-ingestion-infra@workspace:packages/server-ingestion-infra"],
-
-    "server-kernel": ["server-kernel@workspace:packages/server-kernel"],
 
     "server-knowledge": ["server-knowledge@workspace:packages/server-knowledge"],
 

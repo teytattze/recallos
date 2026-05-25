@@ -1,7 +1,10 @@
 {
-  "name": "server-kernel",
+  "name": "@repo/server-kernel",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "lint": "oxlint",
     "test": "bun test --randomize"
