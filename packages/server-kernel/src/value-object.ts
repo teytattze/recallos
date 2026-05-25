@@ -1,49 +1,4 @@
-/**
- * Structural deep equality for the small, plain values a value object holds —
- * primitives, `Date`, arrays, and plain records nested arbitrarily. The kernel
- * leans on `zod` to validate `props` (see {@link parseProps}) but otherwise
- * avoids a general utility belt (no `es-toolkit`), so equality is hand-rolled
- * here. It is intentionally not a general-purpose `isEqual`: it does not handle
- * `Map`/`Set`/class instances, because a value object's `props` should only
- * ever be made of the shapes above.
- */
-function deepEquals(a: unknown, b: unknown): boolean {
-  if (Object.is(a, b)) return true;
-
-  if (a instanceof Date || b instanceof Date) {
-    return (
-      a instanceof Date && b instanceof Date && a.getTime() === b.getTime()
-    );
-  }
-
-  if (Array.isArray(a) || Array.isArray(b)) {
-    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
-      return false;
-    }
-    return a.every((item, index) => deepEquals(item, b[index]));
-  }
-
-  if (
-    typeof a === "object" &&
-    typeof b === "object" &&
-    a !== null &&
-    b !== null
-  ) {
-    const aKeys = Object.keys(a);
-    const bKeys = Object.keys(b);
-    if (aKeys.length !== bKeys.length) return false;
-    return aKeys.every(
-      (key) =>
-        Object.hasOwn(b, key) &&
-        deepEquals(
-          (a as Record<string, unknown>)[key],
-          (b as Record<string, unknown>)[key],
-        ),
-    );
-  }
-
-  return false;
-}
+import { isEqual } from "es-toolkit";
 
 /**
  * A value object: an immutable bundle of data with **no identity**. Two value
@@ -90,6 +45,6 @@ export abstract class ValueObject<T extends Record<string, unknown>> {
   equals(other?: ValueObject<T>): boolean {
     if (other === undefined || other === null) return false;
     if (other === this) return true;
-    return deepEquals(this._props, other._props);
+    return isEqual(this._props, other._props);
   }
 }
