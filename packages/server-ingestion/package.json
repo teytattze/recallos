@@ -1,5 +1,5 @@
 {
-  "name": "server-ingestion",
+  "name": "@repo/server-ingestion",
   "private": true,
   "type": "module",
   "scripts": {

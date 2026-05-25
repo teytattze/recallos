@@ -1,5 +1,5 @@
 {
-  "name": "server-platform",
+  "name": "@repo/server-platform",
   "private": true,
   "type": "module",
   "scripts": {

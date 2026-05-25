@@ -1,5 +1,5 @@
 {
-  "name": "worker",
+  "name": "@repo/worker",
   "private": true,
   "type": "module",
   "scripts": {

@@ -1,5 +1,5 @@
 {
-  "name": "service",
+  "name": "@repo/service",
   "private": true,
   "type": "module",
   "scripts": {
