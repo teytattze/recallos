@@ -1,13 +1,13 @@
-import type { AppConfig } from "@repo/server-platform";
-
 import { PrismaPg } from "@prisma/adapter-pg";
+
+import type { AppConfig } from "./config.ts";
 
 import { PrismaClient } from "./generated/client.ts";
 
 /**
- * The PrismaClient (over the `pg` driver adapter) is the cluster's connection
- * pool and unit-of-work in one — composition roots build it once and inject it
- * into the *-infra repositories.
+ * The PrismaClient (over the `pg` adapter) is the cluster's connection pool and
+ * unit-of-work in one — built once at the composition root, injected into the
+ * *-infra repositories.
  */
 export function createPrismaClient(
   config: Pick<AppConfig, "DATABASE_URL">,
