@@ -12,6 +12,7 @@ const configSchema = z.object({
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
     .default("info"),
   PORT: z.coerce.number().int().positive().default(3000),
+  DATABASE_URL: z.url(),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

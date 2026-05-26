@@ -34,6 +34,7 @@ RecallOS is org-wide shared memory: ingest information from many sources, relate
 - `@packages/`: shared workspaces; every server package is prefixed `server-`.
 - `@packages/server-ingestion/`: ingestion bounded context — pure domain + application (event ingestion). `@repo/server-kernel` only so far.
 - `@packages/server-ingestion-infra/`: outbound adapters for the ingestion context (persistence + gateways).
+- `@packages/server-database/`: dedicated Prisma data layer for the consolidated Postgres cluster — single schema + migration history, `createPrismaClient` factory, `db:*` scripts.
 - `@packages/server-kernel/`: DDD shared kernel — `Entity`, `AggregateRoot`, `ValueObject`, `DomainEvent`, `Id`, `Result`, `DomainError`, `Clock`, `Tenant`, schema helpers. Depends on `zod` only.
 - `@packages/server-knowledge/`: knowledge bounded context — pure domain + application (knowledge graph).
 - `@packages/server-knowledge-infra/`: outbound adapters for the knowledge context.
