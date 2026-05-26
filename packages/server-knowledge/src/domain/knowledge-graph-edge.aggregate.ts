@@ -13,7 +13,10 @@ import { EventId } from "./event-id.value-object.ts";
 import { InvalidKnowledgeGraphEdge } from "./invalid-knowledge-graph-edge.error.ts";
 import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
 import { NodeId } from "./node-id.value-object.ts";
-import { RelationshipType } from "./relationship-type.value-object.ts";
+import {
+  RELATIONSHIP_TYPES,
+  type RelationshipType,
+} from "./relationship-type.value-object.ts";
 
 export type CreateKnowledgeGraphEdgeInput = {
   graphId: KnowledgeGraphId;
@@ -43,7 +46,7 @@ const knowledgeGraphEdgePropsSchema = z.object({
   graphId: z.custom<KnowledgeGraphId>((v) => v instanceof KnowledgeGraphId),
   fromId: z.custom<NodeId>((v) => v instanceof NodeId),
   toId: z.custom<NodeId>((v) => v instanceof NodeId),
-  relationship: z.enum(RelationshipType),
+  relationship: z.enum(RELATIONSHIP_TYPES),
   confidence: z.custom<Confidence>((v) => v instanceof Confidence),
   sourceEventIds: z
     .array(z.custom<EventId>((v) => v instanceof EventId))

@@ -1,11 +1,13 @@
-export enum NodeType {
-  PERSON = "PERSON",
-  ORGANIZATION = "ORGANIZATION",
-  DOCUMENT = "DOCUMENT",
-  MESSAGE = "MESSAGE",
-  TASK = "TASK",
-  TOPIC = "TOPIC",
-  CONCEPT = "CONCEPT",
-  LOCATION = "LOCATION",
-  SYSTEM = "SYSTEM",
-}
+export const NODE_TYPES = [
+  "PERSON",
+  "ORGANIZATION",
+  "DOCUMENT",
+  "MESSAGE",
+  "TASK",
+  "TOPIC",
+  "CONCEPT",
+  "LOCATION",
+  "SYSTEM",
+] as const;
+
+export type NodeType = (typeof NODE_TYPES)[number];

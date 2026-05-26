@@ -13,7 +13,7 @@ import { InvalidKnowledgeGraphNode } from "./invalid-knowledge-graph-node.error.
 import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
 import { NodeBody } from "./node-body.value-object.ts";
 import { NodeId } from "./node-id.value-object.ts";
-import { NodeType } from "./node-type.value-object.ts";
+import { NODE_TYPES, type NodeType } from "./node-type.value-object.ts";
 
 export type CreateKnowledgeGraphNodeInput = {
   graphId: KnowledgeGraphId;
@@ -36,7 +36,7 @@ export type RestoreKnowledgeGraphNodeInput = {
 
 const knowledgeGraphNodePropsSchema = z.object({
   graphId: z.custom<KnowledgeGraphId>((v) => v instanceof KnowledgeGraphId),
-  type: z.enum(NodeType),
+  type: z.enum(NODE_TYPES),
   body: z.custom<NodeBody>((v) => v instanceof NodeBody),
   eventIds: z
     .array(z.custom<EventId>((v) => v instanceof EventId))
