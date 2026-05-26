@@ -37,7 +37,7 @@ RecallOS is org-wide shared memory: ingest information from many sources, relate
 - `@packages/server-kernel/`: DDD shared kernel — `Entity`, `AggregateRoot`, `ValueObject`, `DomainEvent`, `Id`, `Result`, `DomainError`, `Clock`, `Tenant`, schema helpers. Depends on `zod` only.
 - `@packages/server-knowledge/`: knowledge bounded context — pure domain + application (knowledge graph).
 - `@packages/server-knowledge-infra/`: outbound adapters for the knowledge context.
-- `@packages/server-platform/`: cross-cutting infra primitives — Prisma client (consolidated Postgres), `zod` config, `pino` logger; (event bus, unit-of-work to come).
+- `@packages/server-platform/`: cross-cutting infra primitives — `zod` config, `pino` logger, (db pool, event bus, unit-of-work to come).
 - `@packages/typescript-config/`: shared strict tsconfig (`@repo/typescript-config`); extend `bun.json` for server packages.
 
 ## Architecture

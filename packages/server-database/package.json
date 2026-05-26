@@ -1,0 +1,28 @@
+{
+  "name": "@repo/server-database",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:reset": "prisma migrate reset",
+    "db:studio": "prisma studio",
+    "lint": "oxlint",
+    "test": "bun test --randomize"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "catalog:",
+    "@prisma/client": "catalog:",
+    "@repo/server-platform": "workspace:*",
+    "pg": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/pg": "catalog:",
+    "prisma": "catalog:"
+  }
+}

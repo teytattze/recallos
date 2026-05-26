@@ -31,6 +31,20 @@
         "@repo/typescript-config": "workspace:*",
       },
     },
+    "packages/server-database": {
+      "name": "@repo/server-database",
+      "dependencies": {
+        "@prisma/adapter-pg": "catalog:",
+        "@prisma/client": "catalog:",
+        "@repo/server-platform": "workspace:*",
+        "pg": "catalog:",
+      },
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "@types/pg": "catalog:",
+        "prisma": "catalog:",
+      },
+    },
     "packages/server-ingestion": {
       "name": "@repo/server-ingestion",
       "dependencies": {
@@ -76,17 +90,12 @@
     "packages/server-platform": {
       "name": "@repo/server-platform",
       "dependencies": {
-        "@prisma/adapter-pg": "catalog:",
-        "@prisma/client": "catalog:",
-        "pg": "catalog:",
         "pino": "catalog:",
         "pino-pretty": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
-        "@types/pg": "catalog:",
-        "prisma": "catalog:",
       },
     },
     "packages/typescript-config": {
@@ -265,6 +274,8 @@
     "@radix-ui/react-use-effect-event": ["@radix-ui/react-use-effect-event@0.0.2", "", { "dependencies": { "@radix-ui/react-use-layout-effect": "1.1.1" }, "peerDependencies": { "@types/react": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-Qp8WbZOBe+blgpuUT+lw2xheLP8q0oatc9UpmiemEICxGvFLYmHm9QowVZGHtJlGbS6A6yJ3iViad/2cVjnOiA=="],
 
     "@radix-ui/react-use-layout-effect": ["@radix-ui/react-use-layout-effect@1.1.1", "", { "peerDependencies": { "@types/react": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-RbJRS4UWQFkzHTTwVymMTUv8EqYhOp8dOOviLj2ugtTiXRaRQS7GLGxZTLL1jWhMeoSCf5zmcZkqTl9IiYfXcQ=="],
+
+    "@repo/server-database": ["@repo/server-database@workspace:packages/server-database"],
 
     "@repo/server-ingestion": ["@repo/server-ingestion@workspace:packages/server-ingestion"],
 
