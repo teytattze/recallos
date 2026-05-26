@@ -7,6 +7,10 @@
   ],
   "scripts": {
     "build": "turbo run build",
+    "db:migrate:deploy": "bun run --filter @repo/server-platform db:migrate:deploy",
+    "db:migrate:dev": "bun run --filter @repo/server-platform db:migrate:dev",
+    "db:migrate:reset": "bun run --filter @repo/server-platform db:migrate:reset",
+    "db:studio": "bun run --filter @repo/server-platform db:studio",
     "dev": "turbo run dev",
     "fmt": "oxfmt",
     "lint": "turbo run lint",
