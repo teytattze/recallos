@@ -1,4 +1,5 @@
 import { defineConfig } from "prisma/config";
+import "dotenv/config";
 
 // One schema = one migration history for the consolidated Aurora cluster.
 // Prisma 7 keeps the Migrate URL here, not in schema.prisma; read process.env

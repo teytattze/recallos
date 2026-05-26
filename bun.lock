@@ -37,6 +37,7 @@
         "@prisma/adapter-pg": "catalog:",
         "@prisma/client": "catalog:",
         "@repo/server-platform": "workspace:*",
+        "dotenv": "catalog:",
         "pg": "catalog:",
       },
       "devDependencies": {
