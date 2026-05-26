@@ -1,3 +1,5 @@
+export * from "./application/ports/inbound/capture-event.use-case.ts";
+
 export * from "./domain/event.aggregate.ts";
 export * from "./domain/event-body.value-object.ts";
 export * from "./domain/event-id.value-object.ts";
