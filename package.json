@@ -7,6 +7,7 @@
   ],
   "scripts": {
     "build": "turbo run build",
+    "db:generate": "bun run --filter @repo/server-database db:generate",
     "db:migrate:deploy": "bun run --filter @repo/server-database db:migrate:deploy",
     "db:migrate:dev": "bun run --filter @repo/server-database db:migrate:dev",
     "db:migrate:reset": "bun run --filter @repo/server-database db:migrate:reset",

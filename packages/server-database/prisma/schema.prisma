@@ -12,3 +12,18 @@ datasource db {
   // pgvector — recall is co-located with relational metadata (see decision record).
   extensions = [vector]
 }
+
+/// Rows are immutable — the EventLogRepository only appends. No updated_at: for an
+/// immutable fact it would always equal recorded_at.
+model Event {
+  id         String   @id @db.Uuid
+  occurredAt DateTime @map("occurred_at") @db.Timestamptz(6)
+  recordedAt DateTime @map("recorded_at") @db.Timestamptz(6)
+  tags       Json     @db.JsonB
+  body       Json     @db.JsonB
+
+  // Worker drains the log in capture order; routes on tags (e.g. tags @> '{"source":...}').
+  @@index([recordedAt])
+  @@index([tags(ops: JsonbOps)], type: Gin)
+  @@map("events")
+}
