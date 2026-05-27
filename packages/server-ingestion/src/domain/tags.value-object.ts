@@ -22,7 +22,7 @@ export class Tags extends ValueObject<TagsProps> {
     super(props);
   }
 
-  get entries(): Record<string, string> {
+  get entries(): TagsProps["entries"] {
     return this._props.entries;
   }
 

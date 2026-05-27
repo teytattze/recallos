@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@repo/server-database";
+import type { PrismaClient } from "@repo/server-database";
 import type { Event, EventLogRepository } from "@repo/server-ingestion";
 
 export class EventLogPostgresqlRepository implements EventLogRepository {
@@ -10,8 +10,8 @@ export class EventLogPostgresqlRepository implements EventLogRepository {
         id: event.id.value,
         occurredAt: event.occurredAt,
         recordedAt: event.metadata.createdAt,
-        tags: event.tags.entries as Prisma.InputJsonValue,
-        body: event.body.value as Prisma.InputJsonValue,
+        tags: event.tags.entries,
+        body: event.body.value,
       },
     });
   }
