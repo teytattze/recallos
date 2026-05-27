@@ -2,11 +2,17 @@
   "name": "@repo/server-ingestion-infra",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "lint": "oxlint",
     "test": "bun test --randomize"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@repo/server-database": "workspace:*",
+    "@repo/server-ingestion": "workspace:*"
+  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*"
   }

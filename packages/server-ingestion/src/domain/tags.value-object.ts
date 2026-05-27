@@ -22,6 +22,10 @@ export class Tags extends ValueObject<TagsProps> {
     super(props);
   }
 
+  get entries(): Record<string, string> {
+    return this._props.entries;
+  }
+
   static create(input: Record<string, string>): Result<Tags> {
     return Result.map(
       parseProps(tagsPropsSchema, { entries: input }, InvalidEvent),

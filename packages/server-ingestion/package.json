@@ -2,6 +2,9 @@
   "name": "@repo/server-ingestion",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "lint": "oxlint",
     "test": "bun test --randomize"

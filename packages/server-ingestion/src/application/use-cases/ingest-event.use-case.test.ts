@@ -9,7 +9,7 @@ import { IngestEventUseCase } from "./ingest-event.use-case.ts";
 class FakeEventLogRepository implements EventLogRepository {
   readonly appended: Event[] = [];
 
-  append(event: Event): Promise<void> {
+  insert(event: Event): Promise<void> {
     this.appended.push(event);
     return Promise.resolve();
   }

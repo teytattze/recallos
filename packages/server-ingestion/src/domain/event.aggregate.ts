@@ -45,6 +45,18 @@ export class Event extends AggregateRoot<EventId, EventProps> {
     super(id, metadata, props);
   }
 
+  get occurredAt(): Date {
+    return this._props.occurredAt;
+  }
+
+  get tags(): Tags {
+    return this._props.tags;
+  }
+
+  get body(): EventBody {
+    return this._props.body;
+  }
+
   static create(input: CreateEventInput): Result<Event> {
     const createTagsResult = Tags.create(input.tags);
     if (!createTagsResult.ok) return createTagsResult;

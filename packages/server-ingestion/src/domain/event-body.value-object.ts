@@ -21,6 +21,10 @@ export class EventBody extends ValueObject<EventBodyProps> {
     super(props);
   }
 
+  get value(): Record<string, unknown> {
+    return this._props.value;
+  }
+
   static create(value: Record<string, unknown>): Result<EventBody> {
     return Result.map(
       parseProps(eventBodyPropsSchema, { value }, InvalidEvent),
