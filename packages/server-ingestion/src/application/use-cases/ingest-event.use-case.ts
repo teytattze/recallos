@@ -25,7 +25,7 @@ export class IngestEventUseCase implements IngestEvent {
     if (!eventResult.ok) return eventResult;
 
     const event = eventResult.value;
-    await this.events.append(event);
+    await this.events.insert(event);
     return Result.ok({ eventId: event.id.value });
   }
 }
