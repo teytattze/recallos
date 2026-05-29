@@ -26,7 +26,7 @@ CI's `AWS_ECR_REPOSITORY`.
   account.
 - The target account/region **bootstrapped** for CDK once:
   ```sh
-  cd packages/infrastructure
+  cd infrastructure
   bunx cdk bootstrap aws://<account>/<region>
   ```
 
@@ -47,7 +47,7 @@ you run a `cdk deploy`. `imageTag` is the only value you normally pass by hand.
 ## Usage
 
 Dependencies install from the repo root (`bun install`). Run the package scripts
-through Turbo's filter, or `cd packages/infrastructure` and call `bun run`
+through Turbo's filter, or `cd infrastructure` and call `bun run`
 directly. Pass CDK flags after `--`.
 
 ```sh
@@ -85,7 +85,7 @@ git tag).
 ## Layout
 
 ```
-packages/infrastructure/
+infrastructure/
   bin/recallos.ts        # CDK app entrypoint — instantiates both stacks
   lib/config.ts          # context/env/default resolution + service definitions
   lib/ecr-stack.ts       # RecallosEcrStack

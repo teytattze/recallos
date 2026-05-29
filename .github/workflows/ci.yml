@@ -202,7 +202,7 @@ jobs:
         with:
           path: |
             node_modules
-            packages/infrastructure/node_modules
+            infrastructure/node_modules
           key: ${{ runner.os }}-bun-infrastructure-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-infrastructure-
@@ -222,7 +222,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Deploy RecallosServiceStack
-        working-directory: packages/infrastructure
+        working-directory: infrastructure
         run: |
           bunx cdk deploy RecallosServiceStack \
             --require-approval never \
