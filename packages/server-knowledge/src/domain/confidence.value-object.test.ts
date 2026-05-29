@@ -2,50 +2,34 @@ import { test, expect } from "bun:test";
 
 import { Confidence } from "./confidence.value-object.ts";
 
-test("Confidence.create: given the lower bound 0, it should return ok", () => {
+test.each([
+  ["the lower bound 0", 0],
+  ["the upper bound 1", 1],
+  ["a value within the range", 0.42],
+])("Confidence.create: given %s, it should return ok", (_label, value) => {
   // GIVEN / WHEN
-  const result = Confidence.create(0);
+  const result = Confidence.create(value);
 
   // THEN
   expect(result.ok).toBe(true);
 });
 
-test("Confidence.create: given the upper bound 1, it should return ok", () => {
-  // GIVEN / WHEN
-  const result = Confidence.create(1);
+test.each([
+  ["a value above 1", 1.01],
+  ["a value below 0", -0.01],
+])(
+  "Confidence.create: given %s, it should return an InvalidKnowledgeGraphEdge error",
+  (_label, value) => {
+    // GIVEN / WHEN
+    const result = Confidence.create(value);
 
-  // THEN
-  expect(result.ok).toBe(true);
-});
-
-test("Confidence.create: given a value within the range, it should return ok", () => {
-  // GIVEN / WHEN
-  const result = Confidence.create(0.42);
-
-  // THEN
-  expect(result.ok).toBe(true);
-});
-
-test("Confidence.create: given a value above 1, it should return an InvalidKnowledgeGraphEdge error", () => {
-  // GIVEN / WHEN
-  const result = Confidence.create(1.01);
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraphEdge");
-  expect(result.error.category).toBe("validation");
-});
-
-test("Confidence.create: given a value below 0, it should return an InvalidKnowledgeGraphEdge error", () => {
-  // GIVEN / WHEN
-  const result = Confidence.create(-0.01);
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraphEdge");
-});
+    // THEN
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.kind).toBe("InvalidKnowledgeGraphEdge");
+    expect(result.error.category).toBe("validation");
+  },
+);
 
 test("Confidence.restore: given a stored value, it should equal the same Confidence.create value", () => {
   // GIVEN

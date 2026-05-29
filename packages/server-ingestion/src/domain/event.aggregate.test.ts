@@ -47,51 +47,26 @@ test("Event.create: given occurredAt equal to recordedAt, it should be allowed",
   expect(result.ok).toBe(true);
 });
 
-test("Event.create: given occurredAt after recordedAt, it should return an InvalidEvent error", () => {
-  // GIVEN
-  const future = new Date(recordedAt.getTime() + 1000);
+test.each([
+  [
+    "occurredAt after recordedAt",
+    { occurredAt: new Date(recordedAt.getTime() + 1000) },
+  ],
+  ["an invalid occurredAt date", { occurredAt: new Date("not-a-date") }],
+  ["an empty body", { body: {} }],
+  ["a blank tag key", { tags: { "  ": "x" } }],
+])(
+  "Event.create: given %s, it should return an InvalidEvent error",
+  (_label, patch) => {
+    // GIVEN / WHEN
+    const result = Event.create({ ...validInput, ...patch });
 
-  // WHEN
-  const result = Event.create({ ...validInput, occurredAt: future });
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidEvent");
-});
-
-test("Event.create: given an invalid occurredAt date, it should return an InvalidEvent error", () => {
-  // GIVEN / WHEN
-  const result = Event.create({
-    ...validInput,
-    occurredAt: new Date("not-a-date"),
-  });
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidEvent");
-});
-
-test("Event.create: given an empty body, it should propagate the InvalidEvent error", () => {
-  // GIVEN / WHEN
-  const result = Event.create({ ...validInput, body: {} });
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidEvent");
-});
-
-test("Event.create: given a blank tag key, it should propagate the InvalidEvent error", () => {
-  // GIVEN / WHEN
-  const result = Event.create({ ...validInput, tags: { "  ": "x" } });
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidEvent");
-});
+    // THEN
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.kind).toBe("InvalidEvent");
+  },
+);
 
 const storedRow = {
   id: "01952d3f-0000-7000-8000-000000000000",

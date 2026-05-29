@@ -4,52 +4,34 @@ import { NodeBody } from "./node-body.value-object.ts";
 
 const MAX_NODE_BODY_LENGTH = 10_000;
 
-test("NodeBody.create: given non-empty text, it should return ok", () => {
+test.each([
+  ["non-empty text", "Ada Lovelace"],
+  ["text at the maximum length", "a".repeat(MAX_NODE_BODY_LENGTH)],
+])("NodeBody.create: given %s, it should return ok", (_label, text) => {
   // GIVEN / WHEN
-  const result = NodeBody.create("Ada Lovelace");
+  const result = NodeBody.create(text);
 
   // THEN
   expect(result.ok).toBe(true);
 });
 
-test("NodeBody.create: given empty text, it should return an InvalidKnowledgeGraphNode error", () => {
-  // GIVEN / WHEN
-  const result = NodeBody.create("");
+test.each([
+  ["empty text", ""],
+  ["whitespace-only text", "   "],
+  ["text longer than the maximum", "a".repeat(MAX_NODE_BODY_LENGTH + 1)],
+])(
+  "NodeBody.create: given %s, it should return an InvalidKnowledgeGraphNode error",
+  (_label, text) => {
+    // GIVEN / WHEN
+    const result = NodeBody.create(text);
 
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraphNode");
-  expect(result.error.category).toBe("validation");
-});
-
-test("NodeBody.create: given whitespace-only text, it should return an InvalidKnowledgeGraphNode error", () => {
-  // GIVEN / WHEN
-  const result = NodeBody.create("   ");
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraphNode");
-});
-
-test("NodeBody.create: given text at the maximum length, it should return ok", () => {
-  // GIVEN / WHEN
-  const result = NodeBody.create("a".repeat(MAX_NODE_BODY_LENGTH));
-
-  // THEN
-  expect(result.ok).toBe(true);
-});
-
-test("NodeBody.create: given text longer than the maximum, it should return an InvalidKnowledgeGraphNode error", () => {
-  // GIVEN / WHEN
-  const result = NodeBody.create("a".repeat(MAX_NODE_BODY_LENGTH + 1));
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraphNode");
-});
+    // THEN
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.kind).toBe("InvalidKnowledgeGraphNode");
+    expect(result.error.category).toBe("validation");
+  },
+);
 
 test("NodeBody.create: given surrounding whitespace, it should trim before storing", () => {
   // GIVEN

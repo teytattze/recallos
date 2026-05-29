@@ -39,52 +39,24 @@ test("KnowledgeGraph.create: given a fresh graph, it should mint a distinct id e
   );
 });
 
-test("KnowledgeGraph.create: given a blank name, it should return an InvalidKnowledgeGraph error", () => {
-  // GIVEN / WHEN
-  const result = KnowledgeGraph.create({ ...validInput, name: "   " });
+test.each([
+  ["a blank name", { name: "   " }],
+  ["a blank embedding model", { embeddingModel: "" }],
+  ["non-positive embedding dimensions", { embeddingDimensions: 0 }],
+  ["non-integer embedding dimensions", { embeddingDimensions: 1.5 }],
+])(
+  "KnowledgeGraph.create: given %s, it should return an InvalidKnowledgeGraph error",
+  (_label, patch) => {
+    // GIVEN / WHEN
+    const result = KnowledgeGraph.create({ ...validInput, ...patch });
 
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraph");
-  expect(result.error.category).toBe("validation");
-});
-
-test("KnowledgeGraph.create: given a blank embedding model, it should return an InvalidKnowledgeGraph error", () => {
-  // GIVEN / WHEN
-  const result = KnowledgeGraph.create({ ...validInput, embeddingModel: "" });
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraph");
-});
-
-test("KnowledgeGraph.create: given non-positive embedding dimensions, it should return an InvalidKnowledgeGraph error", () => {
-  // GIVEN / WHEN
-  const result = KnowledgeGraph.create({
-    ...validInput,
-    embeddingDimensions: 0,
-  });
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraph");
-});
-
-test("KnowledgeGraph.create: given non-integer embedding dimensions, it should return an InvalidKnowledgeGraph error", () => {
-  // GIVEN / WHEN
-  const result = KnowledgeGraph.create({
-    ...validInput,
-    embeddingDimensions: 1.5,
-  });
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraph");
-});
+    // THEN
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.kind).toBe("InvalidKnowledgeGraph");
+    expect(result.error.category).toBe("validation");
+  },
+);
 
 const storedRow = {
   id: "01952d3f-0000-7000-8000-000000000000",
