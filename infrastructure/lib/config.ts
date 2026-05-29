@@ -1,6 +1,5 @@
 import type { App } from "aws-cdk-lib";
 
-/** A single container image to run on the cluster. */
 export interface ServiceConfig {
   /** App name; doubles as the image tag prefix CI uses (`<name>.<version>`). */
   readonly name: string;

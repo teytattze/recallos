@@ -10,7 +10,6 @@ export interface ServiceStackProps extends StackProps {
   readonly config: RecallosConfig;
 }
 
-/** Runs the ECR images on a shared ECS Fargate cluster. */
 export class ServiceStack extends Stack {
   constructor(scope: Construct, id: string, props: ServiceStackProps) {
     super(scope, id, props);
