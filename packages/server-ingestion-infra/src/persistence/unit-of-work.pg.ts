@@ -5,8 +5,7 @@ import { EventLogPostgresqlRepository } from "./event-log.repository.pg.ts";
 import { OutboxEventPublisher } from "./outbox-event-publisher.pg.ts";
 
 /** Runs the work inside one Prisma interactive transaction and hands it
- *  repositories bound to that transaction, so the event insert and the outbox
- *  write commit (or roll back) together. */
+ *  repositories bound to that transaction. */
 export class PrismaUnitOfWork implements UnitOfWork {
   constructor(private readonly prisma: PrismaClient) {}
 
