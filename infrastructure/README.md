@@ -82,6 +82,28 @@ To deploy a specific version by hand instead, run the step-2 command yourself.
 `<version>` is what `extract-version` produced (`main-<sha7>` for `main`, or the
 git tag).
 
+## CI IAM permissions
+
+The CI user (behind `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) only needs to
+**assume the bootstrap roles** for the deploy — the heavy permissions live on
+the bootstrap `cfn-exec-role`, not the user — plus **ECR push** for the
+`upload_image` job. The finalized inline policy is in
+[`ci-user-policy.json`](./ci-user-policy.json); substitute `<ACCOUNT_ID>`,
+`<REGION>`, and the repository name (`recallos` = `AWS_ECR_REPOSITORY`) before
+attaching it:
+
+```sh
+sed -e "s/<ACCOUNT_ID>/$AWS_ACCOUNT_ID/g" -e "s/<REGION>/$AWS_REGION/g" \
+  ci-user-policy.json > /tmp/ci-user-policy.json
+aws iam put-user-policy \
+  --user-name <ci-user> \
+  --policy-name recallos-ci \
+  --policy-document file:///tmp/ci-user-policy.json
+```
+
+Assumes the default bootstrap qualifier (`hnb659fds`); a custom `--qualifier`
+changes the role-name and SSM-parameter ARNs accordingly.
+
 ## Layout
 
 ```
