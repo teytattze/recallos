@@ -3,6 +3,8 @@ import { defineConfig } from "oxfmt";
 export default defineConfig({
   printWidth: 80,
 
+  ignorePatterns: ["packages/server-database/src/generated/**/*"],
+
   sortImports: {
     groups: [
       "type-import",
