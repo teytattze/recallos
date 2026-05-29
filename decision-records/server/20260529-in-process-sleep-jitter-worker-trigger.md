@@ -1,4 +1,4 @@
-# In-process scheduler with jitter for worker triggering
+# In-process sleep + jitter loop for worker triggering
 
 - **Status:** Accepted
 - **Date:** 20260529
@@ -16,28 +16,28 @@
 
 ## Decision
 
-> Each worker schedules its own work with an **in-process cron loop**, and offsets each instance's tick by a **randomized jitter delay** so replicas don't fire in lockstep; resource-level coordination remains the correctness boundary.
+> Each worker schedules its own work with a **simple in-process loop that sleeps between runs**, and offsets each instance's tick by a **randomized jitter delay** so replicas don't fire in lockstep; resource-level coordination remains the correctness boundary.
 
-- A self-scheduling loop lives inside each worker container — no external scheduler. The relay drains on a short interval; the enricher runs its catch-up batch-pull on a longer interval.
+- A self-scheduling loop lives inside each worker container — no external scheduler, no cron library, just `do work → sleep(interval + jitter) → repeat`. The relay drains on a short interval; the enricher runs its catch-up batch-pull on a longer interval.
 - Each instance applies a **random offset** to its tick (initial delay and/or per-tick jitter) so N replicas spread their work across the interval instead of all firing at once.
 - **Jitter's job is to spread load and shrink the contention window — not to guarantee single processing.** Correctness comes from the resource being read, regardless of tick timing:
   - **Relay:** `SELECT … FOR UPDATE SKIP LOCKED` — concurrent relays lock disjoint rows; an already-claimed row is skipped.
   - **Enricher via SQS:** competing consumers + visibility timeout (one in-flight delivery at a time), with idempotency on `eventId` covering at-least-once redelivery.
   - **Enricher via catch-up poll:** `SKIP LOCKED` (or a Postgres advisory lock) over the event-log page.
-- First-principle reasoning: the workers are already always-on containers, so a self-tick adds **zero new infrastructure** and keeps local dev identical to prod (`bun --watch`). Because the dedup invariant already exists **at the resource**, the trigger only has to avoid wasteful synchronized contention — it does not need to enforce exclusivity — and jitter is the cheapest way to break lockstep.
+- First-principle reasoning: the workers are already always-on containers, so a sleep loop adds **zero new infrastructure** and keeps local dev identical to prod (`bun --watch`). A plain `sleep` loop is the least machinery that drives periodic work — no scheduler, no cron-expression parsing. Because the dedup invariant already exists **at the resource**, the trigger only has to avoid wasteful synchronized contention — it does not need to enforce exclusivity — and jitter is the cheapest way to break lockstep.
 
 ## Consequences
 
 - **Positive:** no new infrastructure (no EventBridge/Lambda/RunTask) for the MVP; identical local and prod scheduling; N replicas are safe to run; jitter removes synchronized DB spikes; the relay can tick at sub-minute cadence that a managed 1-minute-floor scheduler cannot.
 - **Trade-offs:**
   - Requires an **always-on container** — we pay for it even while idle (no scale-to-zero).
-  - "Cron" here is an **interval**, not calendar-accurate cron expressions; not suited to "run at 02:00 daily" style jobs.
+  - The loop is a **fixed interval**, not calendar-accurate scheduling; not suited to "run at 02:00 daily" style jobs.
   - Jitter **reduces but does not eliminate** race windows; correctness rests entirely on the row-lock / visibility-timeout / idempotency mechanisms — if one of those is wrong, jitter will not save us.
   - Scheduling reliability equals **process uptime** — nothing external guarantees a tick ran.
 - **Follow-ups:**
   - Pick the interval and jitter bounds per worker.
   - Ensure the enricher's SQS **visibility timeout exceeds worst-case processing** (LLM + embedding latency), or heartbeat it with `ChangeMessageVisibility`.
-  - Make ticks **non-overlapping** (await the previous run before scheduling the next).
+  - Keep runs **non-overlapping** — `await` the work before sleeping, so the interval starts after the previous run finishes.
   - Confirm `FOR UPDATE … SKIP LOCKED` behaviour on the target Aurora engine version.
   - Revisit **EventBridge Scheduler → ECS RunTask** if calendar-accurate scheduling or scale-to-zero ever outweighs the always-on cost.
 
