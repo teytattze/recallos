@@ -1,5 +1,6 @@
 import { test, expect } from "bun:test";
 
+import { Embedding } from "./embedding.value-object.ts";
 import { KnowledgeGraph } from "./knowledge-graph.aggregate.ts";
 
 const now = new Date("2026-01-01T00:00:00Z");
@@ -108,4 +109,37 @@ test("KnowledgeGraph.restore: given a stored row, it should preserve the id and 
 test("KnowledgeGraph.restore: given a row with a blank name, it should throw", () => {
   // GIVEN / WHEN / THEN
   expect(() => KnowledgeGraph.restore({ ...storedRow, name: "  " })).toThrow();
+});
+
+test("KnowledgeGraph.accepts: given an embedding matching the graph policy, it should accept it", () => {
+  // GIVEN
+  const graph = KnowledgeGraph.restore(storedRow);
+  const embedding = Embedding.create(
+    Array.from({ length: 1536 }, () => 0.1),
+    "text-embedding-3-small",
+  );
+
+  // WHEN / THEN
+  expect(embedding.ok && graph.accepts(embedding.value)).toBe(true);
+});
+
+test("KnowledgeGraph.accepts: given an embedding from a different model, it should reject it", () => {
+  // GIVEN
+  const graph = KnowledgeGraph.restore(storedRow);
+  const embedding = Embedding.create(
+    Array.from({ length: 1536 }, () => 0.1),
+    "other-model",
+  );
+
+  // WHEN / THEN
+  expect(embedding.ok && graph.accepts(embedding.value)).toBe(false);
+});
+
+test("KnowledgeGraph.accepts: given an embedding with mismatched dimensions, it should reject it", () => {
+  // GIVEN
+  const graph = KnowledgeGraph.restore(storedRow);
+  const embedding = Embedding.create([0.1, 0.2], "text-embedding-3-small");
+
+  // WHEN / THEN
+  expect(embedding.ok && graph.accepts(embedding.value)).toBe(false);
 });

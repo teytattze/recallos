@@ -115,3 +115,73 @@ test("KnowledgeGraphEdge.restore: given a row with out-of-range confidence, it s
     KnowledgeGraphEdge.restore({ ...storedRow, confidence: 2 }),
   ).toThrow();
 });
+
+function unwrapEdge(): KnowledgeGraphEdge {
+  const result = KnowledgeGraphEdge.create(validInput);
+  if (!result.ok) throw new Error("expected an ok edge");
+  return result.value;
+}
+
+test("KnowledgeGraphEdge.create: given a new edge, it should record a NodesRelated event", () => {
+  // GIVEN / WHEN
+  const edge = unwrapEdge();
+  const events = edge.pullDomainEvents();
+
+  // THEN
+  expect(events).toHaveLength(1);
+  expect(events[0]!.eventName).toBe("knowledge.NodesRelated");
+});
+
+test("KnowledgeGraphEdge.reinforce: given a later observation, it should accumulate provenance and keep the latest observedAt", () => {
+  // GIVEN
+  const edge = unwrapEdge();
+  edge.pullDomainEvents();
+  const laterObserved = new Date("2026-03-01T00:00:00Z");
+
+  // WHEN
+  const result = edge.reinforce({
+    confidence: 0.7,
+    sourceEventIds: [EventId.create()],
+    observedAt: laterObserved,
+    now,
+  });
+
+  // THEN
+  expect(result.ok).toBe(true);
+  expect(edge.sourceEventIds).toHaveLength(2);
+  expect(edge.observedAt).toEqual(laterObserved);
+  const events = edge.pullDomainEvents();
+  expect(events[0]!.eventName).toBe("knowledge.EdgeReinforced");
+});
+
+test("KnowledgeGraphEdge.reinforce: given an earlier observation, it should keep the existing observedAt", () => {
+  // GIVEN
+  const edge = unwrapEdge();
+
+  // WHEN
+  edge.reinforce({
+    confidence: 0.7,
+    sourceEventIds: [EventId.create()],
+    observedAt: new Date("2025-01-01T00:00:00Z"),
+    now,
+  });
+
+  // THEN
+  expect(edge.observedAt).toEqual(observedAt);
+});
+
+test("KnowledgeGraphEdge.reinforce: given out-of-range confidence, it should return an error", () => {
+  // GIVEN
+  const edge = unwrapEdge();
+
+  // WHEN
+  const result = edge.reinforce({
+    confidence: 2,
+    sourceEventIds: [EventId.create()],
+    observedAt,
+    now,
+  });
+
+  // THEN
+  expect(result.ok).toBe(false);
+});
