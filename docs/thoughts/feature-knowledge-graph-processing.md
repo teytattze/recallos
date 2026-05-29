@@ -96,6 +96,8 @@ The depth lives in four focused sub-docs. Read in pipeline order:
 3. **[Entity resolution & embedding](./feature-knowledge-graph-processing-resolution.md)** — deciding a candidate **is** an existing node (deterministic key → vector ANN → defer); the pure `EntityResolution.classify` decision; `EmbedNodes` triggers; node-body canonicalization. Ports: `NodeResolutionIndex`, `EmbeddingGateway`, the node/edge repositories.
 4. **[Idempotency, consistency & multi-tenancy](./feature-knowledge-graph-processing-idempotency.md)** — at-least-once safety (the processed-events ledger, `factHash`, extractor versioning); the transaction boundary (context-owned unit-of-work); ordering / poison events / back-pressure; resolving a `graphId` per event. Ports: `ProcessedEventLedger`, `GraphResolution`, `UnitOfWork`.
 
+For the build-out, the **[implementation tasks](./feature-knowledge-graph-processing-tasks.md)** doc decomposes this design use-case by use-case (`EnrichEvents` / `EmbedNodes` / `MergeDuplicateNodes`) into ordered sub-tasks with verification checks.
+
 ---
 
 ## 6. Decisions, alternatives, and deferred work
