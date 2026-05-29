@@ -17,7 +17,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - app: service
+          - app: server-api-service
+            build_dir: dist
+          - app: server-knowledge-worker
+            build_dir: dist
+          - app: server-outbox-worker
             build_dir: dist
     steps:
       - name: Checkout repository
@@ -51,7 +55,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - app: service
+          - app: server-api-service
+            build_dir: dist
+          - app: server-knowledge-worker
+            build_dir: dist
+          - app: server-outbox-worker
             build_dir: dist
     steps:
       - name: Checkout repository
@@ -94,7 +102,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - app: service
+          - app: server-api-service
+            build_dir: dist
+          - app: server-knowledge-worker
+            build_dir: dist
+          - app: server-outbox-worker
             build_dir: dist
     steps:
       - name: Checkout repository
@@ -137,7 +149,7 @@ jobs:
     if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
     strategy:
       matrix:
-        app: [service]
+        app: [server-api-service, server-knowledge-worker, server-outbox-worker]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
