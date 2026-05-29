@@ -7,15 +7,14 @@ import type {
   EnrichmentReport,
 } from "../ports/inbound/enrich-events.use-case.ts";
 import type {
-  Checkpoint,
-  CheckpointStore,
-} from "../ports/outbound/checkpoint.store.ts";
-import type {
   EntityExtractorGateway,
   ExtractionResult,
 } from "../ports/outbound/entity-extractor.gateway.ts";
 import type { EventPublisher } from "../ports/outbound/event-publisher.port.ts";
-import type { EventSourceReader } from "../ports/outbound/event-source.reader.ts";
+import type {
+  EventEntry,
+  EventSourceReader,
+} from "../ports/outbound/event-source.reader.ts";
 import type { GraphResolution } from "../ports/outbound/graph-resolution.policy.ts";
 import type { KnowledgeGraphEdgeRepository } from "../ports/outbound/knowledge-graph-edge.repository.ts";
 import type { KnowledgeGraphNodeRepository } from "../ports/outbound/knowledge-graph-node.repository.ts";
@@ -29,8 +28,6 @@ import {
 } from "../../domain/entity-resolution.domain-service.ts";
 import { GraphRelation } from "../../domain/graph-relation.domain-service.ts";
 import { KnowledgeGraphNode } from "../../domain/knowledge-graph-node.aggregate.ts";
-
-const CURSOR_NAME = "knowledge-enrichment";
 
 /** Phase-0 thresholds. Only consulted once vector ANN matches are supplied;
  *  natural-key resolution short-circuits ahead of them (§8). */
@@ -56,49 +53,44 @@ function hashFact(result: ExtractionResult): string {
 
 export class EnrichEventsUseCase implements EnrichEvents {
   constructor(
-    private readonly events: EventSourceReader,
+    private readonly source: EventSourceReader,
     private readonly extractor: EntityExtractorGateway,
     private readonly nodes: KnowledgeGraphNodeRepository,
     private readonly edges: KnowledgeGraphEdgeRepository,
     private readonly graphResolution: GraphResolution,
     private readonly ledger: ProcessedEventLedger,
-    private readonly checkpoints: CheckpointStore,
     private readonly publisher: EventPublisher,
     private readonly uow: UnitOfWork,
     private readonly clock: Clock,
   ) {}
 
   async execute(input: EnrichEventsInput): Promise<Result<EnrichmentReport>> {
-    const cursor = await this.checkpoints.load(CURSOR_NAME);
-    const page = await this.events.readSince(cursor, input.batchSize);
-
-    if (page.length === 0) {
+    if (input.events.length === 0) {
       return Result.ok({
-        pulled: 0,
+        received: 0,
         processed: 0,
         skipped: 0,
         failed: 0,
         nodesUpserted: 0,
         edgesWritten: 0,
-        cursor,
       });
     }
 
-    // Pull/checkpoint by recordedAt (the page is ordered by it), but relate by
-    // occurredAt so an edge's observedAt is correct under late arrivals (§10).
-    const lastEntry = page[page.length - 1]!;
-    const nextCursor: Checkpoint = {
-      recordedAt: lastEntry.recordedAt,
-      lastEventId: lastEntry.id,
-    };
-    const ordered = [...page].sort(
+    // Re-read bodies from the source of truth; messages carry only ids/tags (§4).
+    const bodies = await this.source.readBodies(
+      input.events.map((event) => event.id),
+    );
+
+    // Relate in domain-time order so an edge's observedAt is correct and
+    // reinforce keeps the latest observation under at-least-once delivery (§10).
+    const ordered = [...input.events].sort(
       (a, b) => a.occurredAt.getTime() - b.occurredAt.getTime(),
     );
 
     const nodeBuffer = new Map<string, KnowledgeGraphNode>();
     const edgeBuffer = new Map<string, KnowledgeGraphEdge>();
-    // Intra-run caches so two entries in one page resolve to a single node/edge
-    // before anything is persisted.
+    // Intra-run caches so two notifications in one batch resolve to a single
+    // node/edge before anything is persisted.
     const keyCache = new Map<string, KnowledgeGraphNode>();
     const edgeCache = new Map<string, KnowledgeGraphEdge>();
     const ledgerWrites: Array<{
@@ -112,15 +104,35 @@ export class EnrichEventsUseCase implements EnrichEvents {
     let skipped = 0;
     let failed = 0;
 
-    for (const entry of ordered) {
+    for (const notification of ordered) {
+      const body = bodies.get(notification.id.value);
+      if (!body) {
+        // The outbox guarantees no phantom notifications, so a missing body is
+        // a genuine fault — park it as failed rather than wedge the batch.
+        failed++;
+        ledgerWrites.push({
+          eventId: notification.id,
+          version: "unknown",
+          status: "failed",
+          factHash: "",
+        });
+        continue;
+      }
+
+      const entry: EventEntry = {
+        id: notification.id,
+        occurredAt: notification.occurredAt,
+        tags: notification.tags,
+        body,
+      };
       const graphId = this.graphResolution.resolve(entry.tags);
 
       let extraction: ExtractionResult;
       try {
         extraction = await this.extractor.extract(entry);
       } catch {
-        // Poison event: park it as failed. The cursor still advances past it
-        // (it won't be re-pulled), so one bad event never wedges the pipeline.
+        // Poison event: park it as failed so one bad event never wedges the
+        // batch; the consumer's DLQ handles repeated failures.
         failed++;
         ledgerWrites.push({
           eventId: entry.id,
@@ -239,7 +251,6 @@ export class EnrichEventsUseCase implements EnrichEvents {
           1,
         );
       }
-      await this.checkpoints.save(CURSOR_NAME, nextCursor);
     });
 
     const domainEvents: DomainEvent[] = [
@@ -249,13 +260,12 @@ export class EnrichEventsUseCase implements EnrichEvents {
     await this.publisher.publish(domainEvents);
 
     return Result.ok({
-      pulled: page.length,
+      received: input.events.length,
       processed,
       skipped,
       failed,
       nodesUpserted: nodesToSave.length,
       edgesWritten: edgesToSave.length,
-      cursor: nextCursor,
     });
   }
 }

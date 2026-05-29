@@ -4,12 +4,11 @@ import { expect, test } from "bun:test";
 import type { NodeId } from "../../domain/node-id.value-object.ts";
 import type { NodeType } from "../../domain/node-type.value-object.ts";
 import type { RelationshipType } from "../../domain/relationship-type.value-object.ts";
-import type { Checkpoint } from "../ports/outbound/checkpoint.store.ts";
+import type { EventNotification } from "../ports/inbound/enrich-events.use-case.ts";
 import type {
   EntityExtractorGateway,
   ExtractionResult,
 } from "../ports/outbound/entity-extractor.gateway.ts";
-import type { EventEntry } from "../ports/outbound/event-source.reader.ts";
 
 import { EventId } from "../../domain/event-id.value-object.ts";
 import { KnowledgeGraphEdge } from "../../domain/knowledge-graph-edge.aggregate.ts";
@@ -20,15 +19,25 @@ import { EnrichEventsUseCase } from "./enrich-events.use-case.ts";
 const GRAPH_ID = KnowledgeGraphId.create();
 const clock: Clock = fixedClock(new Date("2026-05-29T00:00:00Z"));
 
-function entry(overrides: Partial<EventEntry> = {}): EventEntry {
+function notification(
+  overrides: Partial<EventNotification> = {},
+): EventNotification {
   return {
     id: EventId.create(),
-    recordedAt: new Date("2026-05-01T00:00:00Z"),
     occurredAt: new Date("2026-04-01T00:00:00Z"),
     tags: { source: "slack" },
-    body: { text: "hello" },
     ...overrides,
   };
+}
+
+class FakeSource {
+  constructor(private readonly present = true) {}
+  async readBodies(ids: EventId[]) {
+    const map = new Map<string, Record<string, unknown>>();
+    if (this.present)
+      for (const id of ids) map.set(id.value, { text: "hello" });
+    return map;
+  }
 }
 
 class FakeNodeRepo {
@@ -108,19 +117,6 @@ class FakeLedger {
   }
 }
 
-class FakeCheckpoints {
-  cursor: Checkpoint = {
-    recordedAt: new Date(0),
-    lastEventId: EventId.restore("00000000-0000-7000-8000-000000000000"),
-  };
-  async load() {
-    return this.cursor;
-  }
-  async save(_name: string, cursor: Checkpoint) {
-    this.cursor = cursor;
-  }
-}
-
 class FakePublisher {
   readonly published: DomainEvent[] = [];
   async publish(events: readonly DomainEvent[]) {
@@ -137,35 +133,32 @@ function fixedExtractor(result: ExtractionResult): EntityExtractorGateway {
 
 function buildUseCase(
   extractor: EntityExtractorGateway,
-  page: EventEntry[],
   deps: {
+    source?: FakeSource;
     nodes?: FakeNodeRepo;
     edges?: FakeEdgeRepo;
     ledger?: FakeLedger;
-    checkpoints?: FakeCheckpoints;
     publisher?: FakePublisher;
   } = {},
 ) {
+  const source = deps.source ?? new FakeSource();
   const nodes = deps.nodes ?? new FakeNodeRepo();
   const edges = deps.edges ?? new FakeEdgeRepo();
   const ledger = deps.ledger ?? new FakeLedger();
-  const checkpoints = deps.checkpoints ?? new FakeCheckpoints();
   const publisher = deps.publisher ?? new FakePublisher();
-  const events = { readSince: async () => page };
 
   const useCase = new EnrichEventsUseCase(
-    events,
+    source,
     extractor,
     nodes,
     edges,
     graphResolution,
     ledger,
-    checkpoints,
     publisher,
     uow,
     clock,
   );
-  return { useCase, nodes, edges, ledger, checkpoints, publisher };
+  return { useCase, source, nodes, edges, ledger, publisher };
 }
 
 const personExtraction: ExtractionResult = {
@@ -177,15 +170,15 @@ const personExtraction: ExtractionResult = {
   edges: [{ from: "a", to: "b", relationship: "AUTHORED_BY", confidence: 0.9 }],
 };
 
-test("EnrichEventsUseCase.execute: given an empty page, it should return a no-op report", async () => {
+test("EnrichEventsUseCase.execute: given no events, it should return a no-op report", async () => {
   // GIVEN
-  const { useCase } = buildUseCase(fixedExtractor(personExtraction), []);
+  const { useCase } = buildUseCase(fixedExtractor(personExtraction));
 
   // WHEN
-  const result = await useCase.execute({ batchSize: 10 });
+  const result = await useCase.execute({ events: [] });
 
   // THEN
-  expect(result.ok && result.value.pulled).toBe(0);
+  expect(result.ok && result.value.received).toBe(0);
   expect(result.ok && result.value.processed).toBe(0);
 });
 
@@ -193,11 +186,10 @@ test("EnrichEventsUseCase.execute: given a new event, it should create nodes and
   // GIVEN
   const { useCase, nodes, edges } = buildUseCase(
     fixedExtractor(personExtraction),
-    [entry()],
   );
 
   // WHEN
-  const result = await useCase.execute({ batchSize: 10 });
+  const result = await useCase.execute({ events: [notification()] });
 
   // THEN
   expect(result.ok && result.value.processed).toBe(1);
@@ -207,34 +199,32 @@ test("EnrichEventsUseCase.execute: given a new event, it should create nodes and
   expect(edges.byTriple.size).toBe(1);
 });
 
-test("EnrichEventsUseCase.execute: given a processed run, it should advance the cursor to the last recordedAt", async () => {
-  // GIVEN
-  const recordedAt = new Date("2026-05-10T00:00:00Z");
-  const { useCase, checkpoints } = buildUseCase(
-    fixedExtractor(personExtraction),
-    [entry({ recordedAt })],
-  );
+test("EnrichEventsUseCase.execute: given an event whose body cannot be re-read, it should fail it", async () => {
+  // GIVEN — the source returns no body for the notification
+  const { useCase, nodes } = buildUseCase(fixedExtractor(personExtraction), {
+    source: new FakeSource(false),
+  });
 
   // WHEN
-  await useCase.execute({ batchSize: 10 });
+  const result = await useCase.execute({ events: [notification()] });
 
   // THEN
-  expect(checkpoints.cursor.recordedAt).toEqual(recordedAt);
+  expect(result.ok && result.value.failed).toBe(1);
+  expect(result.ok && result.value.processed).toBe(0);
+  expect(nodes.byId.size).toBe(0);
 });
 
 test("EnrichEventsUseCase.execute: given an event already in the ledger, it should skip it", async () => {
   // GIVEN
   const ledger = new FakeLedger();
-  const seenEntry = entry();
-  ledger.seenKeys.add(`${seenEntry.id.value}:v1`);
-  const { useCase, nodes } = buildUseCase(
-    fixedExtractor(personExtraction),
-    [seenEntry],
-    { ledger },
-  );
+  const seen = notification();
+  ledger.seenKeys.add(`${seen.id.value}:v1`);
+  const { useCase, nodes } = buildUseCase(fixedExtractor(personExtraction), {
+    ledger,
+  });
 
   // WHEN
-  const result = await useCase.execute({ batchSize: 10 });
+  const result = await useCase.execute({ events: [seen] });
 
   // THEN
   expect(result.ok && result.value.skipped).toBe(1);
@@ -249,13 +239,12 @@ test("EnrichEventsUseCase.execute: given two events about the same entity, it sh
     nodes: [{ ref: "a", type: "PERSON", body: "Ada", naturalKey: "Ada" }],
     edges: [],
   };
-  const { useCase, nodes } = buildUseCase(fixedExtractor(extraction), [
-    entry(),
-    entry(),
-  ]);
+  const { useCase, nodes } = buildUseCase(fixedExtractor(extraction));
 
   // WHEN
-  const result = await useCase.execute({ batchSize: 10 });
+  const result = await useCase.execute({
+    events: [notification(), notification()],
+  });
 
   // THEN
   expect(nodes.byId.size).toBe(1);
@@ -264,25 +253,21 @@ test("EnrichEventsUseCase.execute: given two events about the same entity, it sh
   expect(result.ok && result.value.processed).toBe(2);
 });
 
-test("EnrichEventsUseCase.execute: given a poison event, it should fail it and still advance the cursor", async () => {
+test("EnrichEventsUseCase.execute: given a poison event, it should fail it without wedging the batch", async () => {
   // GIVEN — an extractor that throws
-  const recordedAt = new Date("2026-05-20T00:00:00Z");
   const throwingExtractor: EntityExtractorGateway = {
     extract: async () => {
       throw new Error("cannot parse");
     },
   };
-  const { useCase, checkpoints, nodes } = buildUseCase(throwingExtractor, [
-    entry({ recordedAt }),
-  ]);
+  const { useCase, nodes } = buildUseCase(throwingExtractor);
 
   // WHEN
-  const result = await useCase.execute({ batchSize: 10 });
+  const result = await useCase.execute({ events: [notification()] });
 
   // THEN
   expect(result.ok && result.value.failed).toBe(1);
   expect(nodes.byId.size).toBe(0);
-  expect(checkpoints.cursor.recordedAt).toEqual(recordedAt);
 });
 
 test("EnrichEventsUseCase.execute: given a re-asserted edge, it should reinforce instead of duplicating", async () => {
@@ -318,17 +303,13 @@ test("EnrichEventsUseCase.execute: given a re-asserted edge, it should reinforce
   if (!existingEdge.ok) throw new Error("setup failed");
   await edges.saveMany([existingEdge.value]);
 
-  const { useCase } = buildUseCase(
-    fixedExtractor(personExtraction),
-    [entry()],
-    {
-      nodes,
-      edges,
-    },
-  );
+  const { useCase } = buildUseCase(fixedExtractor(personExtraction), {
+    nodes,
+    edges,
+  });
 
   // WHEN
-  const result = await useCase.execute({ batchSize: 10 });
+  const result = await useCase.execute({ events: [notification()] });
 
   // THEN — still one edge, now with grown provenance
   expect(edges.byTriple.size).toBe(1);

@@ -24,7 +24,6 @@ export * from "./domain/entity-resolution.domain-service.ts";
 export * from "./application/ports/inbound/enrich-events.use-case.ts";
 export * from "./application/ports/inbound/embed-nodes.use-case.ts";
 export * from "./application/ports/inbound/merge-duplicate-nodes.use-case.ts";
-export * from "./application/ports/outbound/checkpoint.store.ts";
 export * from "./application/ports/outbound/event-source.reader.ts";
 export * from "./application/ports/outbound/entity-extractor.gateway.ts";
 export * from "./application/ports/outbound/embedding.gateway.ts";
