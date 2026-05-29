@@ -73,11 +73,14 @@ bun run --filter @repo/infrastructure deploy -- RecallosServiceStack -c imageTag
 ### Typical deploy flow
 
 1. `deploy RecallosEcrStack` once so the repository exists.
-2. Push a tag or merge to `main` — CI builds the images and pushes them as
-   `<app>.<version>` to that repository.
-3. `deploy RecallosServiceStack -c imageTag=<version>` to roll the cluster onto
-   the new images. The `<version>` is what `extract-version` produced
-   (`main-<sha7>` for `main`, or the git tag).
+2. Push a tag or merge to `main` — CI builds the images, pushes them as
+   `<app>.<version>` to that repository, then runs `cdk deploy
+   RecallosServiceStack -c imageTag=<version>` (the `deploy_service` job in
+   `.github/workflows/ci.yml`) to roll the cluster onto the new images.
+
+To deploy a specific version by hand instead, run the step-2 command yourself.
+`<version>` is what `extract-version` produced (`main-<sha7>` for `main`, or the
+git tag).
 
 ## Layout
 

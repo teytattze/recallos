@@ -182,3 +182,51 @@ jobs:
             ${{ vars.AWS_ECR_REPOSITORY }}/${{ matrix.app }}:${{ steps.extract-version.outputs.version }} \
             ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.AWS_ECR_REPOSITORY }}:${{ matrix.app }}.${{ steps.extract-version.outputs.version }}
           docker push ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.AWS_ECR_REPOSITORY }}:${{ matrix.app }}.${{ steps.extract-version.outputs.version }}
+
+  deploy_service:
+    name: Deploy services with CDK
+    runs-on: ubuntu-latest
+    needs: upload_image
+    if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache node_modules
+        uses: actions/cache@v5
+        with:
+          path: |
+            node_modules
+            packages/infrastructure/node_modules
+          key: ${{ runner.os }}-bun-infrastructure-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-infrastructure-
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Extract version
+        id: extract-version
+        uses: ./.github/actions/extract-version
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Deploy RecallosServiceStack
+        working-directory: packages/infrastructure
+        run: |
+          bunx cdk deploy RecallosServiceStack \
+            --require-approval never \
+            -c account=${{ vars.AWS_ACCOUNT_ID }} \
+            -c region=${{ vars.AWS_REGION }} \
+            -c ecrRepositoryName=${{ vars.AWS_ECR_REPOSITORY }} \
+            -c imageTag=${{ steps.extract-version.outputs.version }}
