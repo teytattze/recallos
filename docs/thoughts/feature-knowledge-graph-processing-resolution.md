@@ -104,7 +104,7 @@ export interface KnowledgeGraphEdgeRepository {
 }
 ```
 
-The node/edge repositories are also enlisted in the transactional write of the main enrichment flow — see the [idempotency & consistency sub-doc](./feature-knowledge-graph-processing-idempotency.md) for the unit-of-work that wraps `saveMany` + ledger + checkpoint.
+The node/edge repositories are also enlisted in the transactional write of the main enrichment flow — see the [idempotency & consistency sub-doc](./feature-knowledge-graph-processing-idempotency.md) for the unit-of-work that wraps `saveMany` + ledger.
 
 ## 5. Inbound (driving) ports
 
