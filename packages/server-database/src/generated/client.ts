@@ -47,3 +47,11 @@ export { Prisma }
  * immutable fact it would always equal recorded_at.
  */
 export type Event = Prisma.EventModel
+/**
+ * Model EventOutbox
+ * Transactional outbox (see outbox decision record): one row written in the same
+ * transaction as the events insert, so "recorded" and "will be published" are a
+ * single atomic fact. A relay drains pending rows to SQS and marks them sent.
+ * Thin by design — eventId, timestamps, routing tags only; the body stays in events.
+ */
+export type EventOutbox = Prisma.EventOutboxModel

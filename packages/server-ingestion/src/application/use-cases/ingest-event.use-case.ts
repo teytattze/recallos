@@ -5,13 +5,13 @@ import type {
   IngestEventInput,
   IngestEventOutput,
 } from "../ports/inbound/ingest-event.use-case.ts";
-import type { EventLogRepository } from "../ports/outbound/event-log.repository.ts";
+import type { UnitOfWork } from "../ports/outbound/unit-of-work.ts";
 
 import { Event } from "../../domain/event.aggregate.ts";
 
 export class IngestEventUseCase implements IngestEvent {
   constructor(
-    private readonly events: EventLogRepository,
+    private readonly uow: UnitOfWork,
     private readonly clock: Clock,
   ) {}
 
@@ -25,7 +25,12 @@ export class IngestEventUseCase implements IngestEvent {
     if (!eventResult.ok) return eventResult;
 
     const event = eventResult.value;
-    await this.events.insert(event);
+    // Insert and outbox-write must commit together, or a crash between them
+    // would lose the notification or leave a phantom (see outbox decision record).
+    await this.uow.transaction(async ({ events, publisher }) => {
+      await events.insert(event);
+      await publisher.publish(event);
+    });
     return Result.ok({ eventId: event.id.value });
   }
 }
