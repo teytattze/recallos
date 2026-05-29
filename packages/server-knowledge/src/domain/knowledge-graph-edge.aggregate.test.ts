@@ -35,56 +35,26 @@ test("KnowledgeGraphEdge.create: given valid input, it should stamp now as the c
   expect(result.ok && result.value.metadata.createdAt).toEqual(now);
 });
 
-test("KnowledgeGraphEdge.create: given fromId equal to toId, it should return an InvalidKnowledgeGraphEdge error", () => {
-  // GIVEN
-  const nodeId = NodeId.create();
+const sameNode = NodeId.create();
 
-  // WHEN
-  const result = KnowledgeGraphEdge.create({
-    ...validInput,
-    fromId: nodeId,
-    toId: nodeId,
-  });
+test.each([
+  ["fromId equal to toId", { fromId: sameNode, toId: sameNode }],
+  ["confidence above 1", { confidence: 1.5 }],
+  ["confidence below 0", { confidence: -0.1 }],
+  ["no source events", { sourceEventIds: [] }],
+])(
+  "KnowledgeGraphEdge.create: given %s, it should return an InvalidKnowledgeGraphEdge error",
+  (_label, patch) => {
+    // GIVEN / WHEN
+    const result = KnowledgeGraphEdge.create({ ...validInput, ...patch });
 
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraphEdge");
-  expect(result.error.category).toBe("validation");
-});
-
-test("KnowledgeGraphEdge.create: given confidence above 1, it should return an InvalidKnowledgeGraphEdge error", () => {
-  // GIVEN / WHEN
-  const result = KnowledgeGraphEdge.create({ ...validInput, confidence: 1.5 });
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraphEdge");
-});
-
-test("KnowledgeGraphEdge.create: given confidence below 0, it should return an InvalidKnowledgeGraphEdge error", () => {
-  // GIVEN / WHEN
-  const result = KnowledgeGraphEdge.create({ ...validInput, confidence: -0.1 });
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraphEdge");
-});
-
-test("KnowledgeGraphEdge.create: given no source events, it should return an InvalidKnowledgeGraphEdge error", () => {
-  // GIVEN / WHEN
-  const result = KnowledgeGraphEdge.create({
-    ...validInput,
-    sourceEventIds: [],
-  });
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraphEdge");
-});
+    // THEN
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.kind).toBe("InvalidKnowledgeGraphEdge");
+    expect(result.error.category).toBe("validation");
+  },
+);
 
 const storedRow = {
   id: "01952d3f-0000-7000-8000-000000000010",

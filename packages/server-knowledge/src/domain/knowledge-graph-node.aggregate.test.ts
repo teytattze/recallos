@@ -41,26 +41,22 @@ test("KnowledgeGraphNode.create: given a fresh node, it should mint a distinct i
   );
 });
 
-test("KnowledgeGraphNode.create: given a blank body, it should return an InvalidKnowledgeGraphNode error", () => {
-  // GIVEN / WHEN
-  const result = KnowledgeGraphNode.create({ ...validInput, body: "   " });
+test.each([
+  ["a blank body", { body: "   " }],
+  ["no source events", { eventIds: [] }],
+])(
+  "KnowledgeGraphNode.create: given %s, it should return an InvalidKnowledgeGraphNode error",
+  (_label, patch) => {
+    // GIVEN / WHEN
+    const result = KnowledgeGraphNode.create({ ...validInput, ...patch });
 
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraphNode");
-  expect(result.error.category).toBe("validation");
-});
-
-test("KnowledgeGraphNode.create: given no source events, it should return an InvalidKnowledgeGraphNode error", () => {
-  // GIVEN / WHEN
-  const result = KnowledgeGraphNode.create({ ...validInput, eventIds: [] });
-
-  // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraphNode");
-});
+    // THEN
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.kind).toBe("InvalidKnowledgeGraphNode");
+    expect(result.error.category).toBe("validation");
+  },
+);
 
 test("KnowledgeGraphNode.create: given only duplicate source events, it should still be allowed", () => {
   // GIVEN

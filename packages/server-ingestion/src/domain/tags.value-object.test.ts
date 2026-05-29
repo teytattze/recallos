@@ -2,27 +2,24 @@ import { test, expect } from "bun:test";
 
 import { Tags } from "./tags.value-object.ts";
 
-test("Tags.create: given mixed-case, padded keys, it should normalize them to trimmed lowercase", () => {
-  // GIVEN / WHEN
-  const padded = Tags.create({ "  Source ": "slack" });
-  const canonical = Tags.create({ source: "slack" });
+test.each([
+  ["mixed-case, padded keys", { "  Source ": "slack" }, { source: "slack" }],
+  ["padded values", { type: "  message  " }, { type: "message" }],
+])(
+  "Tags.create: given %s, it should normalize to the canonical form",
+  (_label, padded, canonical) => {
+    // GIVEN / WHEN
+    const paddedTags = Tags.create(padded);
+    const canonicalTags = Tags.create(canonical);
 
-  // THEN
-  expect(
-    padded.ok && canonical.ok && padded.value.equals(canonical.value),
-  ).toBe(true);
-});
-
-test("Tags.create: given padded values, it should trim them", () => {
-  // GIVEN / WHEN
-  const padded = Tags.create({ type: "  message  " });
-  const canonical = Tags.create({ type: "message" });
-
-  // THEN
-  expect(
-    padded.ok && canonical.ok && padded.value.equals(canonical.value),
-  ).toBe(true);
-});
+    // THEN
+    expect(
+      paddedTags.ok &&
+        canonicalTags.ok &&
+        paddedTags.value.equals(canonicalTags.value),
+    ).toBe(true);
+  },
+);
 
 test("Tags.create: given an empty input, it should return ok", () => {
   // GIVEN / WHEN
