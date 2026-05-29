@@ -12,7 +12,10 @@ import { EventId } from "./event-id.value-object.ts";
 import { InvalidKnowledgeGraphNode } from "./invalid-knowledge-graph-node.error.ts";
 import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
 import { NodeBody } from "./node-body.value-object.ts";
+import { NodeCreated } from "./node-created.event.ts";
+import { NodeEmbedded } from "./node-embedded.event.ts";
 import { NodeId } from "./node-id.value-object.ts";
+import { NodeProvenanceExtended } from "./node-provenance-extended.event.ts";
 import { NODE_TYPES, type NodeType } from "./node-type.value-object.ts";
 
 export type CreateKnowledgeGraphNodeInput = {
@@ -61,6 +64,26 @@ export class KnowledgeGraphNode extends AggregateRoot<
     super(id, metadata, props);
   }
 
+  get graphId(): KnowledgeGraphId {
+    return this._props.graphId;
+  }
+
+  get type(): NodeType {
+    return this._props.type;
+  }
+
+  get body(): NodeBody {
+    return this._props.body;
+  }
+
+  get eventIds(): readonly EventId[] {
+    return this._props.eventIds;
+  }
+
+  get embedding(): Embedding | null {
+    return this._props.embedding;
+  }
+
   static create(
     input: CreateKnowledgeGraphNodeInput,
   ): Result<KnowledgeGraphNode> {
@@ -80,13 +103,56 @@ export class KnowledgeGraphNode extends AggregateRoot<
     );
     if (!parsePropsResult.ok) return parsePropsResult;
 
-    return Result.ok(
-      new KnowledgeGraphNode(
-        NodeId.create(),
-        EntityMetadata.create(input.now),
-        parsePropsResult.value,
+    const node = new KnowledgeGraphNode(
+      NodeId.create(),
+      EntityMetadata.create(input.now),
+      parsePropsResult.value,
+    );
+    node.recordEvent(
+      new NodeCreated(
+        node.id.value,
+        input.graphId.value,
+        input.type,
+        input.now,
       ),
     );
+    return Result.ok(node);
+  }
+
+  /** Entity resolution: another event reinforces the same entity. Provenance
+   *  only grows, so re-attaching a known event id is a no-op. */
+  attachEvents(eventIds: EventId[], now: Date): void {
+    const merged = dedupeEventIds([...this._props.eventIds, ...eventIds]);
+    if (merged.length === this._props.eventIds.length) return;
+
+    this.replaceProps({ ...this._props, eventIds: merged });
+    this.touch(now);
+    this.recordEvent(
+      new NodeProvenanceExtended(
+        this.id.value,
+        eventIds.map((id) => id.value),
+        now,
+      ),
+    );
+  }
+
+  /** The Worker assigns or refreshes the embedding after creation. */
+  assignEmbedding(embedding: Embedding, now: Date): void {
+    this.replaceProps({ ...this._props, embedding });
+    this.touch(now);
+    this.recordEvent(
+      new NodeEmbedded(
+        this.id.value,
+        embedding.model,
+        embedding.dimensions,
+        now,
+      ),
+    );
+  }
+
+  reviseBody(body: NodeBody, now: Date): void {
+    this.replaceProps({ ...this._props, body });
+    this.touch(now);
   }
 
   static restore(input: RestoreKnowledgeGraphNodeInput): KnowledgeGraphNode {

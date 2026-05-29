@@ -21,6 +21,18 @@ export class Embedding extends ValueObject<EmbeddingProps> {
     super(props);
   }
 
+  get vector(): number[] {
+    return this._props.vector;
+  }
+
+  get model(): string {
+    return this._props.model;
+  }
+
+  get dimensions(): number {
+    return this._props.dimensions;
+  }
+
   static create(vector: number[], model: string): Result<Embedding> {
     return Result.map(
       parseProps(

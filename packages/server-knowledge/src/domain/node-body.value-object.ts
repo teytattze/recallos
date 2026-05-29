@@ -28,6 +28,10 @@ export class NodeBody extends ValueObject<NodeBodyProps> {
     super(props);
   }
 
+  get value(): string {
+    return this._props.text;
+  }
+
   static create(text: string): Result<NodeBody> {
     return Result.map(
       parseProps(nodeBodyPropsSchema, { text }, InvalidKnowledgeGraphNode),

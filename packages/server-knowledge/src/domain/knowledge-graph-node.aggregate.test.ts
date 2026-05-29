@@ -1,5 +1,6 @@
 import { test, expect } from "bun:test";
 
+import { Embedding } from "./embedding.value-object.ts";
 import { EventId } from "./event-id.value-object.ts";
 import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
 import { KnowledgeGraphNode } from "./knowledge-graph-node.aggregate.ts";
@@ -98,4 +99,66 @@ test("KnowledgeGraphNode.restore: given a row with no source events, it should t
   expect(() =>
     KnowledgeGraphNode.restore({ ...storedRow, eventIds: [] }),
   ).toThrow();
+});
+
+function unwrapNode(input = validInput): KnowledgeGraphNode {
+  const result = KnowledgeGraphNode.create(input);
+  if (!result.ok) throw new Error("expected an ok node");
+  return result.value;
+}
+
+test("KnowledgeGraphNode.create: given a new node, it should record a NodeCreated event", () => {
+  // GIVEN / WHEN
+  const node = unwrapNode();
+  const events = node.pullDomainEvents();
+
+  // THEN
+  expect(events).toHaveLength(1);
+  expect(events[0]!.eventName).toBe("knowledge.NodeCreated");
+});
+
+test("KnowledgeGraphNode.attachEvents: given a new event, it should grow provenance and record NodeProvenanceExtended", () => {
+  // GIVEN
+  const node = unwrapNode();
+  node.pullDomainEvents();
+  const newEvent = EventId.create();
+
+  // WHEN
+  node.attachEvents([newEvent], new Date("2026-02-01T00:00:00Z"));
+
+  // THEN
+  expect(node.eventIds).toHaveLength(2);
+  const events = node.pullDomainEvents();
+  expect(events).toHaveLength(1);
+  expect(events[0]!.eventName).toBe("knowledge.NodeProvenanceExtended");
+});
+
+test("KnowledgeGraphNode.attachEvents: given an already-known event, it should be a no-op", () => {
+  // GIVEN
+  const existing = validInput.eventIds[0]!;
+  const node = unwrapNode();
+  node.pullDomainEvents();
+
+  // WHEN
+  node.attachEvents([existing], new Date("2026-02-01T00:00:00Z"));
+
+  // THEN
+  expect(node.eventIds).toHaveLength(1);
+  expect(node.pullDomainEvents()).toHaveLength(0);
+});
+
+test("KnowledgeGraphNode.assignEmbedding: given an embedding, it should store it and record NodeEmbedded", () => {
+  // GIVEN
+  const node = unwrapNode();
+  node.pullDomainEvents();
+  const embeddingResult = Embedding.create([0.1, 0.2, 0.3], "text-embed-3");
+  if (!embeddingResult.ok) throw new Error("expected an ok embedding");
+
+  // WHEN
+  node.assignEmbedding(embeddingResult.value, new Date("2026-02-01T00:00:00Z"));
+
+  // THEN
+  expect(node.embedding?.model).toBe("text-embed-3");
+  const events = node.pullDomainEvents();
+  expect(events[0]!.eventName).toBe("knowledge.NodeEmbedded");
 });

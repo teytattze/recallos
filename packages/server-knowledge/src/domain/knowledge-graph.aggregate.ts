@@ -7,6 +7,7 @@ import {
 } from "@repo/server-kernel";
 import { z } from "zod";
 
+import { Embedding } from "./embedding.value-object.ts";
 import { InvalidKnowledgeGraph } from "./invalid-knowledge-graph.error.ts";
 import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
 
@@ -44,6 +45,27 @@ export class KnowledgeGraph extends AggregateRoot<
     props: KnowledgeGraphProps,
   ) {
     super(id, metadata, props);
+  }
+
+  get name(): string {
+    return this._props.name;
+  }
+
+  get embeddingModel(): string {
+    return this._props.embeddingModel;
+  }
+
+  get embeddingDimensions(): number {
+    return this._props.embeddingDimensions;
+  }
+
+  /** Graph-wide policy a node can't see on its own: an embedding is valid for
+   *  this graph only if it matches the standardized model and dimensions. */
+  accepts(embedding: Embedding): boolean {
+    return (
+      embedding.model === this._props.embeddingModel &&
+      embedding.dimensions === this._props.embeddingDimensions
+    );
   }
 
   static create(input: CreateKnowledgeGraphInput): Result<KnowledgeGraph> {
