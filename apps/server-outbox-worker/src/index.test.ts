@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { loadWorkerConfig } from "./index.ts";
+import { app, loadWorkerConfig } from "./index.ts";
 
 const validEnv = {
   AWS_REGION: "us-east-1",
@@ -23,4 +23,13 @@ test("loadWorkerConfig: given a missing queue url, it should throw", () => {
   expect(() => loadWorkerConfig({ AWS_REGION: "us-east-1" })).toThrow(
     /Invalid worker configuration/,
   );
+});
+
+test("GET /api/v1/health: it should respond ok", async () => {
+  // when
+  const res = await app.request("/api/v1/health");
+
+  // then
+  expect(res.status).toBe(200);
+  expect(await res.json()).toEqual({ message: "ok" });
 });

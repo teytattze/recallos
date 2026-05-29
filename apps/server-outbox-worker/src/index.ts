@@ -2,7 +2,11 @@ import { SQSClient } from "@aws-sdk/client-sqs";
 import { createPrismaClient } from "@repo/server-database";
 import { OutboxRelay, SqsOutboxBroker } from "@repo/server-ingestion-infra";
 import { createLogger, loadConfig } from "@repo/server-platform";
+import { Hono } from "hono";
 import { z } from "zod";
+
+export const app = new Hono();
+app.get("/api/v1/health", (c) => c.json({ message: "ok" }));
 
 const workerConfigSchema = z.object({
   AWS_REGION: z.string().min(1),
@@ -43,6 +47,11 @@ async function main(): Promise<void> {
     workerConfig.OUTBOX_RELAY_BATCH_SIZE,
   );
 
+  // The relay loop has no inbound traffic, so the health server is the only
+  // way for an orchestrator to probe liveness while the worker drains the outbox.
+  const server = Bun.serve({ port: config.PORT, fetch: app.fetch });
+  logger.info({ port: config.PORT }, "outbox worker health server started");
+
   let running = true;
   const stop = (signal: string): void => {
     logger.info({ signal }, "outbox relay received shutdown signal");
@@ -70,6 +79,7 @@ async function main(): Promise<void> {
     }
   }
 
+  await server.stop();
   await prisma.$disconnect();
   sqs.destroy();
   logger.info("outbox relay stopped");

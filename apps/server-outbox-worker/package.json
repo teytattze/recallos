@@ -13,6 +13,7 @@
     "@repo/server-database": "workspace:*",
     "@repo/server-ingestion-infra": "workspace:*",
     "@repo/server-platform": "workspace:*",
+    "hono": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
