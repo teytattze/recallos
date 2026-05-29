@@ -1,0 +1,20 @@
+{
+  "name": "@repo/infrastructure",
+  "private": true,
+  "scripts": {
+    "build": "bun build bin/recallos.ts --outdir ./dist --target bun",
+    "synth": "cdk synth",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy --all",
+    "destroy": "cdk destroy --all"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "catalog:",
+    "constructs": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "aws-cdk": "catalog:"
+  }
+}
