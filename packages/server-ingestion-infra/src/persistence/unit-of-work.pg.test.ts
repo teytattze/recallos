@@ -1,0 +1,47 @@
+import type { PrismaClient } from "@repo/server-database";
+
+import { Event } from "@repo/server-ingestion";
+import { expect, mock, test } from "bun:test";
+
+import { PrismaUnitOfWork } from "./unit-of-work.pg.ts";
+
+const recordedAt = new Date("2026-01-02T00:00:00Z");
+const occurredAt = new Date("2026-01-01T00:00:00Z");
+
+function buildEvent(): Event {
+  const result = Event.create({
+    recordedAt,
+    occurredAt,
+    tags: { source: "slack" },
+    body: { text: "hello" },
+  });
+  if (!result.ok) throw new Error("test setup: expected a valid event");
+  return result.value;
+}
+
+test("PrismaUnitOfWork.transaction: given work that uses both ports, it should run it against the same transaction client", async () => {
+  // given
+  const eventCreate = mock(() => Promise.resolve());
+  const outboxCreate = mock(() => Promise.resolve());
+  const tx = {
+    event: { create: eventCreate },
+    eventOutbox: { create: outboxCreate },
+  };
+  const $transaction = mock((fn: (client: typeof tx) => Promise<unknown>) =>
+    fn(tx),
+  );
+  const prisma = { $transaction } as unknown as PrismaClient;
+  const uow = new PrismaUnitOfWork(prisma);
+  const event = buildEvent();
+
+  // when
+  await uow.transaction(async ({ events, publisher }) => {
+    await events.insert(event);
+    await publisher.publish(event);
+  });
+
+  // then
+  expect($transaction).toHaveBeenCalledTimes(1);
+  expect(eventCreate).toHaveBeenCalledTimes(1);
+  expect(outboxCreate).toHaveBeenCalledTimes(1);
+});

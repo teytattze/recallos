@@ -384,7 +384,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
-  Event: 'Event'
+  Event: 'Event',
+  EventOutbox: 'EventOutbox'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -400,7 +401,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "event"
+    modelProps: "event" | "eventOutbox"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -478,6 +479,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    EventOutbox: {
+      payload: Prisma.$EventOutboxPayload<ExtArgs>
+      fields: Prisma.EventOutboxFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EventOutboxFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventOutboxPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EventOutboxFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventOutboxPayload>
+        }
+        findFirst: {
+          args: Prisma.EventOutboxFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventOutboxPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EventOutboxFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventOutboxPayload>
+        }
+        findMany: {
+          args: Prisma.EventOutboxFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventOutboxPayload>[]
+        }
+        create: {
+          args: Prisma.EventOutboxCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventOutboxPayload>
+        }
+        createMany: {
+          args: Prisma.EventOutboxCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EventOutboxCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventOutboxPayload>[]
+        }
+        delete: {
+          args: Prisma.EventOutboxDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventOutboxPayload>
+        }
+        update: {
+          args: Prisma.EventOutboxUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventOutboxPayload>
+        }
+        deleteMany: {
+          args: Prisma.EventOutboxDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EventOutboxUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EventOutboxUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventOutboxPayload>[]
+        }
+        upsert: {
+          args: Prisma.EventOutboxUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventOutboxPayload>
+        }
+        aggregate: {
+          args: Prisma.EventOutboxAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEventOutbox>
+        }
+        groupBy: {
+          args: Prisma.EventOutboxGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EventOutboxGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EventOutboxCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EventOutboxCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -528,6 +603,20 @@ export const EventScalarFieldEnum = {
 export type EventScalarFieldEnum = (typeof EventScalarFieldEnum)[keyof typeof EventScalarFieldEnum]
 
 
+export const EventOutboxScalarFieldEnum = {
+  id: 'id',
+  eventId: 'eventId',
+  occurredAt: 'occurredAt',
+  recordedAt: 'recordedAt',
+  tags: 'tags',
+  status: 'status',
+  createdAt: 'createdAt',
+  sentAt: 'sentAt'
+} as const
+
+export type EventOutboxScalarFieldEnum = (typeof EventOutboxScalarFieldEnum)[keyof typeof EventOutboxScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -558,6 +647,14 @@ export const JsonNullValueFilter = {
 } as const
 
 export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
 
@@ -605,6 +702,20 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
+ * Reference to a field of type 'EventOutboxStatus'
+ */
+export type EnumEventOutboxStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EventOutboxStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'EventOutboxStatus[]'
+ */
+export type ListEnumEventOutboxStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EventOutboxStatus[]'>
     
 
 
@@ -732,6 +843,7 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   event?: Prisma.EventOmit
+  eventOutbox?: Prisma.EventOutboxOmit
 }
 
 /* Types for Logging */

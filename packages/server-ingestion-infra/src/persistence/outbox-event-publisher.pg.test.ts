@@ -1,0 +1,42 @@
+import type { Prisma } from "@repo/server-database";
+
+import { Event } from "@repo/server-ingestion";
+import { expect, mock, test } from "bun:test";
+
+import { OutboxEventPublisher } from "./outbox-event-publisher.pg.ts";
+
+const recordedAt = new Date("2026-01-02T00:00:00Z");
+const occurredAt = new Date("2026-01-01T00:00:00Z");
+
+function buildEvent(): Event {
+  const result = Event.create({
+    recordedAt,
+    occurredAt,
+    tags: { source: "slack" },
+    body: { text: "hello" },
+  });
+  if (!result.ok) throw new Error("test setup: expected a valid event");
+  return result.value;
+}
+
+test("OutboxEventPublisher.publish: given an event, it should write a thin outbox row with no body", async () => {
+  // given
+  const create = mock(() => Promise.resolve());
+  const tx = { eventOutbox: { create } } as unknown as Prisma.TransactionClient;
+  const publisher = new OutboxEventPublisher(tx);
+  const event = buildEvent();
+
+  // when
+  await publisher.publish(event);
+
+  // then
+  expect(create).toHaveBeenCalledTimes(1);
+  expect(create).toHaveBeenCalledWith({
+    data: {
+      eventId: event.id.value,
+      occurredAt,
+      recordedAt,
+      tags: { source: "slack" },
+    },
+  });
+});
