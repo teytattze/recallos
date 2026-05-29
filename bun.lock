@@ -52,9 +52,9 @@
         "constructs": "catalog:",
       },
       "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
         "@types/node": "catalog:",
         "aws-cdk": "catalog:",
-        "typescript": "catalog:",
       },
     },
     "packages/server-database": {

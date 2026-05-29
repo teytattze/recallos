@@ -64,7 +64,7 @@ bun run --filter @repo/infrastructure deploy -- RecallosServiceStack -c imageTag
 
 | Script    | Action                                                |
 | --------- | ----------------------------------------------------- |
-| `build`   | Type-check with `tsc` (no emit; CDK runs via Bun).    |
+| `build`   | Bundle the app entrypoint with `bun build` (CDK runs via Bun). |
 | `synth`   | Synthesize CloudFormation templates to `cdk.out/`.    |
 | `diff`    | Diff the synthesized stacks against what is deployed. |
 | `deploy`  | `cdk deploy --all` (pass a stack id to scope it).     |
