@@ -18,3 +18,4 @@ Keep unit tests readable & cheap to maintain.
 - Structure the body as given / when / then; multiple assertions about the same behaviour are fine.
 - Prefer dependency injection — pass fakes or stubs as arguments. Reach for `bun:test` `mock`/`spyOn` only to intercept a real side-effect.
 - Test behaviour through the public surface; don't assert on internals.
+- Consolidate similar-behaviour tests into a single `test` block (e.g. via `test.each`) rather than repeating near-identical blocks.
