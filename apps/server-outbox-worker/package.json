@@ -1,5 +1,5 @@
 {
-  "name": "@repo/service",
+  "name": "@repo/server-outbox-worker",
   "private": true,
   "type": "module",
   "scripts": {
