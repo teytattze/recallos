@@ -12,6 +12,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@base-ui/react": "catalog:",
+    "@fontsource-variable/figtree": "catalog:",
     "@posthog/react": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/react-devtools": "catalog:",
@@ -26,6 +28,7 @@
     "posthog-js": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "shadcn": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
     "tw-animate-css": "catalog:"
