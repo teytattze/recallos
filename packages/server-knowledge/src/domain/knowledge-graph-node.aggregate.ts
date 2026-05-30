@@ -12,6 +12,8 @@ import { EventId } from "./event-id.value-object.ts";
 import { InvalidKnowledgeGraphNode } from "./invalid-knowledge-graph-node.error.ts";
 import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
 import { NodeBody } from "./node-body.value-object.ts";
+import { NodeCreated } from "./node-created.event.ts";
+import { NodeEmbedded } from "./node-embedded.event.ts";
 import { NodeId } from "./node-id.value-object.ts";
 import { NODE_TYPES, type NodeType } from "./node-type.value-object.ts";
 
@@ -61,6 +63,26 @@ export class KnowledgeGraphNode extends AggregateRoot<
     super(id, metadata, props);
   }
 
+  get graphId(): KnowledgeGraphId {
+    return this._props.graphId;
+  }
+
+  get type(): NodeType {
+    return this._props.type;
+  }
+
+  get body(): NodeBody {
+    return this._props.body;
+  }
+
+  get eventIds(): EventId[] {
+    return this._props.eventIds;
+  }
+
+  get embedding(): Embedding | null {
+    return this._props.embedding;
+  }
+
   static create(
     input: CreateKnowledgeGraphNodeInput,
   ): Result<KnowledgeGraphNode> {
@@ -80,13 +102,20 @@ export class KnowledgeGraphNode extends AggregateRoot<
     );
     if (!parsePropsResult.ok) return parsePropsResult;
 
-    return Result.ok(
-      new KnowledgeGraphNode(
-        NodeId.create(),
-        EntityMetadata.create(input.now),
-        parsePropsResult.value,
+    const node = new KnowledgeGraphNode(
+      NodeId.create(),
+      EntityMetadata.create(input.now),
+      parsePropsResult.value,
+    );
+    node.recordEvent(
+      new NodeCreated(
+        node.id.value,
+        input.now,
+        node.graphId.value,
+        node.type,
       ),
     );
+    return Result.ok(node);
   }
 
   static restore(input: RestoreKnowledgeGraphNodeInput): KnowledgeGraphNode {
@@ -107,5 +136,36 @@ export class KnowledgeGraphNode extends AggregateRoot<
           : null,
       }),
     );
+  }
+
+  /** Entity resolution: another event reinforces the same node. Idempotent. */
+  attachEvents(eventIds: EventId[], now: Date): void {
+    const merged = dedupeEventIds([...this._props.eventIds, ...eventIds]);
+    if (merged.length === this._props.eventIds.length) return;
+
+    this.replaceProps({ ...this._props, eventIds: merged });
+    this.touch(now);
+  }
+
+  assignEmbedding(embedding: Embedding, now: Date): void {
+    this.replaceProps({ ...this._props, embedding });
+    this.touch(now);
+    this.recordEvent(
+      new NodeEmbedded(
+        this.id.value,
+        now,
+        embedding.model,
+        embedding.dimensions,
+      ),
+    );
+  }
+
+  reviseBody(body: string, now: Date): Result<void> {
+    const createBodyResult = NodeBody.create(body);
+    if (!createBodyResult.ok) return createBodyResult;
+
+    this.replaceProps({ ...this._props, body: createBodyResult.value });
+    this.touch(now);
+    return Result.ok(undefined);
   }
 }

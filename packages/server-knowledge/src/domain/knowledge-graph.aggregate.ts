@@ -7,6 +7,7 @@ import {
 } from "@repo/server-kernel";
 import { z } from "zod";
 
+import type { Embedding } from "./embedding.value-object.ts";
 import { InvalidKnowledgeGraph } from "./invalid-knowledge-graph.error.ts";
 import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
 
@@ -76,6 +77,14 @@ export class KnowledgeGraph extends AggregateRoot<
         embeddingModel: input.embeddingModel,
         embeddingDimensions: input.embeddingDimensions,
       }),
+    );
+  }
+
+  /** Graph-wide policy a node can't see on its own: does this embedding match the graph's spec? */
+  accepts(embedding: Embedding): boolean {
+    return (
+      embedding.model === this._props.embeddingModel &&
+      embedding.dimensions === this._props.embeddingDimensions
     );
   }
 }
