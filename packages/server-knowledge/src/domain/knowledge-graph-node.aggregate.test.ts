@@ -192,3 +192,28 @@ test("KnowledgeGraphNode.reviseBody: given a blank body, it should return an Inv
   if (result.ok) return;
   expect(result.error.kind).toBe("InvalidKnowledgeGraphNode");
 });
+
+test("KnowledgeGraphNode.absorb: given a duplicate, the survivor should gain the duplicate's eventIds", () => {
+  // GIVEN
+  const survivor = createNode({ eventIds: [EventId.create()] });
+  const duplicate = createNode({ eventIds: [EventId.create()] });
+
+  // WHEN
+  survivor.absorb(duplicate, later);
+
+  // THEN
+  expect(survivor.eventIds).toHaveLength(2);
+});
+
+test("KnowledgeGraphNode.absorb: given the same duplicate twice, the second absorb should be a no-op", () => {
+  // GIVEN
+  const survivor = createNode({ eventIds: [EventId.create()] });
+  const duplicate = createNode({ eventIds: [EventId.create()] });
+  survivor.absorb(duplicate, later);
+
+  // WHEN
+  survivor.absorb(duplicate, later);
+
+  // THEN
+  expect(survivor.eventIds).toHaveLength(2);
+});

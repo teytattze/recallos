@@ -168,4 +168,12 @@ export class KnowledgeGraphNode extends AggregateRoot<
     this.touch(now);
     return Result.ok(undefined);
   }
+
+  /**
+   * Fold a duplicate into this survivor without deletion: provenance only grows.
+   * Re-pointing the duplicate's incident edges is I/O and lives in the application layer.
+   */
+  absorb(duplicate: KnowledgeGraphNode, now: Date): void {
+    this.attachEvents(duplicate.eventIds, now);
+  }
 }
