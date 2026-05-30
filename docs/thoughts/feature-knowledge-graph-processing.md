@@ -38,7 +38,7 @@ This doc is **write-side only.** The recall/read path (`RelationshipGraph` trave
 | **Event entry**             | A read DTO `{ id, occurredAt, tags, body }` returned by the event-read port. The app's view of a raw log item — distinct from the domain's id-only `EventId`. |
 | **Candidate**               | A _proposed_ entity or relationship emitted by the extractor from one event entry, **before** resolution. Not yet a node/edge.                                |
 | **Resolution**              | Deciding whether a candidate entity **is** an existing node, is **new**, or is **ambiguous** (defer). Produces a `NodeId`.                                    |
-| **Enrichment run**          | One execution of the enrichment core over the event entries named by one SQS message batch.                                                                  |
+| **Enrichment run**          | One execution of the enrichment core over the event entries named by one SQS message batch.                                                                   |
 | **Processed-events ledger** | The record of _effect_ — "this `eventId` was processed by this extractor version." The idempotency guard against SQS redelivery.                              |
 | **factHash**                | A content hash of `(eventId, normalized-fact)` used to detect "same fact, already asserted" and skip redundant work.                                          |
 | **Extractor version**       | A monotonically-bumped tag for the extraction logic/prompt/model. Reprocessing under a new version is legitimate.                                             |
@@ -74,8 +74,8 @@ read events → extract candidates → resolve to nodes → upsert nodes → rel
 **One cohesive write core, two drivers, embedding and merging split out.**
 
 | Use case (inbound port)   | Responsibility                                                                                                                          | Driven by                                                            |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| **`EnrichEvents`**        | Given event ids, read bodies → extract → resolve → upsert nodes → relate edges → record ledger. One transactional run.                 | **SQS push** (`apps/server-knowledge-worker` consumer).             |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **`EnrichEvents`**        | Given event ids, read bodies → extract → resolve → upsert nodes → relate edges → record ledger. One transactional run.                  | **SQS push** (`apps/server-knowledge-worker` consumer).              |
 | **`EmbedNodes`**          | Assign/refresh embeddings for nodes that need one. Calls the embedding gateway, then `node.assignEmbedding(...)`.                       | Jittered loop scanning nodes needing embedding (resolution sub-doc). |
 | **`MergeDuplicateNodes`** | Drain `DUPLICATE_OF` edges: fold provenance into the survivor (`attachEvents`) and re-point incident edges. Reuses the merge semantics. | Jittered reconciler loop.                                            |
 
@@ -167,4 +167,4 @@ apps/server-knowledge-worker/src/
 - It resolves the **one judgment call the domain left open** — `graphId` per event — behind a swappable policy, and honors the **one hard boundary the domain set** — provenance is `eventIds`, never a `DERIVED_FROM` edge.
 - Idempotency is anchored on the deterministic **event id** (ledger), so the pipeline is safe under at-least-once SQS delivery _and_ non-deterministic extraction.
 - Everything impure — trigger, event source, extractor, embedder, store — is **behind a port**, so a future trigger graduation (adding a reconciler over the same use case), the integration graduation (shared-DB → published payload), and the store graduations of `database-tradeoffs.md` all stay **adapter-local**. The application core never moves.
-</content>
+  </content>
