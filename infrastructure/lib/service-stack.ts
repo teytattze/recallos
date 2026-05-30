@@ -1,14 +1,17 @@
 import type { Construct } from "constructs";
 
 import { Duration, Stack, type StackProps } from "aws-cdk-lib";
+import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as ecr from "aws-cdk-lib/aws-ecr";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as ecsPatterns from "aws-cdk-lib/aws-ecs-patterns";
+import { ApplicationProtocol } from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as rds from "aws-cdk-lib/aws-rds";
+import * as route53 from "aws-cdk-lib/aws-route53";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 
-import type { RecallosConfig, ServiceConfig } from "./config";
+import type { DomainConfig, RecallosConfig, ServiceConfig } from "./config";
 
 export interface ServiceStackProps extends StackProps {
   readonly config: RecallosConfig;
@@ -40,6 +43,7 @@ export class ServiceStack extends Stack {
         queue,
         service,
         config.imageTag,
+        config.domain,
       );
     }
   }
@@ -76,6 +80,7 @@ export class ServiceStack extends Stack {
     queue: sqs.Queue,
     service: ServiceConfig,
     imageTag: string,
+    domain: DomainConfig | undefined,
   ): void {
     const image = ecs.ContainerImage.fromEcrRepository(
       repository,
@@ -100,6 +105,27 @@ export class ServiceStack extends Stack {
     }
 
     if (service.exposed) {
+      // With a domain the construct provisions an HTTPS:443 listener (cert
+      // below), an HTTP:80 listener that redirects to it, and the Route53
+      // alias record; without one it stays a plain HTTP:80 ALB.
+      let domainOptions = {};
+      if (domain) {
+        const zone = route53.HostedZone.fromLookup(this, "Zone", {
+          domainName: domain.zoneName,
+        });
+        const certificate = new acm.Certificate(this, "ApiCertificate", {
+          domainName: domain.recordName,
+          validation: acm.CertificateValidation.fromDns(zone),
+        });
+        domainOptions = {
+          protocol: ApplicationProtocol.HTTPS,
+          certificate,
+          domainName: domain.recordName,
+          domainZone: zone,
+          redirectHTTP: true,
+        };
+      }
+
       const loadBalanced =
         new ecsPatterns.ApplicationLoadBalancedFargateService(
           this,
@@ -118,6 +144,7 @@ export class ServiceStack extends Stack {
               environment,
               family: service.name,
             },
+            ...domainOptions,
           },
         );
       loadBalanced.targetGroup.configureHealthCheck({ path: "/api/v1/health" });

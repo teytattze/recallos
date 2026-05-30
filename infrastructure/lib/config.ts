@@ -13,6 +13,13 @@ export interface ServiceConfig {
   readonly needsQueue?: boolean;
 }
 
+export interface DomainConfig {
+  /** Apex Route53 hosted zone, e.g. `recallos.io`. */
+  readonly zoneName: string;
+  /** Fully-qualified record for the API, e.g. `dev.api-service.recallos.io`. */
+  readonly recordName: string;
+}
+
 export interface RecallosConfig {
   readonly env: { readonly account?: string; readonly region: string };
   /** The single ECR repository CI pushes every app image to. */
@@ -20,6 +27,8 @@ export interface RecallosConfig {
   /** Version segment of the image tag, e.g. `main-abc1234`. */
   readonly imageTag: string;
   readonly services: readonly ServiceConfig[];
+  /** When set, the exposed service gets an HTTPS ALB + Route53 alias record. */
+  readonly domain?: DomainConfig;
 }
 
 // Mirrors the apps CI builds and pushes to ECR. The API takes HTTP traffic on
@@ -65,10 +74,18 @@ export function loadConfig(app: App): RecallosConfig {
   const imageTag =
     app.node.tryGetContext("imageTag") ?? process.env.IMAGE_TAG ?? "latest";
 
+  const zoneName =
+    app.node.tryGetContext("hostedZoneName") ?? process.env.HOSTED_ZONE_NAME;
+  const recordName =
+    app.node.tryGetContext("apiDomainName") ?? process.env.API_DOMAIN_NAME;
+  // Both are required to wire the domain; without them the ALB stays HTTP-only.
+  const domain = zoneName && recordName ? { zoneName, recordName } : undefined;
+
   return {
     env: { account, region },
     ecrRepositoryName,
     imageTag,
     services: SERVICES,
+    domain,
   };
 }

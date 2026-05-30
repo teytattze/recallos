@@ -15,7 +15,10 @@ Three CloudFormation stacks:
   per-release service changeset.
 - **`RecallosServiceStack`** — runs each image on the network stack's cluster:
   `server-api-service` behind a public ALB (port 8000, health check
-  `/api/v1/health`), plus headless `server-knowledge-worker` and
+  `/api/v1/health`). Set `hostedZoneName` + `apiDomainName` to front it with an
+  HTTPS listener (ACM cert, DNS-validated) and a Route53 alias record, with
+  HTTP redirected to HTTPS; without them the ALB stays HTTP-only. Plus headless
+  `server-knowledge-worker` and
   `server-outbox-worker` services. It also provisions the backing data stores the
   apps connect to: an **Aurora Serverless v2 PostgreSQL** cluster (pgvector-capable,
   generated Secrets Manager credentials) reachable by every service via
@@ -45,6 +48,8 @@ Resolved from CDK context (`-c key=value`), then environment, then defaults:
 | `region`            | `CDK_DEFAULT_REGION`  | `us-east-1` | Target region.                        |
 | `ecrRepositoryName` | `ECR_REPOSITORY_NAME` | `recallos`  | Must match CI's `AWS_ECR_REPOSITORY`. |
 | `imageTag`          | `IMAGE_TAG`           | `latest`    | Version segment of the image tag.     |
+| `hostedZoneName`    | `HOSTED_ZONE_NAME`    | —           | Route53 zone, e.g. `recallos.io`.     |
+| `apiDomainName`     | `API_DOMAIN_NAME`     | —           | API hostname; needs `hostedZoneName`. |
 
 `account`/`region` come from your AWS credentials on `cdk deploy`; `imageTag` is
 the only value you normally pass by hand.

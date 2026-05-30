@@ -280,3 +280,5 @@ jobs:
             -c region=${{ vars.AWS_REGION }} \
             -c ecrRepositoryName=${{ vars.AWS_ECR_REPOSITORY }} \
             -c imageTag=${{ steps.extract-version.outputs.version }}
+            -c hostedZoneName=${{ vars.AWS_ROUTE_53_HOSTED_ZONE_NAME }} \
+            -c apiDomainName=dev.api-service.recallos.io
