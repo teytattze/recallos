@@ -11,7 +11,7 @@ env:
   BUN_VERSION: "1.3.14"
 
 jobs:
-  execute_unit_test:
+  build_artifact:
     name: Execute ${{ matrix.app }} unit test
     runs-on: ubuntu-latest
     strategy:
@@ -45,43 +45,8 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Build ${{ matrix.app }}
+      - name: Run ${{ matrix.app }} unit tests
         run: bun run test --filter ./apps/${{ matrix.app }}
-
-  build_artifact:
-    name: Build ${{ matrix.app }} artifact
-    runs-on: ubuntu-latest
-    needs: execute_unit_test
-    strategy:
-      matrix:
-        include:
-          - app: server-api-service
-            build_dir: dist
-          - app: server-knowledge-worker
-            build_dir: dist
-          - app: server-outbox-worker
-            build_dir: dist
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Cache node_modules
-        uses: actions/cache@v5
-        with:
-          path: |
-            node_modules
-            apps/${{ matrix.app }}/node_modules
-          key: ${{ runner.os }}-bun-${{ matrix.app }}-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-${{ matrix.app }}-
-
-      - name: Install dependencies
-        run: bun install
 
       - name: Build ${{ matrix.app }}
         run: bun run build --filter ./apps/${{ matrix.app }}
@@ -145,7 +110,7 @@ jobs:
   deploy_ecr:
     name: Deploy ECR repository with CDK
     runs-on: ubuntu-latest
-    needs: execute_unit_test
+    needs: build_artifact
     if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repository
@@ -184,6 +149,48 @@ jobs:
             -c account=${{ vars.AWS_ACCOUNT_ID }} \
             -c region=${{ vars.AWS_REGION }} \
             -c ecrRepositoryName=${{ vars.AWS_ECR_REPOSITORY }}
+
+  deploy_network:
+    name: Deploy network with CDK
+    runs-on: ubuntu-latest
+    needs: build_artifact
+    if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache node_modules
+        uses: actions/cache@v5
+        with:
+          path: |
+            node_modules
+            infrastructure/node_modules
+          key: ${{ runner.os }}-bun-infrastructure-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-infrastructure-
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Deploy RecallosNetworkStack
+        working-directory: infrastructure
+        run: |
+          bunx cdk deploy RecallosNetworkStack \
+            --require-approval never \
+            -c account=${{ vars.AWS_ACCOUNT_ID }} \
+            -c region=${{ vars.AWS_REGION }}
 
   upload_image:
     name: Upload ${{ matrix.app }} image
@@ -229,7 +236,7 @@ jobs:
   deploy_service:
     name: Deploy services with CDK
     runs-on: ubuntu-latest
-    needs: upload_image
+    needs: [upload_image, deploy_network]
     if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repository
