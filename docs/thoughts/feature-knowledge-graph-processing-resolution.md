@@ -17,11 +17,11 @@ The hardest stage: deciding a candidate entity **is** an existing node. **Decisi
 - The **I/O** — natural-key lookup, ANN search — is an outbound port (`NodeResolutionIndex` + repo lookups).
 - The **decision** — _"this candidate is `Resolved(nodeId)` / `New` / `Ambiguous`"_ — is a **pure domain service** `EntityResolution.classify(candidate, matches)`, operating on already-fetched matches. This keeps the _threshold policy_ pure and unit-testable instead of buried in an adapter. It is the one new pure type this layer adds to the domain (`entity-resolution.domain-service.ts`).
 
-| Strategy                             | Pro                                                                                    | Con                                                                       |
+| Strategy                             | Pro                                                                                   | Con                                                                      |
 | ------------------------------------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Deterministic key only               | Fast, deterministic, no model cost                                                     | Misses fuzzy duplicates ("Alice" vs "Alice Smith") → fragmentation        |
-| Vector similarity only               | Catches fuzzy duplicates                                                               | Threshold tuning; risk of **over-merging** distinct entities; model cost |
-| LLM canonicalization                 | Highest recall                                                                         | Cost, latency, non-determinism, hardest to make idempotent               |
+| Deterministic key only               | Fast, deterministic, no model cost                                                    | Misses fuzzy duplicates ("Alice" vs "Alice Smith") → fragmentation       |
+| Vector similarity only               | Catches fuzzy duplicates                                                              | Threshold tuning; risk of **over-merging** distinct entities; model cost |
+| LLM canonicalization                 | Highest recall                                                                        | Cost, latency, non-determinism, hardest to make idempotent               |
 | **Hybrid + deferred merge (chosen)** | Deterministic where possible, fuzzy where needed, **never over-merges synchronously** | Two passes; the merge backlog must be drained                            |
 
 The bias is **conservative**: prefer transient fragmentation (fixable by a later merge) over irreversible over-merging in the hot path.
@@ -32,12 +32,12 @@ The bias is **conservative**: prefer transient fragmentation (fixable by a later
 
 Embedding is split out of `EnrichEvents` because the domain treats it as a distinct lifecycle phase, not a one-shot at birth (parent doc §4). The built `KnowledgeGraphNode.create` confirms this — it always sets `embedding: null`.
 
-|                        | Embedding split into `EmbedNodes`                                                                                          | Embedding inline in `EnrichEvents`                         |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| **Domain signal**      | Embedding is **optional at birth**, assigned later via `assignEmbedding`, recording a _separate_ `NodeEmbedded` event.    | Fights the domain — forces a node to be born embedded.    |
-| **Failure isolation**  | An embedding-API outage **does not block graph construction**; nodes are born `embedding: null` and embedded on the next run. | An embedding outage wedges the whole enrichment run.      |
-| **Cost / rate limits** | The most expensive, most rate-limited call is isolated and independently retriable/batchable.                             | Couples graph mutation throughput to embedding throughput. |
-| **Reuse**              | The same job handles **re-embedding** on body revision / model change (below).                                            | Re-embedding needs separate plumbing anyway.              |
+|                        | Embedding split into `EmbedNodes`                                                                                             | Embedding inline in `EnrichEvents`                         |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| **Domain signal**      | Embedding is **optional at birth**, assigned later via `assignEmbedding`, recording a _separate_ `NodeEmbedded` event.        | Fights the domain — forces a node to be born embedded.     |
+| **Failure isolation**  | An embedding-API outage **does not block graph construction**; nodes are born `embedding: null` and embedded on the next run. | An embedding outage wedges the whole enrichment run.       |
+| **Cost / rate limits** | The most expensive, most rate-limited call is isolated and independently retriable/batchable.                                 | Couples graph mutation throughput to embedding throughput. |
+| **Reuse**              | The same job handles **re-embedding** on body revision / model change (below).                                                | Re-embedding needs separate plumbing anyway.               |
 
 **`EmbedNodes` triggers** — embedding is not a one-shot at birth:
 
@@ -86,7 +86,10 @@ export interface KnowledgeGraphNodeRepository {
     type: NodeType,
     key: string,
   ): Promise<KnowledgeGraphNode | null>;
-  findNeedingEmbedding(model: string, limit: number): Promise<KnowledgeGraphNode[]>; // EmbedNodes scan
+  findNeedingEmbedding(
+    model: string,
+    limit: number,
+  ): Promise<KnowledgeGraphNode[]>; // EmbedNodes scan
   saveMany(nodes: KnowledgeGraphNode[]): Promise<void>;
 }
 

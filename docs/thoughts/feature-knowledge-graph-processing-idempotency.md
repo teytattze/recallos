@@ -17,8 +17,8 @@ The threat: **LLM extraction is non-deterministic** (extraction sub-doc §1), so
 
 **Decision: anchor idempotency on the deterministic `eventId`, not on extractor output, via a processed-events ledger:**
 
-| Mechanism                   | Question it answers                          | Key                                                        | Why it works                                                                       |
-| --------------------------- | -------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Mechanism                   | Question it answers                          | Key                                                        | Why it works                                                                                                         |
+| --------------------------- | -------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | **Processed-events ledger** | "Was this event's _effect_ already applied?" | `(eventId, extractorVersion) → status, factHash, attempts` | **Exactly-once effect.** Skip an already-processed event regardless of LLM jitter or how many times SQS delivers it. |
 
 Layered guards beneath the ledger: **deterministic candidate keys** (normalized name+type — resolution sub-doc §1/§3) so even a re-extraction resolves to the _same_ node; and **`factHash`** of `(eventId, normalized-fact)` to skip re-asserting a fact already recorded (avoids confidence churn).

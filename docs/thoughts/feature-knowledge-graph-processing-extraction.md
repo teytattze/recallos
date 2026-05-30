@@ -13,12 +13,12 @@ The extractor turns an event entry's **opaque** body into **candidates** already
 - **Deterministic rules** for known _structured_ sources (a Slack message, a GitHub PR, a calendar invite). Cheap, exact, **deterministic** — and the only reliable source of _structural_ relationships.
 - **LLM structured-output** for _free-text_ bodies, constrained to emit only `NodeType`/`RelationshipType` members.
 
-|                                | Rules (structured sources) | LLM (free-text)        | Hybrid (recommended)                |
-| ------------------------------ | -------------------------- | ---------------------- | ----------------------------------- |
-| **Accuracy on known shapes**   | **High**                   | Medium                 | **High**                            |
-| **Coverage of unknown shapes** | Low                        | **High**               | **High**                            |
-| **Cost / latency**             | **Negligible**             | High                   | Pay LLM cost **only** for free-text |
-| **Determinism / idempotency**  | **Deterministic**          | Non-deterministic      | Deterministic where it matters most |
+|                                | Rules (structured sources) | LLM (free-text)   | Hybrid (recommended)                |
+| ------------------------------ | -------------------------- | ----------------- | ----------------------------------- |
+| **Accuracy on known shapes**   | **High**                   | Medium            | **High**                            |
+| **Coverage of unknown shapes** | Low                        | **High**          | **High**                            |
+| **Cost / latency**             | **Negligible**             | High              | Pay LLM cost **only** for free-text |
+| **Determinism / idempotency**  | **Deterministic**          | Non-deterministic | Deterministic where it matters most |
 
 The non-determinism of the LLM path is what forces the `eventId`-anchored idempotency design — see the [idempotency sub-doc](./feature-knowledge-graph-processing-idempotency.md).
 
