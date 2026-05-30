@@ -13,7 +13,11 @@ Two independently deployable CloudFormation stacks:
 - **`RecallosServiceStack`** — a VPC + ECS Fargate cluster running each image:
   `server-api-service` behind a public ALB (port 8000, health check
   `/api/v1/health`), plus headless `server-knowledge-worker` and
-  `server-outbox-worker` services.
+  `server-outbox-worker` services. It also provisions the backing data stores the
+  apps connect to: an **Aurora Serverless v2 PostgreSQL** cluster (pgvector-capable,
+  generated Secrets Manager credentials) reachable by every service via
+  `DATABASE_URL`, and a standard **SQS** outbox queue (with a dead-letter queue) the
+  `server-outbox-worker` publishes to via `SQS_QUEUE_URL`.
 
 The service stack imports the ECR repository **by name** (not a cross-stack
 export), so the two deploy independently and the name stays in sync with CI's
@@ -111,9 +115,16 @@ infrastructure/
   cdk.json               # `app` runs `bun bin/recallos.ts`
 ```
 
+## Database migrations
+
+The cluster is provisioned empty. Before the apps are healthy, the Prisma schema
+must be applied against it — `prisma migrate deploy` (which creates the tables and
+runs `CREATE EXTENSION vector`). The cluster is in private subnets, so run the
+migration from inside the VPC (a one-off ECS task or a bastion). This is a
+follow-up, not part of the stack.
+
 ## Out of scope
 
-Data stores and queues the apps rely on at runtime (Aurora/pgvector, SQS, S3 —
-see `compose.yml` and the server decision records) are not provisioned here.
-Wire their connection details through the task `environment` in
-`lib/service-stack.ts` once those resources exist.
+Remaining runtime dependencies (S3 — see `compose.yml` and the server decision
+records) are not provisioned here. Wire their connection details through the task
+`environment` in `lib/service-stack.ts` once those resources exist.
