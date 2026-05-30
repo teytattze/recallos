@@ -39,6 +39,7 @@ RecallOS is org-wide shared memory: ingest information from many sources, relate
 - `@packages/server-knowledge/`: knowledge bounded context — pure domain + application (knowledge graph).
 - `@packages/server-knowledge-infra/`: outbound adapters for the knowledge context.
 - `@packages/server-platform/`: cross-cutting infra primitives — `zod` config, `pino` logger, (db pool, event bus, unit-of-work to come).
+- `@packages/server-integration-testing/`: cross-context system integration tests — drives the real use cases/adapters against **Postgres + floci (SQS) Docker containers** (Testcontainers), no mocks. Requires a running Docker daemon; its `test` task is uncached.
 - `@packages/typescript-config/`: shared strict tsconfig (`@repo/typescript-config`); extend `bun.json` for server packages.
 
 ## Architecture
