@@ -16,6 +16,7 @@
     "apps/server-api-service": {
       "name": "@repo/server-api-service",
       "dependencies": {
+        "@repo/server-platform": "workspace:*",
         "hono": "catalog:",
       },
       "devDependencies": {
@@ -25,6 +26,7 @@
     "apps/server-knowledge-worker": {
       "name": "@repo/server-knowledge-worker",
       "dependencies": {
+        "@repo/server-platform": "workspace:*",
         "hono": "catalog:",
       },
       "devDependencies": {

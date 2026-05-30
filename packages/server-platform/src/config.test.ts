@@ -20,7 +20,7 @@ test("loadConfig: given only the required DATABASE_URL, it should apply defaults
   expect(config).toEqual({
     NODE_ENV: "development",
     LOG_LEVEL: "info",
-    PORT: 3000,
+    PORT: 8000,
     DATABASE_URL,
   });
 });
