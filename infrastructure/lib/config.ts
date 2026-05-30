@@ -9,6 +9,8 @@ export interface ServiceConfig {
   /** When true the service is fronted by a public ALB on `containerPort`. */
   readonly exposed: boolean;
   readonly containerPort?: number;
+  /** When true the task gets `SQS_QUEUE_URL` and permission to publish to it. */
+  readonly needsQueue?: boolean;
 }
 
 export interface RecallosConfig {
@@ -44,6 +46,7 @@ const SERVICES: readonly ServiceConfig[] = [
     memoryLimitMiB: 512,
     desiredCount: 1,
     exposed: false,
+    needsQueue: true,
   },
 ];
 

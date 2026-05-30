@@ -1,6 +1,8 @@
+import type { Construct } from "constructs";
+
 import { RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import * as ecr from "aws-cdk-lib/aws-ecr";
-import type { Construct } from "constructs";
+
 import type { RecallosConfig } from "./config";
 
 export interface EcrStackProps extends StackProps {

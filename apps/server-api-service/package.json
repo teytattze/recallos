@@ -9,6 +9,7 @@
     "test": "bun test --randomize"
   },
   "dependencies": {
+    "@repo/server-platform": "workspace:*",
     "hono": "catalog:"
   },
   "devDependencies": {

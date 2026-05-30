@@ -6,18 +6,25 @@ compile step.
 
 ## What it provisions
 
-Two independently deployable CloudFormation stacks:
+Three CloudFormation stacks:
 
 - **`RecallosEcrStack`** — the single ECR repository CI pushes every app image
   to. Images are tagged `<app>.<version>` (e.g. `server-api-service.main-abc1234`).
-- **`RecallosServiceStack`** — a VPC + ECS Fargate cluster running each image:
+- **`RecallosNetworkStack`** — the durable networking: a VPC and an ECS Fargate
+  cluster. It rarely changes, so it is its own stack and stays out of the
+  per-release service changeset.
+- **`RecallosServiceStack`** — runs each image on the network stack's cluster:
   `server-api-service` behind a public ALB (port 8000, health check
   `/api/v1/health`), plus headless `server-knowledge-worker` and
-  `server-outbox-worker` services.
+  `server-outbox-worker` services. It also provisions the backing data stores the
+  apps connect to: an **Aurora Serverless v2 PostgreSQL** cluster (pgvector-capable,
+  generated Secrets Manager credentials) reachable by every service via
+  `DATABASE_URL`, and a standard **SQS** outbox queue (with a dead-letter queue) the
+  `server-outbox-worker` publishes to via `SQS_QUEUE_URL`.
 
-The service stack imports the ECR repository **by name** (not a cross-stack
-export), so the two deploy independently and the name stays in sync with CI's
-`AWS_ECR_REPOSITORY`.
+The service stack imports the VPC + cluster from `RecallosNetworkStack` (CDK
+cross-stack references) and the ECR repository **by name** (the name stays in
+sync with CI's `AWS_ECR_REPOSITORY`).
 
 ## Prerequisites
 
@@ -55,7 +62,10 @@ bun run --filter @repo/infrastructure diff  -- -c imageTag=main-abc1234
 # 1. Create the registry, then let CI build and push images to it.
 bun run --filter @repo/infrastructure deploy -- RecallosEcrStack
 
-# 2. Deploy the services against a specific image version.
+# 2. Create the network (VPC + cluster) — deployed once, rarely changes.
+bun run --filter @repo/infrastructure deploy -- RecallosNetworkStack
+
+# 3. Deploy the services against a specific image version.
 bun run --filter @repo/infrastructure deploy -- RecallosServiceStack -c imageTag=main-abc1234
 ```
 
@@ -72,7 +82,8 @@ bun run --filter @repo/infrastructure deploy -- RecallosServiceStack -c imageTag
 Pushing a tag or merging to `main` runs the full pipeline in
 `.github/workflows/ci.yml`:
 
-1. `deploy_ecr` runs `cdk deploy RecallosEcrStack` (idempotent once created).
+1. `deploy_ecr` runs `cdk deploy RecallosEcrStack` and `deploy_network` runs
+   `cdk deploy RecallosNetworkStack` (both idempotent once created).
 2. CI builds and pushes the images as `<app>.<version>`.
 3. `deploy_service` runs `cdk deploy RecallosServiceStack -c imageTag=<version>`
    to roll the cluster onto the new images.
@@ -104,16 +115,24 @@ changes the role-name and SSM-parameter ARNs accordingly.
 
 ```
 infrastructure/
-  bin/recallos.ts        # CDK app entrypoint — instantiates both stacks
+  bin/recallos.ts        # CDK app entrypoint — instantiates the stacks
   lib/config.ts          # context/env/default resolution + service definitions
   lib/ecr-stack.ts       # RecallosEcrStack
-  lib/service-stack.ts   # RecallosServiceStack (VPC + Fargate)
+  lib/network-stack.ts   # RecallosNetworkStack (VPC + cluster)
+  lib/service-stack.ts   # RecallosServiceStack (Fargate + Aurora + SQS)
   cdk.json               # `app` runs `bun bin/recallos.ts`
 ```
 
+## Database migrations
+
+The cluster is provisioned empty. Before the apps are healthy, the Prisma schema
+must be applied against it — `prisma migrate deploy` (which creates the tables and
+runs `CREATE EXTENSION vector`). The cluster is in private subnets, so run the
+migration from inside the VPC (a one-off ECS task or a bastion). This is a
+follow-up, not part of the stack.
+
 ## Out of scope
 
-Data stores and queues the apps rely on at runtime (Aurora/pgvector, SQS, S3 —
-see `compose.yml` and the server decision records) are not provisioned here.
-Wire their connection details through the task `environment` in
-`lib/service-stack.ts` once those resources exist.
+Remaining runtime dependencies (S3 — see `compose.yml` and the server decision
+records) are not provisioned here. Wire their connection details through the task
+`environment` in `lib/service-stack.ts` once those resources exist.
