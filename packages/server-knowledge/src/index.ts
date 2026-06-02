@@ -13,3 +13,6 @@ export * from "./domain/event-id.value-object.ts";
 export * from "./domain/invalid-knowledge-graph.error.ts";
 export * from "./domain/invalid-knowledge-graph-node.error.ts";
 export * from "./domain/invalid-knowledge-graph-edge.error.ts";
+export * from "./domain/node-created.event.ts";
+export * from "./domain/node-embedded.event.ts";
+export * from "./domain/nodes-related.event.ts";

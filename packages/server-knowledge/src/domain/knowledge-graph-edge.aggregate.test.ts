@@ -85,3 +85,79 @@ test("KnowledgeGraphEdge.restore: given a row with out-of-range confidence, it s
     KnowledgeGraphEdge.restore({ ...storedRow, confidence: 2 }),
   ).toThrow();
 });
+
+const createEdge = (): KnowledgeGraphEdge => {
+  const result = KnowledgeGraphEdge.create(validInput);
+  if (!result.ok) throw new Error("expected ok edge");
+  return result.value;
+};
+
+test("KnowledgeGraphEdge.create: given a fresh edge, it should record a NodesRelated event", () => {
+  // GIVEN
+  const edge = createEdge();
+
+  // WHEN
+  const events = edge.pullDomainEvents();
+
+  // THEN
+  expect(events).toHaveLength(1);
+  expect(events[0]?.eventName).toBe("NodesRelated");
+  expect(events[0]?.aggregateId).toBe(edge.id.value);
+});
+
+test("KnowledgeGraphEdge.reinforce: given a later observation, it should union provenance and keep the latest observedAt", () => {
+  // GIVEN
+  const edge = createEdge();
+  const laterObserved = new Date("2026-02-01T00:00:00Z");
+  const reinforcedAt = new Date("2026-02-02T00:00:00Z");
+  const freshEvent = EventId.create();
+
+  // WHEN
+  const result = edge.reinforce({
+    confidence: 0.7,
+    sourceEventIds: [freshEvent],
+    observedAt: laterObserved,
+    now: reinforcedAt,
+  });
+
+  // THEN
+  expect(result.ok).toBe(true);
+  expect(edge.sourceEventIds).toHaveLength(2);
+  expect(edge.observedAt).toEqual(laterObserved);
+  expect(edge.metadata.updatedAt).toEqual(reinforcedAt);
+});
+
+test("KnowledgeGraphEdge.reinforce: given an earlier observation, it should keep the existing observedAt", () => {
+  // GIVEN
+  const edge = createEdge();
+  const earlier = new Date("2025-12-01T00:00:00Z");
+
+  // WHEN
+  edge.reinforce({
+    confidence: 0.5,
+    sourceEventIds: [EventId.create()],
+    observedAt: earlier,
+    now,
+  });
+
+  // THEN
+  expect(edge.observedAt).toEqual(observedAt);
+});
+
+test("KnowledgeGraphEdge.reinforce: given out-of-range confidence, it should return an InvalidKnowledgeGraphEdge error", () => {
+  // GIVEN
+  const edge = createEdge();
+
+  // WHEN
+  const result = edge.reinforce({
+    confidence: 1.5,
+    sourceEventIds: [EventId.create()],
+    observedAt,
+    now,
+  });
+
+  // THEN
+  expect(result.ok).toBe(false);
+  if (result.ok) return;
+  expect(result.error.kind).toBe("InvalidKnowledgeGraphEdge");
+});

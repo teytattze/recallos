@@ -1,5 +1,6 @@
 import { test, expect } from "bun:test";
 
+import { Embedding } from "./embedding.value-object.ts";
 import { KnowledgeGraph } from "./knowledge-graph.aggregate.ts";
 
 const now = new Date("2026-01-01T00:00:00Z");
@@ -81,3 +82,24 @@ test("KnowledgeGraph.restore: given a row with a blank name, it should throw", (
   // GIVEN / WHEN / THEN
   expect(() => KnowledgeGraph.restore({ ...storedRow, name: "  " })).toThrow();
 });
+
+const graph = KnowledgeGraph.restore(storedRow);
+
+test("KnowledgeGraph.accepts: given an embedding matching the graph's model and dimensions, it should return true", () => {
+  // GIVEN
+  const embedding = Embedding.restore([0.1], "text-embedding-3-small", 1536);
+
+  // WHEN / THEN
+  expect(graph.accepts(embedding)).toBe(true);
+});
+
+test.each([
+  ["a model mismatch", Embedding.restore([0.1], "other-model", 1536)],
+  ["a dimension mismatch", Embedding.restore([0.1], "text-embedding-3-small", 768)],
+])(
+  "KnowledgeGraph.accepts: given %s, it should return false",
+  (_label, embedding) => {
+    // WHEN / THEN
+    expect(graph.accepts(embedding)).toBe(false);
+  },
+);

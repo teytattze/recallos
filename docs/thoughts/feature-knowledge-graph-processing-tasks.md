@@ -10,7 +10,7 @@ The implementation breakdown for the enrichment application layer designed in [`
 
 ## Status snapshot (2026-05)
 
-- **Domain (`@repo/server-knowledge`):** the three aggregates + value objects + closed vocabularies + `Invalid*` errors exist, exposing **`create`/`restore` only**. No mutators, no domain events, no domain services.
+- **Domain (`@repo/server-knowledge`):** the three aggregates + value objects + closed vocabularies + `Invalid*` errors exist. Shared-foundation domain layer (D1–D6) now landed on the aggregates themselves — no domain services: node/edge mutators (`attachEvents`/`assignEmbedding`/`reviseBody`/`absorb`, `reinforce`), the `NodeCreated`/`NodeEmbedded`/`NodesRelated` events, and `KnowledgeGraph.accepts`. The "relate" create-or-reinforce decision (former D4) is deferred to the `EnrichEvents` use case (EE7) as application orchestration.
 - **Application layer:** none (`packages/server-knowledge/src/application/` does not exist).
 - **Infra (`@repo/server-knowledge-infra`):** stub only.
 - **Enricher app (`apps/server-knowledge-worker`):** stub (health route only).
@@ -27,12 +27,12 @@ These are dependencies for more than one use case; build them first.
 
 These are **domain-layer** tasks (mutators/events/services the domain doc designed but never shipped). They live in `@repo/server-knowledge`, follow `.claude/rules/server-hexagonal-domain-layer.md` (zod schema, `parseProps`/`parsePropsOrThrow`, `defineError`, `Result` from expected failures), and must land before the use cases that call them.
 
-- [ ] **D1 — Node mutators.** Add to `knowledge-graph-node.aggregate.ts`: `attachEvents(eventIds, now)` (union into `eventIds`, no-op on duplicates, `metadata.touch`), `assignEmbedding(embedding)`, `reviseBody(body, now)`. → _verify:_ unit tests prove `attachEvents` is idempotent on a repeated `eventId` and that `assignEmbedding` flips `embedding` from `null`.
-- [ ] **D2 — Edge mutator.** Add `reinforce({ confidence, observedAt, sourceEventIds, now })` to `knowledge-graph-edge.aggregate.ts`: union `sourceEventIds`, keep the **latest** `observedAt`, update confidence. → _verify:_ reinforcing keeps the max `observedAt` and unions provenance.
-- [ ] **D3 — Domain events.** Add `NodeCreated`, `NodeEmbedded`, `NodesRelated` (kernel `DomainEvent`) and record them on the matching factory/mutator via `AggregateRoot.record(...)`. → _verify:_ `pullDomainEvents()` returns the expected event after `create`/`assignEmbedding`/`relate`.
-- [ ] **D4 — `GraphRelation` domain service.** `graph-relation.domain-service.ts`: `relate({ graphId, fromId, toId, relationship, confidence, observedAt, sourceEventIds, existing, now })` → create a new edge or `reinforce` the passed-in `existing` one. Pure; takes already-loaded aggregates. → _verify:_ returns a new edge when `existing` is null, a reinforced one otherwise.
-- [ ] **D5 — `KnowledgeGraph.accepts(embedding)`.** Policy on the graph root comparing an embedding's `model`/`dimensions` to the graph's `embeddingModel`/`embeddingDimensions`. → _verify:_ false on model/dimension mismatch.
-- [ ] **D6 — Merge semantics.** A pure helper for folding a duplicate into a survivor (provenance via `attachEvents`); the edge re-point is I/O (P-layer). → _verify:_ survivor gains the duplicate's `eventIds`.
+- [x] **D1 — Node mutators.** Add to `knowledge-graph-node.aggregate.ts`: `attachEvents(eventIds, now)` (union into `eventIds`, no-op on duplicates, `metadata.touch`), `assignEmbedding(embedding)`, `reviseBody(body, now)`. → _verify:_ unit tests prove `attachEvents` is idempotent on a repeated `eventId` and that `assignEmbedding` flips `embedding` from `null`.
+- [x] **D2 — Edge mutator.** Add `reinforce({ confidence, observedAt, sourceEventIds, now })` to `knowledge-graph-edge.aggregate.ts`: union `sourceEventIds`, keep the **latest** `observedAt`, update confidence. → _verify:_ reinforcing keeps the max `observedAt` and unions provenance.
+- [x] **D3 — Domain events.** Add `NodeCreated`, `NodeEmbedded`, `NodesRelated` (kernel `DomainEvent`) and record them on the matching factory/mutator via `AggregateRoot.record(...)`. → _verify:_ `pullDomainEvents()` returns the expected event after `create`/`assignEmbedding`/`relate`.
+- [ ] **D4 — ~~`GraphRelation` domain service~~ → folded into the `EnrichEvents` use case (EE7).** "Relate" (create a new edge vs `reinforce` an existing one for a re-asserted `(fromId, toId, relationship)` triple) is **application orchestration**, not domain behaviour, so there is no domain service. The use case composes the edge aggregate's existing `KnowledgeGraphEdge.create` (D-foundation) and `reinforce` (D2) primitives. → _verify:_ covered by EE7's use-case test (new triple ⇒ `create`; re-asserted triple ⇒ `reinforce`).
+- [x] **D5 — `KnowledgeGraph.accepts(embedding)`.** Policy on the graph root comparing an embedding's `model`/`dimensions` to the graph's `embeddingModel`/`embeddingDimensions`. → _verify:_ false on model/dimension mismatch.
+- [x] **D6 — Merge semantics.** `KnowledgeGraphNode.absorb(duplicate, now)` folds a duplicate into a survivor (provenance via `attachEvents`); the edge re-point is I/O (P-layer). → _verify:_ survivor gains the duplicate's `eventIds`.
 
 > If the team prefers, D1–D6 can be tracked in `feature-knowledge-graph.md`'s own task list instead; they are listed here because the use cases below are blocked on them.
 

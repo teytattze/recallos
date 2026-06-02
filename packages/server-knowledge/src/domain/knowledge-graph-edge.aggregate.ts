@@ -13,6 +13,7 @@ import { EventId } from "./event-id.value-object.ts";
 import { InvalidKnowledgeGraphEdge } from "./invalid-knowledge-graph-edge.error.ts";
 import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
 import { NodeId } from "./node-id.value-object.ts";
+import { NodesRelated } from "./nodes-related.event.ts";
 import {
   RELATIONSHIP_TYPES,
   type RelationshipType,
@@ -71,6 +72,34 @@ export class KnowledgeGraphEdge extends AggregateRoot<
     super(id, metadata, props);
   }
 
+  get graphId(): KnowledgeGraphId {
+    return this._props.graphId;
+  }
+
+  get fromId(): NodeId {
+    return this._props.fromId;
+  }
+
+  get toId(): NodeId {
+    return this._props.toId;
+  }
+
+  get relationship(): RelationshipType {
+    return this._props.relationship;
+  }
+
+  get confidence(): Confidence {
+    return this._props.confidence;
+  }
+
+  get sourceEventIds(): EventId[] {
+    return this._props.sourceEventIds;
+  }
+
+  get observedAt(): Date {
+    return this._props.observedAt;
+  }
+
   static create(
     input: CreateKnowledgeGraphEdgeInput,
   ): Result<KnowledgeGraphEdge> {
@@ -98,13 +127,21 @@ export class KnowledgeGraphEdge extends AggregateRoot<
     );
     if (!parsePropsResult.ok) return parsePropsResult;
 
-    return Result.ok(
-      new KnowledgeGraphEdge(
-        EdgeId.create(),
-        EntityMetadata.create(input.now),
-        parsePropsResult.value,
+    const edge = new KnowledgeGraphEdge(
+      EdgeId.create(),
+      EntityMetadata.create(input.now),
+      parsePropsResult.value,
+    );
+    edge.recordEvent(
+      new NodesRelated(
+        edge.id.value,
+        input.now,
+        edge.fromId.value,
+        edge.toId.value,
+        edge.relationship,
       ),
     );
+    return Result.ok(edge);
   }
 
   static restore(input: RestoreKnowledgeGraphEdgeInput): KnowledgeGraphEdge {
@@ -121,5 +158,31 @@ export class KnowledgeGraphEdge extends AggregateRoot<
         observedAt: input.observedAt,
       }),
     );
+  }
+
+  /** Re-asserted by a later event: bump confidence, accumulate provenance, keep the latest observation. */
+  reinforce(input: {
+    confidence: number;
+    sourceEventIds: EventId[];
+    observedAt: Date;
+    now: Date;
+  }): Result<void> {
+    const createConfidenceResult = Confidence.create(input.confidence);
+    if (!createConfidenceResult.ok) return createConfidenceResult;
+
+    this.replaceProps({
+      ...this._props,
+      confidence: createConfidenceResult.value,
+      sourceEventIds: dedupeEventIds([
+        ...this._props.sourceEventIds,
+        ...input.sourceEventIds,
+      ]),
+      observedAt:
+        input.observedAt > this._props.observedAt
+          ? input.observedAt
+          : this._props.observedAt,
+    });
+    this.touch(input.now);
+    return Result.ok(undefined);
   }
 }
