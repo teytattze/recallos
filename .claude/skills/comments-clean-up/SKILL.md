@@ -19,7 +19,7 @@ sparse, accurate comment more than a verbose one that restates the signature.
 
 ## 1. Set the bar before editing
 
-Find the project's comment convention first (`AGENTS.md`/`CLAUDE.md`,
+Find the project's comment convention first (`AGENTS.md`/`AGENTS.md`,
 `CONTRIBUTING.md`, lint rules) and follow it. Absent one, default to: _comments
 explain why, not what; add one only when the reasoning isn't obvious from the code._
 

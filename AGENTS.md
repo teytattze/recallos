@@ -123,8 +123,3 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
-
-## Coding Principles
-
-- Keep it simple — prefer the smallest design that solves the problem.
-- Comments explain _why_, not _what_ — add one only when the reasoning isn't obvious from the code (a non-obvious invariant, a port boundary, a trade-off).
