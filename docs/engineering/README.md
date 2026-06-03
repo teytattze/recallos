@@ -10,6 +10,7 @@ This directory is the source of truth for RecallOS engineering patterns.
 - [Application layer](./server-hexagonal-application-layer.md): use cases and ports.
 - [Composition root](./server-hexagonal-composition-root.md): dependency wiring in apps.
 - [Domain layer](./server-hexagonal-domain-layer.md): pure model, invariants, factories, and errors.
+- [Error handling](./server-error-handling.md): `Result` for expected failures, `throw` for faults, and boundary reconciliation.
 - [Inbound adapters](./server-hexagonal-inbound-adapter.md): HTTP, cron, and queue entrypoints.
 - [Shared kernel](./server-hexagonal-kernel.md): reusable DDD primitives.
 - [Outbound adapters](./server-hexagonal-outbound-adapter.md): persistence and gateway implementations.
