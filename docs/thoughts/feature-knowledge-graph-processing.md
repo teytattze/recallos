@@ -157,7 +157,7 @@ apps/server-knowledge-worker/src/
 └─ composition/                              # DI: wire use cases ← infra adapters
 ```
 
-`@repo/server-knowledge` still lists **only** `@repo/server-kernel` (and `zod`) as dependencies — every line above touching I/O is an interface, satisfied by `-infra`. The dependency rule stays mechanically enforced (`project-structure.md` §8; `.claude/rules/server-hexagonal-application-layer.md`).
+`@repo/server-knowledge` still lists **only** `@repo/server-kernel` (and `zod`) as dependencies — every line above touching I/O is an interface, satisfied by `-infra`. The dependency rule stays mechanically enforced (`project-structure.md` §8; [`docs/engineering/server-hexagonal-application-layer.md`](../engineering/server-hexagonal-application-layer.md)).
 
 ---
 

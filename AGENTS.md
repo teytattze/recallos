@@ -26,8 +26,8 @@ RecallOS is org-wide shared memory: ingest information from many sources, relate
 
 ### Documentations
 
-- `@decision-records/`: durable, committed engineering decisions with reasoning. Server decisions in `server/`, named `<YYYYMMDD>-<title>.md`; format follows `template.md` (rules in `@.claude/rules/decision-record.md`).
-- `@docs/`: design write-ups and exploration. `thoughts/` holds feature designs and trade-off analyses (e.g. `project-structure.md`, `database-tradeoffs.md`); `diagrams/` holds the Excalidraw architecture diagram.
+- `@decision-records/`: durable, committed engineering decisions with reasoning. Server decisions in `server/`, named `<YYYYMMDD>-<title>.md`; format follows `template.md` (pattern in `@docs/engineering/decision-record.md`).
+- `@docs/`: design write-ups, engineering patterns, and exploration. `engineering/` is the source of truth for engineering patterns; `thoughts/` holds feature designs and trade-off analyses (e.g. `project-structure.md`, `database-tradeoffs.md`); `diagrams/` holds the Excalidraw architecture diagram.
 
 ### Packages
 
@@ -35,7 +35,7 @@ RecallOS is org-wide shared memory: ingest information from many sources, relate
 - `@packages/server-ingestion/`: ingestion bounded context — pure domain + application (event ingestion). `@repo/server-kernel` only so far.
 - `@packages/server-ingestion-infra/`: outbound adapters for the ingestion context (persistence + gateways).
 - `@packages/server-database/`: dedicated Prisma data layer for the consolidated Postgres cluster — single schema + migration history, `createPrismaClient` factory, `db:*` scripts.
-- `@packages/server-kernel/`: DDD shared kernel — `Entity`, `AggregateRoot`, `ValueObject`, `DomainEvent`, `Id`, `Result`, `DomainError`, `Clock`, `Tenant`, schema helpers. Depends on `zod` only.
+- `@packages/server-kernel/`: DDD shared kernel — `Entity`, `AggregateRoot`, `ValueObject`, `DomainEvent`, `Id`, `Result`, `DomainError`, `Clock`, `Tenant`, schema helpers. Depends on `zod` and `es-toolkit` only.
 - `@packages/server-knowledge/`: knowledge bounded context — pure domain + application (knowledge graph).
 - `@packages/server-knowledge-infra/`: outbound adapters for the knowledge context.
 - `@packages/server-platform/`: cross-cutting infra primitives — `zod` config, `pino` logger, (db pool, event bus, unit-of-work to come).
@@ -46,10 +46,10 @@ RecallOS is org-wide shared memory: ingest information from many sources, relate
 
 ### Server-side
 
-The server side follows **hexagonal architecture + DDD**. Dependencies point inward only; the domain is a pure library with zero I/O, and everything touching the network, a DB, a clock, or a framework is an adapter behind a port. Per-layer rules live in `@.claude/rules/` (path-scoped) and the full blueprint is `@docs/thoughts/project-structure.md`. Layer summary:
+The server side follows **hexagonal architecture + DDD**. Dependencies point inward only; the domain is a pure library with zero I/O, and everything touching the network, a DB, a clock, or a framework is an adapter behind a port. Per-layer patterns live in `@docs/engineering/`; `.claude/rules/` contains path-scoped Claude stubs that point there. The full blueprint is `@docs/thoughts/project-structure.md`. Layer summary:
 
-- **Kernel** (`server-kernel`): DDD building blocks; depends on `zod` only.
-- **Domain** (`server-<context>/src/domain/`): entities, value objects, aggregates, events, invariants. Pure — `@repo/server-kernel`, `zod`, `es-toolkit` only.
+- **Kernel** (`server-kernel`): DDD building blocks; depends on `zod` and `es-toolkit` only.
+- **Domain** (`server-<context>/src/domain/`): entities, value objects, aggregates, events, invariants. Pure — `@repo/server-kernel`, `zod` only.
 - **Application** (`server-<context>/src/application/`): use cases + inbound/outbound port interfaces. Pure; never names a concrete adapter.
 - **Outbound adapters** (`server-<context>-infra`): port implementations against real tech (Postgres, pgvector, external APIs).
 - **Inbound adapters + composition root** (`apps/*`): translate HTTP/cron/queue into port calls, and wire concrete adapters to use cases (DI).
@@ -123,8 +123,3 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
-
-## Coding Principles
-
-- Keep it simple — prefer the smallest design that solves the problem.
-- Comments explain _why_, not _what_ — add one only when the reasoning isn't obvious from the code (a non-obvious invariant, a port boundary, a trade-off).
