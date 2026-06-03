@@ -4,10 +4,4 @@ paths:
   - "packages/server-knowledge-infra/src/**/*"
 ---
 
-# Rules: Outbound adapters (driven)
-
-- Contains: implementations of outbound ports against real tech (Postgres, pgvector, graph, external APIs).
-- May depend on: @repo/server-<context>, @repo/server-platform, drivers (pg, SDK clients).
-- Must NOT contain: business rules.
-- Adapters never talk to each other directly — only through the application layer.
-- Files: \*.repository.pg.ts; split into persistence/ (DB) and gateways/ (external APIs).
+The source of truth for this pattern is [`docs/engineering/server-hexagonal-outbound-adapter.md`](../../docs/engineering/server-hexagonal-outbound-adapter.md).

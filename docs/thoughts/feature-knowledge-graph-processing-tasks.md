@@ -25,7 +25,7 @@ These are dependencies for more than one use case; build them first.
 
 ### Domain prerequisites (owed by `feature-knowledge-graph.md`)
 
-These are **domain-layer** tasks (mutators/events/services the domain doc designed but never shipped). They live in `@repo/server-knowledge`, follow `.claude/rules/server-hexagonal-domain-layer.md` (zod schema, `parseProps`/`parsePropsOrThrow`, `defineError`, `Result` from expected failures), and must land before the use cases that call them.
+These are **domain-layer** tasks (mutators/events/services the domain doc designed but never shipped). They live in `@repo/server-knowledge`, follow [`docs/engineering/server-hexagonal-domain-layer.md`](../engineering/server-hexagonal-domain-layer.md) (zod schema, `parseProps`/`parsePropsOrThrow`, `defineError`, `Result` from expected failures), and must land before the use cases that call them.
 
 - [x] **D1 — Node mutators.** Add to `knowledge-graph-node.aggregate.ts`: `attachEvents(eventIds, now)` (union into `eventIds`, no-op on duplicates, `metadata.touch`), `assignEmbedding(embedding)`, `reviseBody(body, now)`. → _verify:_ unit tests prove `attachEvents` is idempotent on a repeated `eventId` and that `assignEmbedding` flips `embedding` from `null`.
 - [x] **D2 — Edge mutator.** Add `reinforce({ confidence, observedAt, sourceEventIds, now })` to `knowledge-graph-edge.aggregate.ts`: union `sourceEventIds`, keep the **latest** `observedAt`, update confidence. → _verify:_ reinforcing keeps the max `observedAt` and unions provenance.
@@ -38,7 +38,7 @@ These are **domain-layer** tasks (mutators/events/services the domain doc design
 
 ### Shared ports (pure, `application/ports/outbound/`)
 
-Interfaces only — no implementations (`.claude/rules/server-hexagonal-application-layer.md`). Exact signatures are in the design sub-docs.
+Interfaces only — no implementations ([`docs/engineering/server-hexagonal-application-layer.md`](../engineering/server-hexagonal-application-layer.md)). Exact signatures are in the design sub-docs.
 
 - [ ] **P1 — `KnowledgeGraphNodeRepository`** (`knowledge-graph-node.repository.ts`): `findById`, `findByNaturalKey`, `findNeedingEmbedding`, `saveMany`. (resolution sub-doc §4)
 - [ ] **P2 — `KnowledgeGraphEdgeRepository`** (`knowledge-graph-edge.repository.ts`): `findByTriple`, `findDuplicateOf`, `saveMany`, `repointIncidentEdges`. (resolution sub-doc §4)

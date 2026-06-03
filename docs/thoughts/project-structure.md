@@ -37,8 +37,8 @@ domain                (server-<context>/domain)
 shared kernel         (server-kernel)
 ```
 
-- **`domain` and `application` are pure.** No `hono`, no database driver, no `pino`, no `process.env`, no `Date.now()`. They may depend only on `@repo/server-kernel`, `zod`, and `es-toolkit`. If a layer needs the outside world, it declares a **port** (an interface) and lets an adapter satisfy it.
-- **`zod` and `es-toolkit` are the two libraries the pure core may import.** Both are pure, I/O-free libraries: `zod` lets value objects and aggregates express and enforce their invariants (e.g. parsing primitives into validated value objects); `es-toolkit` provides stateless utility helpers. Neither is a framework and neither names infrastructure — importing them keeps the dependency rule intact.
+- **`domain` and `application` are pure.** No `hono`, no database driver, no `pino`, no `process.env`, no `Date.now()`. They may depend only on `@repo/server-kernel` and `zod`. If a layer needs the outside world, it declares a **port** (an interface) and lets an adapter satisfy it.
+- **Pure packages only import libraries declared in their package manifests.** Context packages use `zod` to express and enforce invariants; `server-kernel` also uses `es-toolkit` for stateless utility helpers. Neither is a framework and neither names infrastructure — importing them keeps the dependency rule intact.
 - **`server-platform` is sideways infrastructure**, not an inner layer. Adapters and apps use it; the domain never does.
 - **Apps never import each other.** `service` and `worker` are siblings; anything they share lives in a package.
 
@@ -50,14 +50,14 @@ The package graph _is_ the enforcement: an inner package simply does not list an
 
 | Layer                          | Package                                                  | Responsibility                                                                                                       | May depend on                                              | Must NOT contain                                         |
 | ------------------------------ | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
-| **Domain**                     | `@repo/server-<context>` (`domain/`)                     | Entities, value objects, aggregates, domain events, domain services, invariants                                      | `@repo/server-kernel`, `zod`, `es-toolkit`                 | I/O, frameworks, SQL, env, wall-clock reads              |
-| **Application**                | `@repo/server-<context>` (`application/`)                | Use cases that orchestrate the domain; transaction boundaries; defines ports                                         | own `domain/`, `@repo/server-kernel`, `zod`, `es-toolkit`  | concrete DBs/HTTP; knowledge of _which_ adapter is wired |
+| **Domain**                     | `@repo/server-<context>` (`domain/`)                     | Entities, value objects, aggregates, domain events, domain services, invariants                                      | `@repo/server-kernel`, `zod`                               | I/O, frameworks, SQL, env, wall-clock reads              |
+| **Application**                | `@repo/server-<context>` (`application/`)                | Use cases that orchestrate the domain; transaction boundaries; defines ports                                         | own `domain/`, `@repo/server-kernel`, `zod`                | concrete DBs/HTTP; knowledge of _which_ adapter is wired |
 | **Inbound ports** (driving)    | `@repo/server-<context>` (`application/ports/inbound/`)  | Interfaces describing _what the app can do_ — one per use case                                                       | —                                                          | implementation                                           |
 | **Outbound ports** (driven)    | `@repo/server-<context>` (`application/ports/outbound/`) | Interfaces the app _needs_ — repositories, gateways, clock, event publisher                                          | —                                                          | implementation                                           |
 | **Inbound adapters** (driving) | `apps/service` (`inbound/`), `apps/worker` (`inbound/`)  | Translate HTTP/cron/queue into inbound-port calls; validate transport input                                          | `@repo/server-<context>`, `@repo/server-platform`, `hono`  | business rules                                           |
 | **Outbound adapters** (driven) | `@repo/server-<context>-infra`                           | Implement outbound ports against real tech (Postgres, external APIs)                                                 | `@repo/server-<context>`, `@repo/server-platform`, drivers | business rules                                           |
 | **Composition root**           | `apps/*` (`composition/`)                                | The _only_ place that knows concrete adapters; wires them to use cases (DI)                                          | everything                                                 | business rules                                           |
-| **Shared kernel**              | `@repo/server-kernel`                                    | DDD building blocks: `Entity`, `AggregateRoot`, `ValueObject`, `DomainEvent`, `Id`, `Result`, `DomainError`, `Clock` | `zod` only                                                 | I/O, context-specific types                              |
+| **Shared kernel**              | `@repo/server-kernel`                                    | DDD building blocks: `Entity`, `AggregateRoot`, `ValueObject`, `DomainEvent`, `Id`, `Result`, `DomainError`, `Clock` | `zod`, `es-toolkit`                                       | I/O, context-specific types                              |
 | **Platform**                   | `@repo/server-platform`                                  | Cross-cutting infra primitives: pg pool, `zod` config, `pino` logger, event bus, unit-of-work                        | drivers                                                    | domain types, business rules                             |
 
 The split inside the hexagon is the classic one: **driving ports** are how the world calls _in_ (use-case interfaces), **driven ports** are how the app calls _out_ (repositories/gateways). Adapters sit on the two opposite edges of the hexagon and never talk to each other directly — only through the core.
@@ -78,7 +78,7 @@ recallos/
 │     ├─ composition/               #   DI wiring
 │     └─ index.ts                   #   bootstrap
 ├─ packages/
-│  ├─ server-kernel/src/               # @repo/server-kernel — DDD shared kernel, zod only
+│  ├─ server-kernel/src/               # @repo/server-kernel — DDD shared kernel, zod + es-toolkit only
 │  │                                #   Entity, AggregateRoot, ValueObject, DomainEvent, Id, Result, DomainError, Clock
 │  ├─ server-platform/src/             # @repo/server-platform — cross-cutting infra primitives
 │  │                                #   db (pg pool), config (zod env), logger (pino), eventBus, unit-of-work
@@ -222,7 +222,7 @@ Three guards, strongest first:
 2. **Lint.** `oxlint.config.ts` already enables the `import` plugin; add `import/no-cycle` and boundary rules so a stray relative import across packages is caught.
 3. **TypeScript.** Each package extends `@repo/typescript-config/bun.json` and sets its own `paths` (the `@/*` → `./src/*` alias already used by `apps/service`). Project references keep `domain`/`application` compiling without any infra types in scope.
 
-A quick smell test for any PR: open the `package.json` of a `domain`/`application` package — if it lists a driver, a framework, or `@repo/server-platform`, the hexagon has leaked. `zod` and `es-toolkit` are the only permitted third-party dependencies (both pure and I/O-free); anything else outside `@repo/server-kernel` is a leak.
+A quick smell test for any PR: open the `package.json` of a `domain`/`application` package — if it lists a driver, a framework, or `@repo/server-platform`, the hexagon has leaked. `zod` is the only permitted third-party dependency in context packages; `server-kernel` may also use `es-toolkit`.
 
 ---
 
