@@ -52,6 +52,7 @@ export type Event = Prisma.EventModel
  * Transactional outbox (see outbox decision record): one row written in the same
  * transaction as the events insert, so "recorded" and "will be published" are a
  * single atomic fact. A relay drains pending rows to SQS and marks them sent.
- * Thin by design — eventId, timestamps, routing tags only; the body stays in events.
+ * Metadata-only by design. The relay joins `events` to publish the canonical body
+ * in SQS without duplicating it in the outbox table.
  */
 export type EventOutbox = Prisma.EventOutboxModel

@@ -23,9 +23,9 @@ capture  →  enrich  →  relate  →  recall
             └────── this doc ──────┘
 ```
 
-`Service` (`apps/server-api-service`) appends opaque events to an append-only log and, in the same transaction, writes an **outbox** row; a relay (`apps/server-outbox-worker`) forwards each as a thin SQS message ([`feature-event-publication.md`](./feature-event-publication.md), ADR [`20260524-outbox-sqs-event-publication`](../../decision-records/server/20260524-outbox-sqs-event-publication.md)). This application layer **drains that stream and distills the graph from it** — entities become **nodes** (with embeddings), assertions become **typed edges** — so that `recall` can later traverse trustworthy, time-aware relationships.
+`Service` (`apps/server-api-service`) appends opaque events to an append-only log and, in the same transaction, writes an **outbox** row; a relay (`apps/server-outbox-worker`) forwards each as an SQS message carrying `eventId`, timestamps, routing `tags`, and `body` ([`feature-event-publication.md`](./feature-event-publication.md), ADR [`20260524-outbox-sqs-event-publication`](../../decision-records/server/20260524-outbox-sqs-event-publication.md)). This application layer **drains that stream and distills the graph from it** — entities become **nodes** (with embeddings), assertions become **typed edges** — so that `recall` can later traverse trustworthy, time-aware relationships.
 
-> **The framing that shapes everything below.** The _domain_ model is deliberately blind to event payloads: a node references the events it was derived from **by `EventId` only** and _"never dereferences them"_ (`feature-knowledge-graph.md` §2/§4.1). But **enrichment cannot be blind** — to extract entities and relationships it must read the event's opaque **`body`**, its routing **`tags`**, and its **`occurredAt`**. The published SQS message is deliberately **thin** (`eventId`, timestamps, `tags` — never the `body`; `feature-event-publication.md` §3), so the app layer **re-reads the body** through a cross-context **event-read port**. The read port is an **anti-corruption layer**: it returns a knowledge-owned DTO and **never imports the ingestion `Event` aggregate**. Holding this line — payload-reading in the app, id-only provenance in the domain — is the spine of the design.
+> **The framing that shapes everything below.** The _domain_ model is deliberately blind to event payloads: a node references the events it was derived from **by `EventId` only** and _"never dereferences them"_ (`feature-knowledge-graph.md` §2/§4.1). But **enrichment cannot be blind** — to extract entities and relationships it must read the event's opaque **`body`**, its routing **`tags`**, and its **`occurredAt`**. The published SQS message therefore carries those fields as a knowledge-owned event-entry payload. Holding this line — payload-reading in the app, id-only provenance in the domain — is the spine of the design.
 
 This doc is **write-side only.** The recall/read path (`RelationshipGraph` traversal, ranking, GraphRAG) is a separate discovery; the `RelationshipGraph` port named in the domain doc is _not_ exercised here.
 
@@ -75,7 +75,7 @@ read events → extract candidates → resolve to nodes → upsert nodes → rel
 
 | Use case (inbound port)   | Responsibility                                                                                                                          | Driven by                                                            |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| **`EnrichEvents`**        | Given event ids, read bodies → extract → resolve → upsert nodes → relate edges → record ledger. One transactional run.                  | **SQS push** (`apps/server-knowledge-worker` consumer).              |
+| **`EnrichEvents`**        | Given event entries from SQS, extract → resolve → upsert nodes → relate edges → record ledger. One transactional run.                  | **SQS push** (`apps/server-knowledge-worker` consumer).              |
 | **`EmbedNodes`**          | Assign/refresh embeddings for nodes that need one. Calls the embedding gateway, then `node.assignEmbedding(...)`.                       | Jittered loop scanning nodes needing embedding (resolution sub-doc). |
 | **`MergeDuplicateNodes`** | Drain `DUPLICATE_OF` edges: fold provenance into the survivor (`attachEvents`) and re-point incident edges. Reuses the merge semantics. | Jittered reconciler loop.                                            |
 
@@ -91,7 +91,7 @@ Enrichment is driven solely by **SQS push** — one recorded event per message, 
 
 The depth lives in four focused sub-docs. Read in pipeline order:
 
-1. **[Event consumption & cross-context integration](./feature-knowledge-graph-processing-event-consumption.md)** — how enrichment is triggered (SQS push) and how it reads events that belong to the ingestion context behind an anti-corruption `EventSourceReader` port. Port: `EventSourceReader`; inbound `EnrichEvents`; the enrichment orchestration.
+1. **[Event consumption & cross-context integration](./feature-knowledge-graph-processing-event-consumption.md)** — how enrichment is triggered (SQS push) and how the SQS payload carries the knowledge-owned event entry. Inbound `EnrichEvents`; the enrichment orchestration.
 2. **[Extraction](./feature-knowledge-graph-processing-extraction.md)** — opaque `body` → candidates already typed to the closed vocabulary; hybrid rules + LLM routed on `tags`; vocabulary enforced in the gateway; the source-signal → relationship mapping; `DERIVED_FROM` vs `eventIds`. Port: `EntityExtractorGateway`.
 3. **[Entity resolution & embedding](./feature-knowledge-graph-processing-resolution.md)** — deciding a candidate **is** an existing node (deterministic key → vector ANN → defer); the pure `EntityResolution.classify` decision; `EmbedNodes` triggers; node-body canonicalization. Ports: `NodeResolutionIndex`, `EmbeddingGateway`, the node/edge repositories.
 4. **[Idempotency, consistency & multi-tenancy](./feature-knowledge-graph-processing-idempotency.md)** — at-least-once safety (the processed-events ledger, `factHash`, extractor versioning); the transaction boundary (context-owned unit-of-work); ordering / poison events / back-pressure; resolving a `graphId` per event. Ports: `ProcessedEventLedger`, `GraphResolution`, `UnitOfWork`.
@@ -105,7 +105,7 @@ For the build-out, the **[implementation tasks](./feature-knowledge-graph-proces
 **Decisions taken (with the rejected alternative):**
 
 - **Consume events → SQS push only** ([consumption](./feature-knowledge-graph-processing-event-consumption.md)). The original draft chose cron batch-pull because the publisher seam did not exist; it now does (outbox → SQS, ADR `20260524`), so enrichment is driven per-event off the queue. No cursor/reconcile path — at-least-once delivery, a DLQ, and the `eventId` ledger cover redelivery and poison messages; the `events` table stays the source of truth for any manual backfill. A scheduled reconciler can be added later behind a new driving adapter over the same use case if evidence demands it.
-- **Integration → shared-DB read behind an ACL port** ([consumption](./feature-knowledge-graph-processing-event-consumption.md)), not payload-in-event or a read API. The SQS message is thin by design, so the body is re-read locally; coupling is contained by a KG-owned DTO + a published-language read contract.
+- **Integration → payload-in-event for the hot path** ([consumption](./feature-knowledge-graph-processing-event-consumption.md)), with the immutable `events` table remaining the canonical replay/backfill source. The outbox table stays metadata-only; the relay joins `events` to publish the body.
 - **Pipeline → one enrichment core (two drivers); `EmbedNodes` and `MergeDuplicateNodes` split out** (§4), not a single fat job and not fully fragmented per-stage jobs.
 - **Extraction → hybrid, vocabulary enforced in the gateway** ([extraction](./feature-knowledge-graph-processing-extraction.md)), not LLM-only and not rules-only.
 - **Resolution → conservative hybrid + deferred merge; the decision is a pure domain service** ([resolution](./feature-knowledge-graph-processing-resolution.md)), not synchronous fuzzy merging. Prefers transient fragmentation over irreversible over-merge.
@@ -137,7 +137,6 @@ packages/server-knowledge/src/
    │  ├─ embed-nodes.use-case.ts             # EmbedNodes
    │  └─ merge-duplicate-nodes.use-case.ts   # MergeDuplicateNodes
    └─ ports/outbound/
-      ├─ event-source.reader.ts              # EventSourceReader (ACL read)
       ├─ entity-extractor.gateway.ts         # EntityExtractorGateway
       ├─ embedding.gateway.ts                # EmbeddingGateway
       ├─ knowledge-graph-node.repository.ts  # node repo port
@@ -150,7 +149,7 @@ packages/server-knowledge/src/
 packages/server-knowledge-infra/src/         # adapters (NOT built here)
 ├─ persistence/                              #   *.repository.pg.ts, ledger table, pgvector resolution index, UoW
 ├─ gateways/                                 #   LLM extractor, embedder
-└─ read/                                     #   event-table reader implementing EventSourceReader
+└─ read/                                     #   optional event-table readers for replay/backfill
 
 apps/server-knowledge-worker/src/
 ├─ jobs/                                      # SQS consumer (enrich) + jittered loops (embed / merge)
@@ -166,5 +165,5 @@ apps/server-knowledge-worker/src/
 - This is a **pure application layer over an already-decided domain**: it reads the event payloads the domain refuses to dereference, and orchestrates `create`/`attachEvents`/`reinforce`/`relate` — adding no new domain rules. Timestamps enter via the `Clock`; ids are minted inside the domain factories.
 - It resolves the **one judgment call the domain left open** — `graphId` per event — behind a swappable policy, and honors the **one hard boundary the domain set** — provenance is `eventIds`, never a `DERIVED_FROM` edge.
 - Idempotency is anchored on the deterministic **event id** (ledger), so the pipeline is safe under at-least-once SQS delivery _and_ non-deterministic extraction.
-- Everything impure — trigger, event source, extractor, embedder, store — is **behind a port**, so a future trigger graduation (adding a reconciler over the same use case), the integration graduation (shared-DB → published payload), and the store graduations of `database-tradeoffs.md` all stay **adapter-local**. The application core never moves.
+- Everything impure — trigger, extractor, embedder, store — is **behind a port**, so a future trigger graduation (adding a reconciler over the same use case), replay/backfill source changes, and the store graduations of `database-tradeoffs.md` all stay **adapter-local**. The application core never moves.
   </content>

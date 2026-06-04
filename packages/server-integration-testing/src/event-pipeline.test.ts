@@ -99,6 +99,7 @@ test("OutboxRelay over SqsOutboxBroker: given a pending outbox row, it should pu
   expect(JSON.parse(message ?? "")).toMatchObject({
     eventId,
     tags: ingestInput.tags,
+    body: ingestInput.body,
     occurredAt: occurredAt.toISOString(),
     recordedAt: recordedAt.toISOString(),
   });

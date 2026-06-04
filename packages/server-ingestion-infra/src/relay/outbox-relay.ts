@@ -8,6 +8,7 @@ interface PendingOutboxRow {
   occurred_at: Date;
   recorded_at: Date;
   tags: Record<string, string>;
+  body: Record<string, unknown>;
 }
 
 /** Drains pending `event_outbox` rows to the broker. Claim, publish and mark-sent
@@ -24,10 +25,11 @@ export class OutboxRelay {
   relayBatch(): Promise<number> {
     return this.prisma.$transaction(async (tx) => {
       const rows = await tx.$queryRaw<PendingOutboxRow[]>`
-        SELECT id, event_id, occurred_at, recorded_at, tags
-        FROM event_outbox
-        WHERE status = 'pending'
-        ORDER BY created_at
+        SELECT eo.id, eo.event_id, eo.occurred_at, eo.recorded_at, eo.tags, e.body
+        FROM event_outbox eo
+        JOIN events e ON e.id = eo.event_id
+        WHERE eo.status = 'pending'
+        ORDER BY eo.created_at
         FOR UPDATE SKIP LOCKED
         LIMIT ${this.batchSize}
       `;
@@ -38,6 +40,7 @@ export class OutboxRelay {
           occurredAt: row.occurred_at,
           recordedAt: row.recorded_at,
           tags: row.tags,
+          body: row.body,
         });
       }
 

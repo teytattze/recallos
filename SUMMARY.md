@@ -25,13 +25,13 @@ The design optimizes for idempotent writes, conservative resolution, clean bound
 
 ## Step-by-Step Workflow
 
-### 1. Capture Produces a Thin Event Message
+### 1. Capture Produces an Event-Entry Message
 
-**What happens:** The ingestion service appends a raw event to the event log and writes an outbox row in the same transaction. An outbox relay publishes a thin message to SQS containing identifiers and routing metadata, not the event body.
+**What happens:** The ingestion service appends a raw event to the event log and writes an outbox row in the same transaction. An outbox relay publishes an SQS message containing the event identifiers, timestamps, routing metadata, and body.
 
-**How it works:** The SQS message carries values such as `eventId`, `occurredAt`, `recordedAt`, and `tags`. It deliberately omits `body`.
+**How it works:** The outbox table stores relay metadata only. When publishing, the relay joins the immutable `events` row by `eventId` and sends `{ eventId, occurredAt, recordedAt, tags, body }` to SQS. Ingest rejects events whose serialized SQS message would exceed the 256 KiB broker limit.
 
-**Why this strategy:** The event body is opaque, can exceed SQS limits, and may become stale if duplicated in the message. Keeping the message thin makes the queue a trigger, while the event table remains the source of truth.
+**Why this strategy:** The queue payload is complete enough for the enrichment hot path, while `events` remains the canonical replay/backfill source and `event_outbox` avoids duplicating large JSON bodies.
 
 ### 2. The Knowledge Worker Receives SQS Messages
 
@@ -45,24 +45,25 @@ EnrichEvents.execute({ eventIds })
 
 **Why this strategy:** SQS gives at-least-once delivery and keeps enrichment reactive without building a custom polling cursor. There is no standing reconcile loop in Phase 0; if a gap is discovered later, the event table can be used for manual backfill or a new driving adapter over the same `EnrichEvents` core.
 
-### 3. Enrichment Re-Reads Event Bodies Through an ACL Port
+### 3. Enrichment Reads Event Entries From SQS
 
-**What happens:** The use case loads the full event data needed for extraction.
+**What happens:** The worker maps SQS message JSON into the full event-entry DTO needed for extraction.
 
-**How it works:** `EventSourceReader.findByIds(ids)` returns a knowledge-owned DTO:
+**How it works:** The SQS payload already contains a knowledge-owned DTO:
 
 ```ts
 {
   id,
   occurredAt,
+  recordedAt,
   tags,
   body,
 }
 ```
 
-The adapter currently reads the ingestion `events` table directly from the shared database, but the application layer never imports the ingestion `Event` aggregate.
+The application layer never imports the ingestion `Event` aggregate. A future backfill adapter can still read `events` rows into the same DTO.
 
-**Why this strategy:** Extraction needs `body`, `tags`, and `occurredAt`, but those belong to the ingestion context. The anti-corruption port contains the shared-database coupling. If the integration later moves to payload-in-event or an HTTP/RPC read API, only the adapter changes.
+**Why this strategy:** Extraction needs `body`, `tags`, and `occurredAt`, but the domain must still keep event provenance as ids only. The SQS DTO gives the app layer the impure payload it needs without leaking ingestion aggregates inward.
 
 ### 4. The Ledger Filters Already-Processed Events
 
@@ -236,9 +237,7 @@ For each duplicate pair, the survivor absorbs duplicate provenance, incident edg
 ## End-to-End Pseudocode
 
 ```text
-EnrichEvents.execute({ eventIds }):
-  entries = EventSourceReader.findByIds(eventIds)
-
+EnrichEvents.execute({ entries }):
   for entry in entries sorted by occurredAt:
     graphId = GraphResolution.resolve(entry.tags)
     extraction = EntityExtractorGateway.extract(entry)
@@ -275,7 +274,7 @@ EnrichEvents.execute({ eventIds }):
 
 | Port | Purpose |
 | --- | --- |
-| `EventSourceReader` | Re-read event bodies into a knowledge-owned DTO. |
+| `EventEntry` payload | Carries `{ eventId, occurredAt, recordedAt, tags, body }` from SQS into enrichment. |
 | `EntityExtractorGateway` | Convert opaque event bodies into typed node and edge candidates. |
 | `GraphResolution` | Map event tags to a `KnowledgeGraphId`. |
 | `ProcessedEventLedger` | Provide exactly-once effect per `(eventId, extractorVersion)`. |

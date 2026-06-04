@@ -110,3 +110,23 @@ test("IngestEventUseCase.execute: given an invalid event, it should return an In
   expect(uow.events.appended.length).toBe(0);
   expect(uow.publisher.published.length).toBe(0);
 });
+
+test("IngestEventUseCase.execute: given an event too large for SQS publication, it should reject without appending or publishing", async () => {
+  // GIVEN
+  const uow = new FakeUnitOfWork();
+  const useCase = new IngestEventUseCase(uow, fixedClock(recordedAt));
+
+  // WHEN
+  const result = await useCase.execute({
+    ...validInput,
+    body: { text: "x".repeat(262_144) },
+  });
+
+  // THEN
+  expect(result.ok).toBe(false);
+  if (result.ok) return;
+  expect(result.error.kind).toBe("InvalidEvent");
+  expect(uow.ran).toBe(0);
+  expect(uow.events.appended.length).toBe(0);
+  expect(uow.publisher.published.length).toBe(0);
+});

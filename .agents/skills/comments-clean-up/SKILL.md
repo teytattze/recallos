@@ -25,16 +25,21 @@ Do not scan or rewrite untouched repo comments just because they look weak.
 4. Keep a comment only when it explains non-obvious rationale: an invariant,
    boundary, trade-off, gotcha, compatibility constraint, or stale-but-needed
    context.
-5. Cut or compress comments that restate names/signatures, explain obvious code,
+5. Preserve test structure markers such as `// GIVEN`, `// WHEN`, `// THEN`,
+   `// given`, `// when`, and `// then` when the surrounding test file uses that
+   style. These markers make test phases scan-friendly and are not low-value
+   comments.
+6. Cut or compress comments that restate names/signatures, explain obvious code,
    duplicate nearby context, include generic usage examples, or define concepts
    the type/API already makes clear.
-6. Fix stale comment text when the branch changed the behavior it describes.
+7. Fix stale comment text when the branch changed the behavior it describes.
 
 ## Defaults
 
 - Prefer no comment over a decorative or restating comment.
 - Keep usage examples only when they document non-obvious behavior or prevent misuse.
 - Keep conceptual prose only as a concise contract or rationale.
+- Keep established given/when/then test phase markers.
 - Match the surrounding comment style when a keeper remains.
 
 ## Verify
