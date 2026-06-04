@@ -1,3 +1,9 @@
+export * from "./application/ports/outbound/embedding.gateway.ts";
+export * from "./application/ports/outbound/knowledge-graph-edge.repository.ts";
+export * from "./application/ports/outbound/knowledge-graph-node.repository.ts";
+export * from "./application/ports/outbound/processed-event.ledger.ts";
+export * from "./application/ports/outbound/unit-of-work.ts";
+
 export * from "./domain/knowledge-graph.aggregate.ts";
 export * from "./domain/knowledge-graph-node.aggregate.ts";
 export * from "./domain/knowledge-graph-edge.aggregate.ts";

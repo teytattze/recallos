@@ -38,12 +38,12 @@ These are **domain-layer** tasks (mutators/events/services the domain doc design
 
 ### Shared ports (pure, `application/ports/outbound/`)
 
-Interfaces only — no implementations ([`docs/engineering/server-hexagonal-application-layer.md`](../engineering/server-hexagonal-application-layer.md)). Exact signatures are in the design sub-docs.
+Interfaces only — no implementations ([`docs/engineering/server-hexagonal-application-layer.md`](../engineering/server-hexagonal-application-layer.md)). Repository ports are intentionally generic/id-based; workflow-specific lookups move to dedicated use-case ports when those use cases land.
 
-- [ ] **P1 — `KnowledgeGraphNodeRepository`** (`knowledge-graph-node.repository.ts`): `findById`, `findByNaturalKey`, `findNeedingEmbedding`, `saveMany`. (resolution sub-doc §4)
-- [ ] **P2 — `KnowledgeGraphEdgeRepository`** (`knowledge-graph-edge.repository.ts`): `findByTriple`, `findDuplicateOf`, `saveMany`, `repointIncidentEdges`. (resolution sub-doc §4)
-- [ ] **P3 — `UnitOfWork` + `KnowledgeContext`** (`unit-of-work.ts`): `transaction(ctx => …)` exposing `{ nodes, edges, ledger }`. Mirror `@repo/server-ingestion`'s `UnitOfWork`. (idempotency sub-doc §4)
-- [ ] **P4 — `EmbeddingGateway`** (`embedding.gateway.ts`): `embed(texts, model)`. (resolution sub-doc §4)
+- [x] **P1 — `KnowledgeGraphNodeRepository`** (`knowledge-graph-node.repository.ts`): `findById`, `findByIds`, `save`, `saveMany`.
+- [x] **P2 — `KnowledgeGraphEdgeRepository`** (`knowledge-graph-edge.repository.ts`): `findById`, `findByIds`, `save`, `saveMany`.
+- [x] **P3 — `UnitOfWork` + `KnowledgeContext`** (`unit-of-work.ts`): `transaction(ctx => …)` exposing `{ nodes, edges, ledger }`. Mirror `@repo/server-ingestion`'s `UnitOfWork`. (idempotency sub-doc §4)
+- [x] **P4 — `EmbeddingGateway`** (`embedding.gateway.ts`): `embed(texts, model)`. (resolution sub-doc §4)
 
 ---
 
