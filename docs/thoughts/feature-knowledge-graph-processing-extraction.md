@@ -8,7 +8,7 @@ Sub-document of [`feature-knowledge-graph-processing.md`](./feature-knowledge-gr
 
 The extractor turns an event entry's **opaque** body into **candidates** already typed to the closed vocabulary (`NodeType` / `RelationshipType`, from `@repo/server-knowledge`). It is pure I/O (a model/parse call), so it is an **outbound gateway port** (`EntityExtractorGateway`); the use case never embeds extraction logic.
 
-**Decision: hybrid extraction, routed on `tags`.** `tags` is explicitly _"what the Worker routes on"_ (`feature-event-ingestion.md` §2), and it is the part of the published message that arrives even before the body is re-read (event consumption sub-doc §2):
+**Decision: hybrid extraction, routed on `tags`.** `tags` is explicitly _"what the Worker routes on"_ (`feature-event-ingestion.md` §2), and it arrives in the same published event-entry message as `body` (event consumption sub-doc §2):
 
 - **Deterministic rules** for known _structured_ sources (a Slack message, a GitHub PR, a calendar invite). Cheap, exact, **deterministic** — and the only reliable source of _structural_ relationships.
 - **LLM structured-output** for _free-text_ bodies, constrained to emit only `NodeType`/`RelationshipType` members.

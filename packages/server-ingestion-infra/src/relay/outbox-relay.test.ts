@@ -16,6 +16,7 @@ function buildRow(id: string) {
     occurred_at: occurredAt,
     recorded_at: recordedAt,
     tags: { source: "slack" },
+    body: { text: `hello ${id}` },
   };
 }
 
@@ -54,6 +55,7 @@ test("OutboxRelay.relayBatch: given pending rows, it should publish each to the 
     occurredAt,
     recordedAt,
     tags: { source: "slack" },
+    body: { text: "hello 1" },
   });
   expect(updateMany).toHaveBeenCalledTimes(1);
   expect(updateMany.mock.calls[0]?.[0]).toEqual({

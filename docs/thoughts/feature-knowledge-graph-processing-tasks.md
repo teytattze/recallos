@@ -49,7 +49,7 @@ Interfaces only — no implementations ([`docs/engineering/server-hexagonal-appl
 
 ## Use case 1 — `EnrichEvents` (SQS push)
 
-The hot path: one SQS message batch → read bodies → extract → resolve → upsert nodes → relate edges → record ledger, in one transaction. **Depends on:** D1, D2, D3, D4, P1, P2, P3.
+The hot path: one SQS message batch carrying event entries → extract → resolve → upsert nodes → relate edges → record ledger, in one transaction. **Depends on:** D1, D2, D3, D4, P1, P2, P3.
 
 ### Domain
 
@@ -57,7 +57,7 @@ The hot path: one SQS message batch → read bodies → extract → resolve → 
 
 ### Ports (pure)
 
-- [ ] **EE2 — `EventSourceReader`** (`event-source.reader.ts`): `findByIds(ids)` returning the KG-owned `EventEntry` DTO. ACL — never imports ingestion's `Event`. (consumption sub-doc §3)
+- [ ] **EE2 — SQS event-entry payload type/decoder**: parse `{ eventId, occurredAt, recordedAt, tags, body }` into the KG-owned `EventEntry` DTO. Never imports ingestion's `Event`. (consumption sub-doc §3)
 - [ ] **EE3 — `EntityExtractorGateway`** (`entity-extractor.gateway.ts`): `extract(entry) → ExtractionResult` with `CandidateNode`/`CandidateEdge`/`extractorVersion`. (extraction sub-doc §3)
 - [ ] **EE4 — `NodeResolutionIndex`** (`node-resolution.index.ts`): `findSimilar(graphId, type, vector, threshold, k)`. (resolution sub-doc §4)
 - [ ] **EE5 — `GraphResolution`** (`graph-resolution.policy.ts`): `resolve(tags) → KnowledgeGraphId`. (idempotency sub-doc §4)
@@ -69,7 +69,7 @@ The hot path: one SQS message batch → read bodies → extract → resolve → 
 
 ### Infra (`@repo/server-knowledge-infra`)
 
-- [ ] **EE8 — Event-table reader** (`read/event-source.reader.pg.ts`): `SELECT id, occurred_at, tags, body FROM events WHERE id = ANY(...)` → `EventEntry`. (consumption sub-doc §2)
+- [ ] **EE8 — Optional event-table reader for replay/backfill** (`read/event-source.reader.pg.ts`): `SELECT id, occurred_at, recorded_at, tags, body FROM events WHERE id = ANY(...)` → `EventEntry`. Not required for the SQS hot path. (consumption sub-doc §2)
 - [ ] **EE9 — Node & edge pg repos** (`persistence/*.repository.pg.ts`) implementing P1/P2 against Prisma; new `knowledge_graph_node` / `knowledge_graph_edge` tables + unique constraint on the edge triple + FK to nodes (`server-database` migration).
 - [ ] **EE10 — `UnitOfWorkPg`** (`persistence/unit-of-work.pg.ts`) implementing P3; copy the ingestion `UnitOfWorkPg` transaction-context shape.
 - [ ] **EE11 — Processed-events ledger** adapter + table (`persistence/processed-event.ledger.pg.ts` + migration): `(event_id, extractor_version)` PK, `status`, `fact_hash`, `attempts`.

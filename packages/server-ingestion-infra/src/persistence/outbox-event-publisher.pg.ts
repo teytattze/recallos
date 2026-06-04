@@ -1,8 +1,8 @@
 import type { Prisma } from "@repo/server-database";
 import type { Event, EventPublisher } from "@repo/server-ingestion";
 
-/** Writes one thin `event_outbox` row — eventId, timestamps, routing tags, never
- *  the body (the Worker re-reads that from `events`). */
+/** Writes the relay metadata row. The canonical body stays in `events`; the relay
+ *  joins it in when publishing to SQS. */
 export class OutboxEventPublisher implements EventPublisher {
   constructor(private readonly prisma: Prisma.TransactionClient) {}
 

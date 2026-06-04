@@ -20,10 +20,14 @@
 
 - The outbox adapter writes one `event_outbox` row in the **same transaction** (shared unit-of-work) as the `events` insert. This makes "the event is recorded" and "the `Worker` will be told" a **single atomic Postgres fact**, closing the dual-write entirely inside the database we already run.
 - A **relay** process claims pending rows with `SELECT … FOR UPDATE SKIP LOCKED`, publishes each to **SQS**, and marks them `sent`. The relay is itself at-least-once (crash after publish, before mark-sent → re-publish → consumer dedups).
-- Published messages are **thin**: `eventId`, timestamps, and routing `tags` only — **not** the `body`. The `Worker` re-reads the body from the `events` table (the source of truth) when it processes the message, since the body can be large (SQS caps a message at 256 KB) and would go stale if duplicated.
+- Published messages include `eventId`, timestamps, routing `tags`, and the event `body`. The `event_outbox` table remains metadata-only; the relay joins the immutable `events` row by `event_id` at publish time so SQS carries the extraction payload without duplicating it in the outbox table. Accepted ingest payloads are capped so the serialized SQS message fits within SQS's 256 KiB limit.
 - The `Worker`'s enrich consumer is **idempotent on `eventId`** — cheap here because graph writes already dedup via provenance (re-attaching the same `eventId`, reinforcing an existing edge) — with an **SQS DLQ** for poison messages.
 - The whole seam stays behind the `EventPublisher` outbound port, so the broker remains swappable without touching the domain.
 - First-principle reasoning: the outbox is the **only** option that makes capture and notification atomic **without standing up CDC infrastructure**; SQS is the **minimal managed broker** for a single `Worker` consumer — managed retries plus DLQ, near-zero ops, pennies at this scale.
+
+### Revision: payload in SQS
+
+The original accepted version used thin SQS messages and required the `Worker` to re-read `body` from `events`. That was revised so the SQS message is a complete event entry for the hot path. The source of truth remains `events`; the relay reads it when publishing, and oversize events are rejected at ingest instead of falling back to partial messages.
 
 ## Consequences
 

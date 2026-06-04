@@ -19,7 +19,7 @@ function buildEvent(): Event {
   return result.value;
 }
 
-test("OutboxEventPublisher.publish: given an event, it should write a thin outbox row with no body", async () => {
+test("OutboxEventPublisher.publish: given an event, it should write relay metadata without duplicating the body", async () => {
   // given
   const create = mock(() => Promise.resolve());
   const tx = { eventOutbox: { create } } as unknown as Prisma.TransactionClient;
