@@ -1,7 +1,7 @@
 import type { Tenant } from "@repo/server-kernel";
 import type { JsonObject } from "type-fest";
 
-export type ProcessEventInput = {
+export type ProcessEventUseCaseInput = {
   payload: {
     id: string;
     createdAt: string;
@@ -12,8 +12,8 @@ export type ProcessEventInput = {
   tenant: Tenant;
 };
 
-export type ProcessEventOutput = Promise<void>;
+export type ProcessEventUseCaseOutput = Promise<void>;
 
-export interface ProcessEvent {
-  execute(input: ProcessEventInput): ProcessEventOutput;
+export interface ProcessEventUseCasePort {
+  execute(input: ProcessEventUseCaseInput): ProcessEventUseCaseOutput;
 }
