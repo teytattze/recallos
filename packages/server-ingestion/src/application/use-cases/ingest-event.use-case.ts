@@ -1,6 +1,5 @@
 import { type Clock, Result } from "@repo/server-kernel";
 
-import { InvalidEvent } from "../../domain/invalid-event.error.ts";
 import type {
   IngestEvent,
   IngestEventInput,
@@ -9,6 +8,7 @@ import type {
 import type { UnitOfWork } from "../ports/outbound/unit-of-work.ts";
 
 import { Event } from "../../domain/event.aggregate.ts";
+import { InvalidEvent } from "../../domain/invalid-event.error.ts";
 
 const SQS_MAX_MESSAGE_BODY_BYTES = 262_144;
 

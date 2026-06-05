@@ -38,7 +38,7 @@ The design optimizes for idempotent writes, conservative resolution, clean bound
 **What happens:** `apps/server-knowledge-worker` long-polls SQS and invokes the pure application use case:
 
 ```ts
-EnrichEvents.execute({ eventIds })
+EnrichEvents.execute({ eventIds });
 ```
 
 **How it works:** One recorded event maps to one SQS message. The worker may pass a batch of event ids into `EnrichEvents`. SQS visibility timeout, competing consumers, redelivery, and the DLQ provide delivery mechanics.
@@ -207,7 +207,7 @@ Database constraints still matter: foreign keys prevent dangling edges, and a un
 **How it works:** A jittered background loop scans for nodes where embedding is missing or stale:
 
 ```ts
-EmbedNodes.execute({ limit })
+EmbedNodes.execute({ limit });
 ```
 
 The use case batches calls to `EmbeddingGateway.embed(texts, model)`, creates `Embedding` value objects, and calls `node.assignEmbedding(...)`.
@@ -227,7 +227,7 @@ Embeddings are needed when:
 **How it works:** A jittered loop drains `DUPLICATE_OF` edges:
 
 ```ts
-MergeDuplicateNodes.execute({ limit })
+MergeDuplicateNodes.execute({ limit });
 ```
 
 For each duplicate pair, the survivor absorbs duplicate provenance, incident edges are repointed from the duplicate to the survivor, and any edge-triple collisions are reinforced rather than duplicated.
@@ -272,17 +272,17 @@ EnrichEvents.execute({ entries }):
 
 ## Ports and Responsibilities
 
-| Port | Purpose |
-| --- | --- |
-| `EventEntry` payload | Carries `{ eventId, occurredAt, recordedAt, tags, body }` from SQS into enrichment. |
-| `EntityExtractorGateway` | Convert opaque event bodies into typed node and edge candidates. |
-| `GraphResolution` | Map event tags to a `KnowledgeGraphId`. |
-| `ProcessedEventLedger` | Provide exactly-once effect per `(eventId, extractorVersion)`. |
-| `KnowledgeGraphNodeRepository` | Load, resolve, scan, and save node aggregates. |
-| `KnowledgeGraphEdgeRepository` | Load, deduplicate, reinforce, merge, and save edge aggregates. |
-| `NodeResolutionIndex` | Find vector-similar same-type nodes for fuzzy resolution. |
-| `EmbeddingGateway` | Produce embeddings for node bodies. |
-| `UnitOfWork` | Commit graph writes and ledger writes atomically. |
+| Port                           | Purpose                                                                             |
+| ------------------------------ | ----------------------------------------------------------------------------------- |
+| `EventEntry` payload           | Carries `{ eventId, occurredAt, recordedAt, tags, body }` from SQS into enrichment. |
+| `EntityExtractorGateway`       | Convert opaque event bodies into typed node and edge candidates.                    |
+| `GraphResolution`              | Map event tags to a `KnowledgeGraphId`.                                             |
+| `ProcessedEventLedger`         | Provide exactly-once effect per `(eventId, extractorVersion)`.                      |
+| `KnowledgeGraphNodeRepository` | Load, resolve, scan, and save node aggregates.                                      |
+| `KnowledgeGraphEdgeRepository` | Load, deduplicate, reinforce, merge, and save edge aggregates.                      |
+| `NodeResolutionIndex`          | Find vector-similar same-type nodes for fuzzy resolution.                           |
+| `EmbeddingGateway`             | Produce embeddings for node bodies.                                                 |
+| `UnitOfWork`                   | Commit graph writes and ledger writes atomically.                                   |
 
 ## Implementation Order
 

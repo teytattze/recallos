@@ -1,5 +1,5 @@
-import { test, expect } from "bun:test";
 import { Tenant } from "@repo/server-kernel";
+import { test, expect } from "bun:test";
 
 import { EventId } from "./event-id.value-object.ts";
 import { KnowledgeGraphEdge } from "./knowledge-graph-edge.aggregate.ts";

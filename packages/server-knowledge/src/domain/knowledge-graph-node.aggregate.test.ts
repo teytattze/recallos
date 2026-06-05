@@ -1,5 +1,5 @@
-import { test, expect } from "bun:test";
 import { Tenant } from "@repo/server-kernel";
+import { test, expect } from "bun:test";
 
 import { Embedding } from "./embedding.value-object.ts";
 import { EventId } from "./event-id.value-object.ts";
@@ -175,7 +175,10 @@ test("KnowledgeGraphNode.assignEmbedding: given a node born without one, it shou
   // GIVEN
   const node = createNode();
   node.pullDomainEvents();
-  const embeddingResult = Embedding.create([0.1, 0.2, 0.3], "text-embedding-3-small");
+  const embeddingResult = Embedding.create(
+    [0.1, 0.2, 0.3],
+    "text-embedding-3-small",
+  );
   if (!embeddingResult.ok) throw new Error("expected ok embedding");
 
   // WHEN

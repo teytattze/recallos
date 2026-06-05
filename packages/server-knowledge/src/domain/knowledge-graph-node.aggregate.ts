@@ -115,12 +115,7 @@ export class KnowledgeGraphNode extends TenantAwareAggregateRoot<
       parsePropsResult.value,
     );
     node.recordEvent(
-      new NodeCreated(
-        node.id.value,
-        input.now,
-        node.graphId.value,
-        node.type,
-      ),
+      new NodeCreated(node.id.value, input.now, node.graphId.value, node.type),
     );
     return Result.ok(node);
   }
