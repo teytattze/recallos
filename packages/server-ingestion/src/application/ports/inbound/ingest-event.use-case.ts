@@ -1,11 +1,13 @@
 import type { Result, Tenant } from "@repo/server-kernel";
 
-/** `recordedAt` is omitted: the use case stamps it from a Clock, not the caller. */
+/** `createdAt` is omitted: the use case stamps it from a Clock, not the caller. */
 export type IngestEventInput = {
   tenant: Tenant;
-  occurredAt: Date;
-  tags: Record<string, string>;
-  body: Record<string, unknown>;
+  payload: {
+    occurredAt: Date;
+    tags: Record<string, string>;
+    body: Record<string, unknown>;
+  };
 };
 
 /** Id only — the aggregate must not cross the inbound boundary. */

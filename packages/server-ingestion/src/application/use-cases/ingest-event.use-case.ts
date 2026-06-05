@@ -21,10 +21,10 @@ export class IngestEventUseCase implements IngestEvent {
   async execute(input: IngestEventInput): Promise<Result<IngestEventOutput>> {
     const eventResult = Event.create({
       tenant: input.tenant,
-      recordedAt: this.clock.now(),
-      occurredAt: input.occurredAt,
-      tags: input.tags,
-      body: input.body,
+      createdAt: this.clock.now(),
+      occurredAt: input.payload.occurredAt,
+      tags: input.payload.tags,
+      body: input.payload.body,
     });
     if (!eventResult.ok) return eventResult;
 
@@ -32,7 +32,7 @@ export class IngestEventUseCase implements IngestEvent {
     const publishMessage = {
       eventId: event.id.value,
       occurredAt: event.occurredAt,
-      recordedAt: event.metadata.createdAt,
+      createdAt: event.metadata.createdAt,
       tags: event.tags.entries,
       body: event.body.value,
     };

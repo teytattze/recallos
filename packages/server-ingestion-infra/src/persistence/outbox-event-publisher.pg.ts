@@ -11,7 +11,7 @@ export class OutboxEventPublisher implements EventPublisher {
       data: {
         eventId: event.id.value,
         occurredAt: event.occurredAt,
-        recordedAt: event.metadata.createdAt,
+        createdAt: event.metadata.createdAt,
         tags: event.tags.entries,
       },
     });

@@ -7,14 +7,14 @@ import type { OutboxBroker } from "./outbox-broker.ts";
 import { OutboxRelay } from "./outbox-relay.ts";
 
 const occurredAt = new Date("2026-01-01T00:00:00Z");
-const recordedAt = new Date("2026-01-02T00:00:00Z");
+const createdAt = new Date("2026-01-02T00:00:00Z");
 
 function buildRow(id: string) {
   return {
     id,
     event_id: `event-${id}`,
     occurred_at: occurredAt,
-    recorded_at: recordedAt,
+    created_at: createdAt,
     tags: { source: "slack" },
     body: { text: `hello ${id}` },
   };
@@ -53,7 +53,7 @@ test("OutboxRelay.relayBatch: given pending rows, it should publish each to the 
   expect(publish).toHaveBeenNthCalledWith(1, {
     eventId: "event-1",
     occurredAt,
-    recordedAt,
+    createdAt,
     tags: { source: "slack" },
     body: { text: "hello 1" },
   });

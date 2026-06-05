@@ -14,14 +14,16 @@ import { beforeEach, expect, test } from "bun:test";
 
 import { harness } from "./harness/index.ts";
 
-const recordedAt = new Date("2026-05-30T12:00:00.000Z");
+const createdAt = new Date("2026-05-30T12:00:00.000Z");
 const occurredAt = new Date("2026-05-30T11:59:00.000Z");
 
 const ingestInput = {
   tenant: Tenant.organization("org1"),
-  occurredAt,
-  tags: { source: "slack", type: "message" },
-  body: { text: "hello from the integration suite", channel: "C123" },
+  payload: {
+    occurredAt,
+    tags: { source: "slack", type: "message" },
+    body: { text: "hello from the integration suite", channel: "C123" },
+  },
 };
 
 // Each test starts from an empty cluster + queue so assertions about row counts
@@ -39,7 +41,7 @@ test("IngestEventUseCase over PrismaUnitOfWork: given a valid event, it should p
   const { prisma } = harness();
   const useCase = new IngestEventUseCase(
     new PrismaUnitOfWork(prisma),
-    fixedClock(recordedAt),
+    fixedClock(createdAt),
   );
 
   // when
@@ -55,9 +57,9 @@ test("IngestEventUseCase over PrismaUnitOfWork: given a valid event, it should p
   });
   expect(event).toMatchObject({
     occurredAt,
-    recordedAt,
-    tags: ingestInput.tags,
-    body: ingestInput.body,
+    createdAt,
+    tags: ingestInput.payload.tags,
+    body: ingestInput.payload.body,
   });
 
   const outbox = await prisma.eventOutbox.findMany();
@@ -65,8 +67,8 @@ test("IngestEventUseCase over PrismaUnitOfWork: given a valid event, it should p
   expect(outbox[0]).toMatchObject({
     eventId,
     occurredAt,
-    recordedAt,
-    tags: ingestInput.tags,
+    createdAt,
+    tags: ingestInput.payload.tags,
     status: "pending",
     sentAt: null,
   });
@@ -77,7 +79,7 @@ test("OutboxRelay over SqsOutboxBroker: given a pending outbox row, it should pu
   const { prisma, sqs, queueUrl } = harness();
   const useCase = new IngestEventUseCase(
     new PrismaUnitOfWork(prisma),
-    fixedClock(recordedAt),
+    fixedClock(createdAt),
   );
   const ingest = await useCase.execute(ingestInput);
   if (!ingest.ok) throw new Error("expected ingest to succeed");
@@ -99,10 +101,10 @@ test("OutboxRelay over SqsOutboxBroker: given a pending outbox row, it should pu
   expect(message).not.toBeNull();
   expect(JSON.parse(message ?? "")).toMatchObject({
     eventId,
-    tags: ingestInput.tags,
-    body: ingestInput.body,
+    tags: ingestInput.payload.tags,
+    body: ingestInput.payload.body,
     occurredAt: occurredAt.toISOString(),
-    recordedAt: recordedAt.toISOString(),
+    createdAt: createdAt.toISOString(),
   });
 });
 
@@ -111,7 +113,7 @@ test("OutboxRelay: given rows it already marked sent, it should not republish th
   const { prisma, sqs, queueUrl } = harness();
   const useCase = new IngestEventUseCase(
     new PrismaUnitOfWork(prisma),
-    fixedClock(recordedAt),
+    fixedClock(createdAt),
   );
   const ingest = await useCase.execute(ingestInput);
   if (!ingest.ok) throw new Error("expected ingest to succeed");

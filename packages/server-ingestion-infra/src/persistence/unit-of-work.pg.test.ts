@@ -5,7 +5,7 @@ import { expect, mock, test } from "bun:test";
 
 import { PrismaUnitOfWork } from "./unit-of-work.pg.ts";
 
-const recordedAt = new Date("2026-01-02T00:00:00Z");
+const createdAt = new Date("2026-01-02T00:00:00Z");
 const occurredAt = new Date("2026-01-01T00:00:00Z");
 
 function buildEvent(): Event {
@@ -13,8 +13,8 @@ function buildEvent(): Event {
     id: "01952d3f-0000-7000-8000-000000000000",
     tenantType: "organization",
     tenantId: "org1",
-    recordedAt,
-    updatedAt: recordedAt,
+    createdAt,
+    updatedAt: createdAt,
     occurredAt,
     tags: { source: "slack" },
     body: { text: "hello" },

@@ -11,7 +11,7 @@ export class EventLogPostgresqlRepository implements EventLogRepository {
       data: {
         id: event.id.value,
         occurredAt: event.occurredAt,
-        recordedAt: event.metadata.createdAt,
+        createdAt: event.metadata.createdAt,
         tags: event.tags.entries,
         body: event.body.value,
       },

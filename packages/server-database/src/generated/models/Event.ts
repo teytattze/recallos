@@ -15,7 +15,7 @@ import type * as Prisma from "../internal/prismaNamespace.ts"
 /**
  * Model Event
  * Rows are immutable — the EventLogRepository only appends. No updated_at: for an
- * immutable fact it would always equal recorded_at.
+ * immutable fact it would always equal created_at.
  */
 export type EventModel = runtime.Types.Result.DefaultSelection<Prisma.$EventPayload>
 
@@ -28,19 +28,19 @@ export type AggregateEvent = {
 export type EventMinAggregateOutputType = {
   id: string | null
   occurredAt: Date | null
-  recordedAt: Date | null
+  createdAt: Date | null
 }
 
 export type EventMaxAggregateOutputType = {
   id: string | null
   occurredAt: Date | null
-  recordedAt: Date | null
+  createdAt: Date | null
 }
 
 export type EventCountAggregateOutputType = {
   id: number
   occurredAt: number
-  recordedAt: number
+  createdAt: number
   tags: number
   body: number
   _all: number
@@ -50,19 +50,19 @@ export type EventCountAggregateOutputType = {
 export type EventMinAggregateInputType = {
   id?: true
   occurredAt?: true
-  recordedAt?: true
+  createdAt?: true
 }
 
 export type EventMaxAggregateInputType = {
   id?: true
   occurredAt?: true
-  recordedAt?: true
+  createdAt?: true
 }
 
 export type EventCountAggregateInputType = {
   id?: true
   occurredAt?: true
-  recordedAt?: true
+  createdAt?: true
   tags?: true
   body?: true
   _all?: true
@@ -143,7 +143,7 @@ export type EventGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type EventGroupByOutputType = {
   id: string
   occurredAt: Date
-  recordedAt: Date
+  createdAt: Date
   tags: runtime.JsonValue
   body: runtime.JsonValue
   _count: EventCountAggregateOutputType | null
@@ -172,7 +172,7 @@ export type EventWhereInput = {
   NOT?: Prisma.EventWhereInput | Prisma.EventWhereInput[]
   id?: Prisma.UuidFilter<"Event"> | string
   occurredAt?: Prisma.DateTimeFilter<"Event"> | Date | string
-  recordedAt?: Prisma.DateTimeFilter<"Event"> | Date | string
+  createdAt?: Prisma.DateTimeFilter<"Event"> | Date | string
   tags?: Prisma.JsonFilter<"Event">
   body?: Prisma.JsonFilter<"Event">
 }
@@ -180,7 +180,7 @@ export type EventWhereInput = {
 export type EventOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   occurredAt?: Prisma.SortOrder
-  recordedAt?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   body?: Prisma.SortOrder
 }
@@ -191,7 +191,7 @@ export type EventWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.EventWhereInput[]
   NOT?: Prisma.EventWhereInput | Prisma.EventWhereInput[]
   occurredAt?: Prisma.DateTimeFilter<"Event"> | Date | string
-  recordedAt?: Prisma.DateTimeFilter<"Event"> | Date | string
+  createdAt?: Prisma.DateTimeFilter<"Event"> | Date | string
   tags?: Prisma.JsonFilter<"Event">
   body?: Prisma.JsonFilter<"Event">
 }, "id">
@@ -199,7 +199,7 @@ export type EventWhereUniqueInput = Prisma.AtLeast<{
 export type EventOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   occurredAt?: Prisma.SortOrder
-  recordedAt?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   body?: Prisma.SortOrder
   _count?: Prisma.EventCountOrderByAggregateInput
@@ -213,7 +213,7 @@ export type EventScalarWhereWithAggregatesInput = {
   NOT?: Prisma.EventScalarWhereWithAggregatesInput | Prisma.EventScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"Event"> | string
   occurredAt?: Prisma.DateTimeWithAggregatesFilter<"Event"> | Date | string
-  recordedAt?: Prisma.DateTimeWithAggregatesFilter<"Event"> | Date | string
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"Event"> | Date | string
   tags?: Prisma.JsonWithAggregatesFilter<"Event">
   body?: Prisma.JsonWithAggregatesFilter<"Event">
 }
@@ -221,7 +221,7 @@ export type EventScalarWhereWithAggregatesInput = {
 export type EventCreateInput = {
   id: string
   occurredAt: Date | string
-  recordedAt: Date | string
+  createdAt: Date | string
   tags: Prisma.JsonNullValueInput | runtime.InputJsonValue
   body: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -229,7 +229,7 @@ export type EventCreateInput = {
 export type EventUncheckedCreateInput = {
   id: string
   occurredAt: Date | string
-  recordedAt: Date | string
+  createdAt: Date | string
   tags: Prisma.JsonNullValueInput | runtime.InputJsonValue
   body: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -237,7 +237,7 @@ export type EventUncheckedCreateInput = {
 export type EventUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  recordedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   body?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -245,7 +245,7 @@ export type EventUpdateInput = {
 export type EventUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  recordedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   body?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -253,7 +253,7 @@ export type EventUncheckedUpdateInput = {
 export type EventCreateManyInput = {
   id: string
   occurredAt: Date | string
-  recordedAt: Date | string
+  createdAt: Date | string
   tags: Prisma.JsonNullValueInput | runtime.InputJsonValue
   body: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -261,7 +261,7 @@ export type EventCreateManyInput = {
 export type EventUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  recordedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   body?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -269,7 +269,7 @@ export type EventUpdateManyMutationInput = {
 export type EventUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  recordedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   body?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -277,7 +277,7 @@ export type EventUncheckedUpdateManyInput = {
 export type EventCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   occurredAt?: Prisma.SortOrder
-  recordedAt?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   body?: Prisma.SortOrder
 }
@@ -285,13 +285,13 @@ export type EventCountOrderByAggregateInput = {
 export type EventMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   occurredAt?: Prisma.SortOrder
-  recordedAt?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
 }
 
 export type EventMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   occurredAt?: Prisma.SortOrder
-  recordedAt?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -307,7 +307,7 @@ export type DateTimeFieldUpdateOperationsInput = {
 export type EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   occurredAt?: boolean
-  recordedAt?: boolean
+  createdAt?: boolean
   tags?: boolean
   body?: boolean
 }, ExtArgs["result"]["event"]>
@@ -315,7 +315,7 @@ export type EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type EventSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   occurredAt?: boolean
-  recordedAt?: boolean
+  createdAt?: boolean
   tags?: boolean
   body?: boolean
 }, ExtArgs["result"]["event"]>
@@ -323,7 +323,7 @@ export type EventSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type EventSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   occurredAt?: boolean
-  recordedAt?: boolean
+  createdAt?: boolean
   tags?: boolean
   body?: boolean
 }, ExtArgs["result"]["event"]>
@@ -331,12 +331,12 @@ export type EventSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type EventSelectScalar = {
   id?: boolean
   occurredAt?: boolean
-  recordedAt?: boolean
+  createdAt?: boolean
   tags?: boolean
   body?: boolean
 }
 
-export type EventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "occurredAt" | "recordedAt" | "tags" | "body", ExtArgs["result"]["event"]>
+export type EventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "occurredAt" | "createdAt" | "tags" | "body", ExtArgs["result"]["event"]>
 
 export type $EventPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Event"
@@ -344,7 +344,7 @@ export type $EventPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     occurredAt: Date
-    recordedAt: Date
+    createdAt: Date
     tags: runtime.JsonValue
     body: runtime.JsonValue
   }, ExtArgs["result"]["event"]>
@@ -772,7 +772,7 @@ export interface Prisma__EventClient<T, Null = never, ExtArgs extends runtime.Ty
 export interface EventFieldRefs {
   readonly id: Prisma.FieldRef<"Event", 'String'>
   readonly occurredAt: Prisma.FieldRef<"Event", 'DateTime'>
-  readonly recordedAt: Prisma.FieldRef<"Event", 'DateTime'>
+  readonly createdAt: Prisma.FieldRef<"Event", 'DateTime'>
   readonly tags: Prisma.FieldRef<"Event", 'Json'>
   readonly body: Prisma.FieldRef<"Event", 'Json'>
 }
