@@ -44,7 +44,7 @@ export { Prisma }
 /**
  * Model Event
  * Rows are immutable — the EventLogRepository only appends. No updated_at: for an
- * immutable fact it would always equal recorded_at.
+ * immutable fact it would always equal created_at.
  */
 export type Event = Prisma.EventModel
 /**

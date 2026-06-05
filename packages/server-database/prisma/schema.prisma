@@ -7,23 +7,23 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
   // URL lives in prisma.config.ts (Prisma 7 forbids it here).
   // pgvector — recall is co-located with relational metadata (see decision record).
   extensions = [vector]
 }
 
 /// Rows are immutable — the EventLogRepository only appends. No updated_at: for an
-/// immutable fact it would always equal recorded_at.
+/// immutable fact it would always equal created_at.
 model Event {
   id         String   @id @db.Uuid
   occurredAt DateTime @map("occurred_at") @db.Timestamptz(6)
-  recordedAt DateTime @map("recorded_at") @db.Timestamptz(6)
+  createdAt  DateTime @map("created_at") @db.Timestamptz(6)
   tags       Json     @db.JsonB
   body       Json     @db.JsonB
 
   // Worker drains the log in capture order; routes on tags (e.g. tags @> '{"source":...}').
-  @@index([recordedAt])
+  @@index([createdAt])
   @@index([tags(ops: JsonbOps)], type: Gin)
   @@map("events")
 }
@@ -44,13 +44,13 @@ model EventOutbox {
   id         String            @id @default(uuid(7)) @db.Uuid
   eventId    String            @map("event_id") @db.Uuid
   occurredAt DateTime          @map("occurred_at") @db.Timestamptz(6)
-  recordedAt DateTime          @map("recorded_at") @db.Timestamptz(6)
+  createdAt  DateTime          @map("created_at") @db.Timestamptz(6)
   tags       Json              @db.JsonB
   status     EventOutboxStatus @default(pending)
-  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  queuedAt   DateTime          @default(now()) @map("queued_at") @db.Timestamptz(6)
   sentAt     DateTime?         @map("sent_at") @db.Timestamptz(6)
 
   // Relay claims pending rows in capture order (FOR UPDATE SKIP LOCKED).
-  @@index([status, createdAt])
+  @@index([status, queuedAt])
   @@map("event_outbox")
 }

@@ -29,7 +29,7 @@ The design optimizes for idempotent writes, conservative resolution, clean bound
 
 **What happens:** The ingestion service appends a raw event to the event log and writes an outbox row in the same transaction. An outbox relay publishes an SQS message containing the event identifiers, timestamps, routing metadata, and body.
 
-**How it works:** The outbox table stores relay metadata only. When publishing, the relay joins the immutable `events` row by `eventId` and sends `{ eventId, occurredAt, recordedAt, tags, body }` to SQS. Ingest rejects events whose serialized SQS message would exceed the 256 KiB broker limit.
+**How it works:** The outbox table stores relay metadata only. When publishing, the relay joins the immutable `events` row by `eventId` and sends `{ eventId, occurredAt, createdAt, tags, body }` to SQS. Ingest rejects events whose serialized SQS message would exceed the 256 KiB broker limit.
 
 **Why this strategy:** The queue payload is complete enough for the enrichment hot path, while `events` remains the canonical replay/backfill source and `event_outbox` avoids duplicating large JSON bodies.
 
@@ -55,7 +55,7 @@ EnrichEvents.execute({ eventIds });
 {
   id,
   occurredAt,
-  recordedAt,
+  createdAt,
   tags,
   body,
 }
@@ -272,17 +272,17 @@ EnrichEvents.execute({ entries }):
 
 ## Ports and Responsibilities
 
-| Port                           | Purpose                                                                             |
-| ------------------------------ | ----------------------------------------------------------------------------------- |
-| `EventEntry` payload           | Carries `{ eventId, occurredAt, recordedAt, tags, body }` from SQS into enrichment. |
-| `EntityExtractorGateway`       | Convert opaque event bodies into typed node and edge candidates.                    |
-| `GraphResolution`              | Map event tags to a `KnowledgeGraphId`.                                             |
-| `ProcessedEventLedger`         | Provide exactly-once effect per `(eventId, extractorVersion)`.                      |
-| `KnowledgeGraphNodeRepository` | Load, resolve, scan, and save node aggregates.                                      |
-| `KnowledgeGraphEdgeRepository` | Load, deduplicate, reinforce, merge, and save edge aggregates.                      |
-| `NodeResolutionIndex`          | Find vector-similar same-type nodes for fuzzy resolution.                           |
-| `EmbeddingGateway`             | Produce embeddings for node bodies.                                                 |
-| `UnitOfWork`                   | Commit graph writes and ledger writes atomically.                                   |
+| Port                           | Purpose                                                                            |
+| ------------------------------ | ---------------------------------------------------------------------------------- |
+| `EventEntry` payload           | Carries `{ eventId, occurredAt, createdAt, tags, body }` from SQS into enrichment. |
+| `EntityExtractorGateway`       | Convert opaque event bodies into typed node and edge candidates.                   |
+| `GraphResolution`              | Map event tags to a `KnowledgeGraphId`.                                            |
+| `ProcessedEventLedger`         | Provide exactly-once effect per `(eventId, extractorVersion)`.                     |
+| `KnowledgeGraphNodeRepository` | Load, resolve, scan, and save node aggregates.                                     |
+| `KnowledgeGraphEdgeRepository` | Load, deduplicate, reinforce, merge, and save edge aggregates.                     |
+| `NodeResolutionIndex`          | Find vector-similar same-type nodes for fuzzy resolution.                          |
+| `EmbeddingGateway`             | Produce embeddings for node bodies.                                                |
+| `UnitOfWork`                   | Commit graph writes and ledger writes atomically.                                  |
 
 ## Implementation Order
 

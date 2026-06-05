@@ -1,6 +1,6 @@
 import type { Result, Tenant } from "@repo/server-kernel";
 
-/** `recordedAt` is omitted: the use case stamps it from a Clock, not the caller. */
+/** `createdAt` is omitted: the use case stamps it from a Clock, not the caller. */
 export type IngestEventInput = {
   tenant: Tenant;
   payload: {

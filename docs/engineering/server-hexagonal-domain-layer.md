@@ -9,7 +9,7 @@
 
 - Owns entities, value objects, aggregates, domain events, domain services, domain errors, and invariants.
 - Declares ports when it needs outside-world capabilities.
-- Accepts time as input, e.g. `recordedAt: Date`; never calls `Date.now()`.
+- Accepts time as input, e.g. `createdAt: Date`; never calls `Date.now()`.
 
 ## Boundaries
 
@@ -24,7 +24,7 @@
 - Validate with kernel helpers, not raw `schema.parse`:
   - `parseProps`: returns `Result` for expected invariant failures.
   - `parsePropsOrThrow`: throws for impossible states.
-- Cross-field/contextual checks zod can't express are layered imperatively after `parseProps`, returning `Result.err(<contextError>(...))` (e.g. `occurredAt` must not be after `recordedAt`).
+- Cross-field/contextual checks zod can't express are layered imperatively after `parseProps`, returning `Result.err(<contextError>(...))` (e.g. `occurredAt` must not be after `createdAt`).
 - Use private constructors that receive already-parsed props.
 - Use `create(input)` for untrusted input; validate with `parseProps` and return `Result`.
 - Use `restore(input)` for persisted/trusted data; validate with `parsePropsOrThrow`.

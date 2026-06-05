@@ -13,7 +13,7 @@ test("SqsOutboxBroker.publish: given a message, it should send its JSON body to 
   const message: OutboxMessage = {
     eventId: "event-1",
     occurredAt: new Date("2026-01-01T00:00:00Z"),
-    recordedAt: new Date("2026-01-02T00:00:00Z"),
+    createdAt: new Date("2026-01-02T00:00:00Z"),
     tags: { source: "slack" },
     body: { text: "hello" },
   };

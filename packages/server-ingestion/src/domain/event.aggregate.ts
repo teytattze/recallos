@@ -16,7 +16,7 @@ import { Tags } from "./tags.value-object.ts";
 
 export type CreateEventInput = {
   tenant: Tenant;
-  recordedAt: Date;
+  createdAt: Date;
   occurredAt: Date;
   tags: Record<string, string>;
   body: Record<string, unknown>;
@@ -26,7 +26,7 @@ export type RestoreEventInput = {
   id: string;
   tenantType: TenantType;
   tenantId: string;
-  recordedAt: Date;
+  createdAt: Date;
   updatedAt: Date;
   occurredAt: Date;
   tags: Record<string, string>;
@@ -82,7 +82,7 @@ export class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
     if (!parsePropsResult.ok) return parsePropsResult;
 
     const eventProps = parsePropsResult.value;
-    if (eventProps.occurredAt.getTime() > input.recordedAt.getTime()) {
+    if (eventProps.occurredAt.getTime() > input.createdAt.getTime()) {
       return Result.err(InvalidEvent("occurredAt cannot be in the future"));
     }
 
@@ -90,7 +90,7 @@ export class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
       new Event(
         EventId.create(),
         input.tenant,
-        EntityMetadata.create(input.recordedAt),
+        EntityMetadata.create(input.createdAt),
         eventProps,
       ),
     );
@@ -100,7 +100,7 @@ export class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
     return new Event(
       EventId.restore(input.id),
       Tenant.of(input.tenantType, input.tenantId),
-      EntityMetadata.restore(input.recordedAt, input.updatedAt),
+      EntityMetadata.restore(input.createdAt, input.updatedAt),
       parsePropsOrThrow(eventPropsSchema, {
         occurredAt: input.occurredAt,
         tags: Tags.restore(input.tags),

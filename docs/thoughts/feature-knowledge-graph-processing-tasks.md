@@ -57,7 +57,7 @@ The hot path: one SQS message batch carrying event entries → extract → resol
 
 ### Ports (pure)
 
-- [ ] **EE2 — SQS event-entry payload type/decoder**: parse `{ eventId, occurredAt, recordedAt, tags, body }` into the KG-owned `EventEntry` DTO. Never imports ingestion's `Event`. (consumption sub-doc §3)
+- [ ] **EE2 — SQS event-entry payload type/decoder**: parse `{ eventId, occurredAt, createdAt, tags, body }` into the KG-owned `EventEntry` DTO. Never imports ingestion's `Event`. (consumption sub-doc §3)
 - [ ] **EE3 — `EntityExtractorGateway`** (`entity-extractor.gateway.ts`): `extract(entry) → ExtractionResult` with `CandidateNode`/`CandidateEdge`/`extractorVersion`. (extraction sub-doc §3)
 - [ ] **EE4 — `NodeResolutionIndex`** (`node-resolution.index.ts`): `findSimilar(graphId, type, vector, threshold, k)`. (resolution sub-doc §4)
 - [ ] **EE5 — `GraphResolution`** (`graph-resolution.policy.ts`): `resolve(tags) → KnowledgeGraphId`. (idempotency sub-doc §4)
@@ -69,7 +69,7 @@ The hot path: one SQS message batch carrying event entries → extract → resol
 
 ### Infra (`@repo/server-knowledge-infra`)
 
-- [ ] **EE8 — Optional event-table reader for replay/backfill** (`read/event-source.reader.pg.ts`): `SELECT id, occurred_at, recorded_at, tags, body FROM events WHERE id = ANY(...)` → `EventEntry`. Not required for the SQS hot path. (consumption sub-doc §2)
+- [ ] **EE8 — Optional event-table reader for replay/backfill** (`read/event-source.reader.pg.ts`): `SELECT id, occurred_at, created_at, tags, body FROM events WHERE id = ANY(...)` → `EventEntry`. Not required for the SQS hot path. (consumption sub-doc §2)
 - [ ] **EE9 — Node & edge pg repos** (`persistence/*.repository.pg.ts`) implementing P1/P2 against Prisma; new `knowledge_graph_node` / `knowledge_graph_edge` tables + unique constraint on the edge triple + FK to nodes (`server-database` migration).
 - [ ] **EE10 — `UnitOfWorkPg`** (`persistence/unit-of-work.pg.ts`) implementing P3; copy the ingestion `UnitOfWorkPg` transaction-context shape.
 - [ ] **EE11 — Processed-events ledger** adapter + table (`persistence/processed-event.ledger.pg.ts` + migration): `(event_id, extractor_version)` PK, `status`, `fact_hash`, `attempts`.

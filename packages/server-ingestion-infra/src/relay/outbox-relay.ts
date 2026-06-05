@@ -6,7 +6,7 @@ interface PendingOutboxRow {
   id: string;
   event_id: string;
   occurred_at: Date;
-  recorded_at: Date;
+  created_at: Date;
   tags: Record<string, string>;
   body: Record<string, unknown>;
 }
@@ -25,11 +25,11 @@ export class OutboxRelay {
   relayBatch(): Promise<number> {
     return this.prisma.$transaction(async (tx) => {
       const rows = await tx.$queryRaw<PendingOutboxRow[]>`
-        SELECT eo.id, eo.event_id, eo.occurred_at, eo.recorded_at, eo.tags, e.body
+        SELECT eo.id, eo.event_id, eo.occurred_at, eo.created_at, eo.tags, e.body
         FROM event_outbox eo
         JOIN events e ON e.id = eo.event_id
         WHERE eo.status = 'pending'
-        ORDER BY eo.created_at
+        ORDER BY eo.queued_at
         FOR UPDATE SKIP LOCKED
         LIMIT ${this.batchSize}
       `;
@@ -38,7 +38,7 @@ export class OutboxRelay {
         await this.broker.publish({
           eventId: row.event_id,
           occurredAt: row.occurred_at,
-          recordedAt: row.recorded_at,
+          createdAt: row.created_at,
           tags: row.tags,
           body: row.body,
         });

@@ -74,7 +74,7 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const EventScalarFieldEnum = {
   id: 'id',
   occurredAt: 'occurredAt',
-  recordedAt: 'recordedAt',
+  createdAt: 'createdAt',
   tags: 'tags',
   body: 'body'
 } as const
@@ -86,10 +86,10 @@ export const EventOutboxScalarFieldEnum = {
   id: 'id',
   eventId: 'eventId',
   occurredAt: 'occurredAt',
-  recordedAt: 'recordedAt',
+  createdAt: 'createdAt',
   tags: 'tags',
   status: 'status',
-  createdAt: 'createdAt',
+  queuedAt: 'queuedAt',
   sentAt: 'sentAt'
 } as const
 
