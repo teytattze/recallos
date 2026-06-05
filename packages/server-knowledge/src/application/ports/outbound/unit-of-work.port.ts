@@ -1,6 +1,6 @@
-import type { KnowledgeGraphEdgeRepository } from "./knowledge-graph-edge.repository.ts";
-import type { KnowledgeGraphNodeRepository } from "./knowledge-graph-node.repository.ts";
-import type { ProcessedEventLedger } from "./processed-event.ledger.ts";
+import type { KnowledgeGraphEdgeRepository } from "./knowledge-graph-edge-repository.port.ts";
+import type { KnowledgeGraphNodeRepository } from "./knowledge-graph-node-repository.port.ts";
+import type { ProcessedEventLedger } from "./processed-event-ledger.port.ts";
 
 export interface KnowledgeContext {
   nodes: KnowledgeGraphNodeRepository;

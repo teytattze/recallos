@@ -1,7 +1,7 @@
-export * from "./application/ports/inbound/ingest-event.use-case.ts";
-export * from "./application/ports/outbound/event-log.repository.ts";
-export * from "./application/ports/outbound/event-publisher.ts";
-export * from "./application/ports/outbound/unit-of-work.ts";
+export * from "./application/ports/inbound/ingest-event-use-case.port.ts";
+export * from "./application/ports/outbound/event-log-repository.port.ts";
+export * from "./application/ports/outbound/event-publisher.port.ts";
+export * from "./application/ports/outbound/unit-of-work.port.ts";
 export * from "./application/use-cases/ingest-event.use-case.ts";
 
 export * from "./domain/event.aggregate.ts";

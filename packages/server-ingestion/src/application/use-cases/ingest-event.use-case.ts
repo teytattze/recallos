@@ -1,24 +1,26 @@
 import { type Clock, Result } from "@repo/server-kernel";
 
 import type {
-  IngestEvent,
-  IngestEventInput,
-  IngestEventOutput,
-} from "../ports/inbound/ingest-event.use-case.ts";
-import type { UnitOfWork } from "../ports/outbound/unit-of-work.ts";
+  IngestEventUseCaseInput,
+  IngestEventUseCaseOutput,
+  IngestEventUseCasePort,
+} from "../ports/inbound/ingest-event-use-case.port.ts";
+import type { UnitOfWorkPort } from "../ports/outbound/unit-of-work.port.ts";
 
 import { Event } from "../../domain/event.aggregate.ts";
 import { InvalidEvent } from "../../domain/invalid-event.error.ts";
 
 const SQS_MAX_MESSAGE_BODY_BYTES = 262_144;
 
-export class IngestEventUseCase implements IngestEvent {
+export class IngestEventUseCase implements IngestEventUseCasePort {
   constructor(
-    private readonly uow: UnitOfWork,
+    private readonly uow: UnitOfWorkPort,
     private readonly clock: Clock,
   ) {}
 
-  async execute(input: IngestEventInput): Promise<Result<IngestEventOutput>> {
+  async execute(
+    input: IngestEventUseCaseInput,
+  ): Promise<Result<IngestEventUseCaseOutput>> {
     const eventResult = Event.create({
       tenant: input.tenant,
       createdAt: this.clock.now(),
