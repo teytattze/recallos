@@ -1,11 +1,14 @@
+import { Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
 import { Event } from "./event.aggregate.ts";
 
 const recordedAt = new Date("2026-01-02T00:00:00Z");
 const occurredAt = new Date("2026-01-01T00:00:00Z");
+const tenant = Tenant.organization("org1");
 
 const validInput = {
+  tenant,
   recordedAt,
   occurredAt,
   tags: { source: "slack" },
@@ -26,6 +29,14 @@ test("Event.create: given valid input, it should stamp recordedAt as the created
 
   // THEN
   expect(result.ok && result.value.metadata.createdAt).toEqual(recordedAt);
+});
+
+test("Event.create: given valid input, it should preserve the tenant", () => {
+  // GIVEN / WHEN
+  const result = Event.create(validInput);
+
+  // THEN
+  expect(result.ok && result.value.tenant).toBe(tenant);
 });
 
 test("Event.create: given a fresh event, it should mint a distinct id each time", () => {
@@ -70,6 +81,8 @@ test.each([
 
 const storedRow = {
   id: "01952d3f-0000-7000-8000-000000000000",
+  tenantType: "organization" as const,
+  tenantId: "org1",
   recordedAt,
   updatedAt: new Date("2026-01-03T00:00:00Z"),
   occurredAt,
@@ -85,6 +98,14 @@ test("Event.restore: given a stored row, it should preserve the id and audit tim
   expect(event.id.value).toBe(storedRow.id);
   expect(event.metadata.createdAt).toEqual(storedRow.recordedAt);
   expect(event.metadata.updatedAt).toEqual(storedRow.updatedAt);
+});
+
+test("Event.restore: given a stored row, it should restore the tenant", () => {
+  // GIVEN / WHEN
+  const event = Event.restore(storedRow);
+
+  // THEN
+  expect(event.tenant.equals(tenant)).toBe(true);
 });
 
 test("Event.restore: given a row with an empty body, it should throw", () => {
