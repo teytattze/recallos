@@ -9,7 +9,7 @@ import {
   PrismaUnitOfWork,
   SqsOutboxBroker,
 } from "@repo/server-ingestion-infra";
-import { fixedClock } from "@repo/server-kernel";
+import { fixedClock, Tenant } from "@repo/server-kernel";
 import { beforeEach, expect, test } from "bun:test";
 
 import { harness } from "./harness/index.ts";
@@ -18,6 +18,7 @@ const recordedAt = new Date("2026-05-30T12:00:00.000Z");
 const occurredAt = new Date("2026-05-30T11:59:00.000Z");
 
 const ingestInput = {
+  tenant: Tenant.organization("org1"),
   occurredAt,
   tags: { source: "slack", type: "message" },
   body: { text: "hello from the integration suite", channel: "C123" },

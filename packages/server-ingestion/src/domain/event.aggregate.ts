@@ -1,7 +1,9 @@
 import {
-  AggregateRoot,
   EntityMetadata,
   Result,
+  Tenant,
+  TenantAwareAggregateRoot,
+  type TenantType,
   parseProps,
   parsePropsOrThrow,
 } from "@repo/server-kernel";
@@ -13,6 +15,7 @@ import { InvalidEvent } from "./invalid-event.error.ts";
 import { Tags } from "./tags.value-object.ts";
 
 export type CreateEventInput = {
+  tenant: Tenant;
   recordedAt: Date;
   occurredAt: Date;
   tags: Record<string, string>;
@@ -21,6 +24,8 @@ export type CreateEventInput = {
 
 export type RestoreEventInput = {
   id: string;
+  tenantType: TenantType;
+  tenantId: string;
   recordedAt: Date;
   updatedAt: Date;
   occurredAt: Date;
@@ -36,13 +41,14 @@ const eventPropsSchema = z.object({
 
 type EventProps = z.infer<typeof eventPropsSchema>;
 
-export class Event extends AggregateRoot<EventId, EventProps> {
+export class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
   private constructor(
     id: EventId,
+    tenant: Tenant,
     metadata: EntityMetadata,
     props: EventProps,
   ) {
-    super(id, metadata, props);
+    super(id, tenant, metadata, props);
   }
 
   get occurredAt(): Date {
@@ -83,6 +89,7 @@ export class Event extends AggregateRoot<EventId, EventProps> {
     return Result.ok(
       new Event(
         EventId.create(),
+        input.tenant,
         EntityMetadata.create(input.recordedAt),
         eventProps,
       ),
@@ -92,6 +99,7 @@ export class Event extends AggregateRoot<EventId, EventProps> {
   static restore(input: RestoreEventInput): Event {
     return new Event(
       EventId.restore(input.id),
+      Tenant.of(input.tenantType, input.tenantId),
       EntityMetadata.restore(input.recordedAt, input.updatedAt),
       parsePropsOrThrow(eventPropsSchema, {
         occurredAt: input.occurredAt,

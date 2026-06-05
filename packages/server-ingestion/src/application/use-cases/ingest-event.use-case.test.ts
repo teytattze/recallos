@@ -1,4 +1,4 @@
-import { fixedClock } from "@repo/server-kernel";
+import { fixedClock, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
 import type { Event } from "../../domain/event.aggregate.ts";
@@ -43,8 +43,10 @@ class FakeUnitOfWork implements UnitOfWork {
 }
 
 const recordedAt = new Date("2026-01-02T00:00:00Z");
+const tenant = Tenant.organization("org1");
 
 const validInput = {
+  tenant,
   occurredAt: new Date("2026-01-01T00:00:00Z"),
   tags: { source: "slack" },
   body: { text: "hello" },
@@ -91,6 +93,18 @@ test("IngestEventUseCase.execute: given valid input, it should stamp the clock's
 
   // THEN
   expect(uow.events.appended[0]!.metadata.createdAt).toEqual(recordedAt);
+});
+
+test("IngestEventUseCase.execute: given valid input, it should pass the tenant to the event", async () => {
+  // GIVEN
+  const uow = new FakeUnitOfWork();
+  const useCase = new IngestEventUseCase(uow, fixedClock(recordedAt));
+
+  // WHEN
+  await useCase.execute(validInput);
+
+  // THEN
+  expect(uow.events.appended[0]!.tenant).toBe(tenant);
 });
 
 test("IngestEventUseCase.execute: given an invalid event, it should return an InvalidEvent error without appending or publishing", async () => {

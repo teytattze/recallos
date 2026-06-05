@@ -20,6 +20,7 @@ export class IngestEventUseCase implements IngestEvent {
 
   async execute(input: IngestEventInput): Promise<Result<IngestEventOutput>> {
     const eventResult = Event.create({
+      tenant: input.tenant,
       recordedAt: this.clock.now(),
       occurredAt: input.occurredAt,
       tags: input.tags,
