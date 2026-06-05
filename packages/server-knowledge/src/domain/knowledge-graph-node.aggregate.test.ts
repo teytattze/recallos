@@ -1,4 +1,5 @@
 import { test, expect } from "bun:test";
+import { Tenant } from "@repo/server-kernel";
 
 import { Embedding } from "./embedding.value-object.ts";
 import { EventId } from "./event-id.value-object.ts";
@@ -8,8 +9,10 @@ import { NodeBody } from "./node-body.value-object.ts";
 
 const now = new Date("2026-01-01T00:00:00Z");
 const later = new Date("2026-01-05T00:00:00Z");
+const tenant = Tenant.organization("org1");
 
 const validInput = {
+  tenant,
   graphId: KnowledgeGraphId.create(),
   type: "PERSON" as const,
   body: "Ada Lovelace",
@@ -39,6 +42,14 @@ test("KnowledgeGraphNode.create: given valid input, it should stamp now as the c
 
   // THEN
   expect(result.ok && result.value.metadata.createdAt).toEqual(now);
+});
+
+test("KnowledgeGraphNode.create: given valid input, it should preserve the tenant", () => {
+  // GIVEN / WHEN
+  const result = KnowledgeGraphNode.create(validInput);
+
+  // THEN
+  expect(result.ok && result.value.tenant).toBe(tenant);
 });
 
 test("KnowledgeGraphNode.create: given a fresh node, it should mint a distinct id each time", () => {
@@ -85,6 +96,8 @@ test("KnowledgeGraphNode.create: given only duplicate source events, it should s
 
 const storedRow = {
   id: "01952d3f-0000-7000-8000-000000000001",
+  tenantType: "organization" as const,
+  tenantId: "org1",
   graphId: "01952d3f-0000-7000-8000-000000000002",
   type: "PERSON" as const,
   body: "Ada Lovelace",
@@ -102,6 +115,14 @@ test("KnowledgeGraphNode.restore: given a stored row, it should preserve the id 
   expect(node.id.value).toBe(storedRow.id);
   expect(node.metadata.createdAt).toEqual(storedRow.createdAt);
   expect(node.metadata.updatedAt).toEqual(storedRow.updatedAt);
+});
+
+test("KnowledgeGraphNode.restore: given a stored row, it should restore the tenant", () => {
+  // GIVEN / WHEN
+  const node = KnowledgeGraphNode.restore(storedRow);
+
+  // THEN
+  expect(node.tenant.equals(tenant)).toBe(true);
 });
 
 test("KnowledgeGraphNode.restore: given a row with no source events, it should throw", () => {

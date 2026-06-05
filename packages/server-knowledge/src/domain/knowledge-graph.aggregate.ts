@@ -1,17 +1,21 @@
 import {
-  AggregateRoot,
   EntityMetadata,
   Result,
+  Tenant,
+  TenantAwareAggregateRoot,
+  type TenantType,
   parseProps,
   parsePropsOrThrow,
 } from "@repo/server-kernel";
 import { z } from "zod";
 
 import type { Embedding } from "./embedding.value-object.ts";
+
 import { InvalidKnowledgeGraph } from "./invalid-knowledge-graph.error.ts";
 import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
 
 export type CreateKnowledgeGraphInput = {
+  tenant: Tenant;
   name: string;
   embeddingModel: string;
   embeddingDimensions: number;
@@ -20,6 +24,8 @@ export type CreateKnowledgeGraphInput = {
 
 export type RestoreKnowledgeGraphInput = {
   id: string;
+  tenantType: TenantType;
+  tenantId: string;
   name: string;
   embeddingModel: string;
   embeddingDimensions: number;
@@ -35,16 +41,17 @@ const knowledgeGraphPropsSchema = z.object({
 
 type KnowledgeGraphProps = z.infer<typeof knowledgeGraphPropsSchema>;
 
-export class KnowledgeGraph extends AggregateRoot<
+export class KnowledgeGraph extends TenantAwareAggregateRoot<
   KnowledgeGraphId,
   KnowledgeGraphProps
 > {
   private constructor(
     id: KnowledgeGraphId,
+    tenant: Tenant,
     metadata: EntityMetadata,
     props: KnowledgeGraphProps,
   ) {
-    super(id, metadata, props);
+    super(id, tenant, metadata, props);
   }
 
   static create(input: CreateKnowledgeGraphInput): Result<KnowledgeGraph> {
@@ -62,6 +69,7 @@ export class KnowledgeGraph extends AggregateRoot<
     return Result.ok(
       new KnowledgeGraph(
         KnowledgeGraphId.create(),
+        input.tenant,
         EntityMetadata.create(input.now),
         parsePropsResult.value,
       ),
@@ -71,6 +79,7 @@ export class KnowledgeGraph extends AggregateRoot<
   static restore(input: RestoreKnowledgeGraphInput): KnowledgeGraph {
     return new KnowledgeGraph(
       KnowledgeGraphId.restore(input.id),
+      Tenant.of(input.tenantType, input.tenantId),
       EntityMetadata.restore(input.createdAt, input.updatedAt),
       parsePropsOrThrow(knowledgeGraphPropsSchema, {
         name: input.name,

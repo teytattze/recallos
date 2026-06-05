@@ -1,7 +1,9 @@
 import {
-  AggregateRoot,
   EntityMetadata,
   Result,
+  Tenant,
+  TenantAwareAggregateRoot,
+  type TenantType,
   parseProps,
   parsePropsOrThrow,
 } from "@repo/server-kernel";
@@ -18,6 +20,7 @@ import { NodeId } from "./node-id.value-object.ts";
 import { NODE_TYPES, type NodeType } from "./node-type.value-object.ts";
 
 export type CreateKnowledgeGraphNodeInput = {
+  tenant: Tenant;
   graphId: KnowledgeGraphId;
   type: NodeType;
   body: string;
@@ -27,6 +30,8 @@ export type CreateKnowledgeGraphNodeInput = {
 
 export type RestoreKnowledgeGraphNodeInput = {
   id: string;
+  tenantType: TenantType;
+  tenantId: string;
   graphId: string;
   type: NodeType;
   body: string;
@@ -51,16 +56,17 @@ type KnowledgeGraphNodeProps = z.infer<typeof knowledgeGraphNodePropsSchema>;
 const dedupeEventIds = (eventIds: EventId[]): EventId[] =>
   Array.from(new Map(eventIds.map((id) => [id.value, id])).values());
 
-export class KnowledgeGraphNode extends AggregateRoot<
+export class KnowledgeGraphNode extends TenantAwareAggregateRoot<
   NodeId,
   KnowledgeGraphNodeProps
 > {
   private constructor(
     id: NodeId,
+    tenant: Tenant,
     metadata: EntityMetadata,
     props: KnowledgeGraphNodeProps,
   ) {
-    super(id, metadata, props);
+    super(id, tenant, metadata, props);
   }
 
   get graphId(): KnowledgeGraphId {
@@ -104,6 +110,7 @@ export class KnowledgeGraphNode extends AggregateRoot<
 
     const node = new KnowledgeGraphNode(
       NodeId.create(),
+      input.tenant,
       EntityMetadata.create(input.now),
       parsePropsResult.value,
     );
@@ -121,6 +128,7 @@ export class KnowledgeGraphNode extends AggregateRoot<
   static restore(input: RestoreKnowledgeGraphNodeInput): KnowledgeGraphNode {
     return new KnowledgeGraphNode(
       NodeId.restore(input.id),
+      Tenant.of(input.tenantType, input.tenantId),
       EntityMetadata.restore(input.createdAt, input.updatedAt),
       parsePropsOrThrow(knowledgeGraphNodePropsSchema, {
         graphId: KnowledgeGraphId.restore(input.graphId),

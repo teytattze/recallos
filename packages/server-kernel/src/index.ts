@@ -8,5 +8,5 @@ export * from "./metadata.ts";
 export * from "./entity.ts";
 export * from "./domain-event.ts";
 export * from "./aggregate-root.ts";
-export * from "./tenant-aggregate-root.ts";
+export * from "./tenant-aware-aggregate-root.ts";
 export * from "./clock.ts";

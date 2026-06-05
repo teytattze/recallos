@@ -1,7 +1,9 @@
 import {
-  AggregateRoot,
   EntityMetadata,
   Result,
+  Tenant,
+  TenantAwareAggregateRoot,
+  type TenantType,
   parseProps,
   parsePropsOrThrow,
 } from "@repo/server-kernel";
@@ -20,6 +22,7 @@ import {
 } from "./relationship-type.value-object.ts";
 
 export type CreateKnowledgeGraphEdgeInput = {
+  tenant: Tenant;
   graphId: KnowledgeGraphId;
   fromId: NodeId;
   toId: NodeId;
@@ -32,6 +35,8 @@ export type CreateKnowledgeGraphEdgeInput = {
 
 export type RestoreKnowledgeGraphEdgeInput = {
   id: string;
+  tenantType: TenantType;
+  tenantId: string;
   graphId: string;
   fromId: string;
   toId: string;
@@ -60,16 +65,17 @@ type KnowledgeGraphEdgeProps = z.infer<typeof knowledgeGraphEdgePropsSchema>;
 const dedupeEventIds = (eventIds: EventId[]): EventId[] =>
   Array.from(new Map(eventIds.map((id) => [id.value, id])).values());
 
-export class KnowledgeGraphEdge extends AggregateRoot<
+export class KnowledgeGraphEdge extends TenantAwareAggregateRoot<
   EdgeId,
   KnowledgeGraphEdgeProps
 > {
   private constructor(
     id: EdgeId,
+    tenant: Tenant,
     metadata: EntityMetadata,
     props: KnowledgeGraphEdgeProps,
   ) {
-    super(id, metadata, props);
+    super(id, tenant, metadata, props);
   }
 
   get graphId(): KnowledgeGraphId {
@@ -129,6 +135,7 @@ export class KnowledgeGraphEdge extends AggregateRoot<
 
     const edge = new KnowledgeGraphEdge(
       EdgeId.create(),
+      input.tenant,
       EntityMetadata.create(input.now),
       parsePropsResult.value,
     );
@@ -147,6 +154,7 @@ export class KnowledgeGraphEdge extends AggregateRoot<
   static restore(input: RestoreKnowledgeGraphEdgeInput): KnowledgeGraphEdge {
     return new KnowledgeGraphEdge(
       EdgeId.restore(input.id),
+      Tenant.of(input.tenantType, input.tenantId),
       EntityMetadata.restore(input.createdAt, input.updatedAt),
       parsePropsOrThrow(knowledgeGraphEdgePropsSchema, {
         graphId: KnowledgeGraphId.restore(input.graphId),
