@@ -1,3 +1,4 @@
+import { Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
 import { EventId } from "./event-id.value-object.ts";
@@ -7,8 +8,10 @@ import { NodeId } from "./node-id.value-object.ts";
 
 const now = new Date("2026-01-02T00:00:00Z");
 const observedAt = new Date("2026-01-01T00:00:00Z");
+const tenant = Tenant.organization("org1");
 
 const validInput = {
+  tenant,
   graphId: KnowledgeGraphId.create(),
   fromId: NodeId.create(),
   toId: NodeId.create(),
@@ -35,6 +38,14 @@ test("KnowledgeGraphEdge.create: given valid input, it should stamp now as the c
   expect(result.ok && result.value.metadata.createdAt).toEqual(now);
 });
 
+test("KnowledgeGraphEdge.create: given valid input, it should preserve the tenant", () => {
+  // GIVEN / WHEN
+  const result = KnowledgeGraphEdge.create(validInput);
+
+  // THEN
+  expect(result.ok && result.value.tenant).toBe(tenant);
+});
+
 const sameNode = NodeId.create();
 
 test.each([
@@ -58,6 +69,8 @@ test.each([
 
 const storedRow = {
   id: "01952d3f-0000-7000-8000-000000000010",
+  tenantType: "organization" as const,
+  tenantId: "org1",
   graphId: "01952d3f-0000-7000-8000-000000000011",
   fromId: "01952d3f-0000-7000-8000-000000000012",
   toId: "01952d3f-0000-7000-8000-000000000013",
@@ -77,6 +90,14 @@ test("KnowledgeGraphEdge.restore: given a stored row, it should preserve the id 
   expect(edge.id.value).toBe(storedRow.id);
   expect(edge.metadata.createdAt).toEqual(storedRow.createdAt);
   expect(edge.metadata.updatedAt).toEqual(storedRow.updatedAt);
+});
+
+test("KnowledgeGraphEdge.restore: given a stored row, it should restore the tenant", () => {
+  // GIVEN / WHEN
+  const edge = KnowledgeGraphEdge.restore(storedRow);
+
+  // THEN
+  expect(edge.tenant.equals(tenant)).toBe(true);
 });
 
 test("KnowledgeGraphEdge.restore: given a row with out-of-range confidence, it should throw", () => {

@@ -11,7 +11,7 @@ import { Tenant } from "./tenant.ts";
  * can't accidentally carry one. Set once and immutable, like the id; the same
  * boundary is mirrored at the row level in the database (RLS).
  */
-export abstract class TenantAggregateRoot<
+export abstract class TenantAwareAggregateRoot<
   TId extends Id,
   T extends Record<string, unknown> = Record<string, never>,
 > extends AggregateRoot<TId, T> {

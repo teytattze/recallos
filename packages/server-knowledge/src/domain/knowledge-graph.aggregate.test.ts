@@ -1,11 +1,14 @@
+import { Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
 import { Embedding } from "./embedding.value-object.ts";
 import { KnowledgeGraph } from "./knowledge-graph.aggregate.ts";
 
 const now = new Date("2026-01-01T00:00:00Z");
+const tenant = Tenant.organization("org1");
 
 const validInput = {
+  tenant,
   name: "people",
   embeddingModel: "text-embedding-3-small",
   embeddingDimensions: 1536,
@@ -27,6 +30,14 @@ test("KnowledgeGraph.create: given valid input, it should stamp now as both crea
   // THEN
   expect(result.ok && result.value.metadata.createdAt).toEqual(now);
   expect(result.ok && result.value.metadata.updatedAt).toEqual(now);
+});
+
+test("KnowledgeGraph.create: given valid input, it should preserve the tenant", () => {
+  // GIVEN / WHEN
+  const result = KnowledgeGraph.create(validInput);
+
+  // THEN
+  expect(result.ok && result.value.tenant).toBe(tenant);
 });
 
 test("KnowledgeGraph.create: given a fresh graph, it should mint a distinct id each time", () => {
@@ -61,6 +72,8 @@ test.each([
 
 const storedRow = {
   id: "01952d3f-0000-7000-8000-000000000000",
+  tenantType: "organization" as const,
+  tenantId: "org1",
   name: "people",
   embeddingModel: "text-embedding-3-small",
   embeddingDimensions: 1536,
@@ -76,6 +89,14 @@ test("KnowledgeGraph.restore: given a stored row, it should preserve the id and 
   expect(graph.id.value).toBe(storedRow.id);
   expect(graph.metadata.createdAt).toEqual(storedRow.createdAt);
   expect(graph.metadata.updatedAt).toEqual(storedRow.updatedAt);
+});
+
+test("KnowledgeGraph.restore: given a stored row, it should restore the tenant", () => {
+  // GIVEN / WHEN
+  const graph = KnowledgeGraph.restore(storedRow);
+
+  // THEN
+  expect(graph.tenant.equals(tenant)).toBe(true);
 });
 
 test("KnowledgeGraph.restore: given a row with a blank name, it should throw", () => {
@@ -95,7 +116,10 @@ test("KnowledgeGraph.accepts: given an embedding matching the graph's model and 
 
 test.each([
   ["a model mismatch", Embedding.restore([0.1], "other-model", 1536)],
-  ["a dimension mismatch", Embedding.restore([0.1], "text-embedding-3-small", 768)],
+  [
+    "a dimension mismatch",
+    Embedding.restore([0.1], "text-embedding-3-small", 768),
+  ],
 ])(
   "KnowledgeGraph.accepts: given %s, it should return false",
   (_label, embedding) => {

@@ -75,7 +75,7 @@ read events → extract candidates → resolve to nodes → upsert nodes → rel
 
 | Use case (inbound port)   | Responsibility                                                                                                                          | Driven by                                                            |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| **`EnrichEvents`**        | Given event entries from SQS, extract → resolve → upsert nodes → relate edges → record ledger. One transactional run.                  | **SQS push** (`apps/server-knowledge-worker` consumer).              |
+| **`EnrichEvents`**        | Given event entries from SQS, extract → resolve → upsert nodes → relate edges → record ledger. One transactional run.                   | **SQS push** (`apps/server-knowledge-worker` consumer).              |
 | **`EmbedNodes`**          | Assign/refresh embeddings for nodes that need one. Calls the embedding gateway, then `node.assignEmbedding(...)`.                       | Jittered loop scanning nodes needing embedding (resolution sub-doc). |
 | **`MergeDuplicateNodes`** | Drain `DUPLICATE_OF` edges: fold provenance into the survivor (`attachEvents`) and re-point incident edges. Reuses the merge semantics. | Jittered reconciler loop.                                            |
 
