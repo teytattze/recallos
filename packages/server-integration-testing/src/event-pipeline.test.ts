@@ -19,9 +19,11 @@ const occurredAt = new Date("2026-05-30T11:59:00.000Z");
 
 const ingestInput = {
   tenant: Tenant.organization("org1"),
-  occurredAt,
-  tags: { source: "slack", type: "message" },
-  body: { text: "hello from the integration suite", channel: "C123" },
+  payload: {
+    occurredAt,
+    tags: { source: "slack", type: "message" },
+    body: { text: "hello from the integration suite", channel: "C123" },
+  },
 };
 
 // Each test starts from an empty cluster + queue so assertions about row counts
@@ -56,8 +58,8 @@ test("IngestEventUseCase over PrismaUnitOfWork: given a valid event, it should p
   expect(event).toMatchObject({
     occurredAt,
     recordedAt,
-    tags: ingestInput.tags,
-    body: ingestInput.body,
+    tags: ingestInput.payload.tags,
+    body: ingestInput.payload.body,
   });
 
   const outbox = await prisma.eventOutbox.findMany();
@@ -66,7 +68,7 @@ test("IngestEventUseCase over PrismaUnitOfWork: given a valid event, it should p
     eventId,
     occurredAt,
     recordedAt,
-    tags: ingestInput.tags,
+    tags: ingestInput.payload.tags,
     status: "pending",
     sentAt: null,
   });
@@ -99,8 +101,8 @@ test("OutboxRelay over SqsOutboxBroker: given a pending outbox row, it should pu
   expect(message).not.toBeNull();
   expect(JSON.parse(message ?? "")).toMatchObject({
     eventId,
-    tags: ingestInput.tags,
-    body: ingestInput.body,
+    tags: ingestInput.payload.tags,
+    body: ingestInput.payload.body,
     occurredAt: occurredAt.toISOString(),
     recordedAt: recordedAt.toISOString(),
   });

@@ -22,9 +22,9 @@ export class IngestEventUseCase implements IngestEvent {
     const eventResult = Event.create({
       tenant: input.tenant,
       recordedAt: this.clock.now(),
-      occurredAt: input.occurredAt,
-      tags: input.tags,
-      body: input.body,
+      occurredAt: input.payload.occurredAt,
+      tags: input.payload.tags,
+      body: input.payload.body,
     });
     if (!eventResult.ok) return eventResult;
 

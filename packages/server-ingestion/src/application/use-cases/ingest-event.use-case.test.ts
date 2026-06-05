@@ -47,9 +47,11 @@ const tenant = Tenant.organization("org1");
 
 const validInput = {
   tenant,
-  occurredAt: new Date("2026-01-01T00:00:00Z"),
-  tags: { source: "slack" },
-  body: { text: "hello" },
+  payload: {
+    occurredAt: new Date("2026-01-01T00:00:00Z"),
+    tags: { source: "slack" },
+    body: { text: "hello" },
+  },
 };
 
 test("IngestEventUseCase.execute: given valid input, it should append the event and return its id", async () => {
@@ -114,7 +116,10 @@ test("IngestEventUseCase.execute: given an invalid event, it should return an In
   const future = new Date(recordedAt.getTime() + 1000);
 
   // WHEN
-  const result = await useCase.execute({ ...validInput, occurredAt: future });
+  const result = await useCase.execute({
+    ...validInput,
+    payload: { ...validInput.payload, occurredAt: future },
+  });
 
   // THEN
   expect(result.ok).toBe(false);
@@ -133,7 +138,10 @@ test("IngestEventUseCase.execute: given an event too large for SQS publication, 
   // WHEN
   const result = await useCase.execute({
     ...validInput,
-    body: { text: "x".repeat(262_144) },
+    payload: {
+      ...validInput.payload,
+      body: { text: "x".repeat(262_144) },
+    },
   });
 
   // THEN
