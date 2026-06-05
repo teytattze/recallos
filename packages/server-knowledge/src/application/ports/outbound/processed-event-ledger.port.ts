@@ -1,13 +1,13 @@
 import type { EventId } from "../../../domain/event-id.value-object.ts";
 
-export type ProcessStatus = "done" | "failed";
+export type ProcessedEventLedgerStatus = "done" | "failed";
 
-export interface ProcessedEventLedger {
+export interface ProcessedEventLedgerPort {
   seen(eventId: EventId, extractorVersion: string): Promise<boolean>;
   record(
     eventId: EventId,
     extractorVersion: string,
-    status: ProcessStatus,
+    status: ProcessedEventLedgerStatus,
     factHash: string,
     attempts: number,
   ): Promise<void>;

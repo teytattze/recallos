@@ -2,16 +2,16 @@ import { fixedClock, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
 import type { Event } from "../../domain/event.aggregate.ts";
-import type { EventLogRepository } from "../ports/outbound/event-log.repository.ts";
-import type { EventPublisher } from "../ports/outbound/event-publisher.ts";
+import type { EventLogRepositoryPort } from "../ports/outbound/event-log-repository.port.ts";
+import type { EventPublisherPort } from "../ports/outbound/event-publisher.port.ts";
 import type {
-  IngestionContext,
-  UnitOfWork,
-} from "../ports/outbound/unit-of-work.ts";
+  UnitOfWorkContext,
+  UnitOfWorkPort,
+} from "../ports/outbound/unit-of-work.port.ts";
 
 import { IngestEventUseCase } from "./ingest-event.use-case.ts";
 
-class FakeEventLogRepository implements EventLogRepository {
+class FakeEventLogRepository implements EventLogRepositoryPort {
   readonly appended: Event[] = [];
 
   insert(event: Event): Promise<void> {
@@ -20,7 +20,7 @@ class FakeEventLogRepository implements EventLogRepository {
   }
 }
 
-class FakeEventPublisher implements EventPublisher {
+class FakeEventPublisher implements EventPublisherPort {
   readonly published: Event[] = [];
 
   publish(event: Event): Promise<void> {
@@ -31,12 +31,12 @@ class FakeEventPublisher implements EventPublisher {
 
 /** Records whether the work ran inside a transaction so tests can assert that the
  *  insert and the outbox write are enlisted together. */
-class FakeUnitOfWork implements UnitOfWork {
+class FakeUnitOfWork implements UnitOfWorkPort {
   readonly events = new FakeEventLogRepository();
   readonly publisher = new FakeEventPublisher();
   ran = 0;
 
-  transaction<T>(work: (ctx: IngestionContext) => Promise<T>): Promise<T> {
+  transaction<T>(work: (ctx: UnitOfWorkContext) => Promise<T>): Promise<T> {
     this.ran += 1;
     return work({ events: this.events, publisher: this.publisher });
   }

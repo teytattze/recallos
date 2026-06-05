@@ -34,11 +34,11 @@ test("OutboxEventPublisher.publish: given an event, it should write relay metada
   // then
   expect(create).toHaveBeenCalledTimes(1);
   expect(create).toHaveBeenCalledWith({
-      data: {
-        eventId: event.id.value,
-        occurredAt,
-        createdAt,
-        tags: { source: "slack" },
-      },
+    data: {
+      eventId: event.id.value,
+      occurredAt,
+      createdAt,
+      tags: { source: "slack" },
+    },
   });
 });

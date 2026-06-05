@@ -34,12 +34,12 @@ test("EventLogPostgresqlRepository.insert: given an event, it should create a ro
   // then
   expect(create).toHaveBeenCalledTimes(1);
   expect(create).toHaveBeenCalledWith({
-      data: {
-        id: event.id.value,
-        occurredAt,
-        createdAt,
-        tags: { source: "slack" },
-        body: { text: "hello" },
-      },
+    data: {
+      id: event.id.value,
+      occurredAt,
+      createdAt,
+      tags: { source: "slack" },
+      body: { text: "hello" },
+    },
   });
 });
