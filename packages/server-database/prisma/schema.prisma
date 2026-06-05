@@ -13,8 +13,7 @@ datasource db {
   extensions = [vector]
 }
 
-/// Rows are immutable — the EventLogRepository only appends. No updated_at: for an
-/// immutable fact it would always equal created_at.
+/// Rows are immutable; updated_at would always equal created_at.
 model Event {
   id         String   @id @db.Uuid
   occurredAt DateTime @map("occurred_at") @db.Timestamptz(6)
