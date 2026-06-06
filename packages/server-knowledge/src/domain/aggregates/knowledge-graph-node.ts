@@ -10,8 +10,8 @@ import {
 import { z } from "zod";
 
 import { createInvalidKnowledgeGraphNodeError } from "../errors/invalid-knowledge-graph-node-error.ts";
-import { NodeCreated } from "../events/node-created.ts";
-import { NodeEmbedded } from "../events/node-embedded.ts";
+import { createNodeCreatedEvent } from "../events/node-created-event.ts";
+import { createNodeEmbeddedEvent } from "../events/node-embedded-event.ts";
 import { Embedding } from "../value-objects/embedding.ts";
 import { EventId } from "../value-objects/event-id.ts";
 import { KnowledgeGraphId } from "../value-objects/knowledge-graph-id.ts";
@@ -117,7 +117,7 @@ class KnowledgeGraphNode extends TenantAwareAggregateRoot<
       parsePropsResult.value,
     );
     node.recordEvent(
-      NodeCreated(node.id.value, input.metadata.createdAt, {
+      createNodeCreatedEvent(node.id.value, input.metadata.createdAt, {
         graphId: node.graphId.value,
         type: node.type,
       }),
@@ -161,7 +161,7 @@ class KnowledgeGraphNode extends TenantAwareAggregateRoot<
     this.replaceProps({ ...this._props, embedding });
     this.touch(now);
     this.recordEvent(
-      NodeEmbedded(this.id.value, now, {
+      createNodeEmbeddedEvent(this.id.value, now, {
         model: embedding.model,
         dimensions: embedding.dimensions,
       }),

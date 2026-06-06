@@ -21,6 +21,13 @@
 ## Conventions
 
 - Use cases: `*.use-case.ts`.
-- Inbound ports: `application/ports/inbound/`, one interface per use case.
-- Outbound ports: `application/ports/outbound/`.
-- Outbound port files: `*.port.ts` or `*.repository.ts`.
+- Inbound ports: `application/ports/inbound/<use-case>-port.ts`, one
+  interface per use case.
+- Outbound ports: `application/ports/outbound/<capability>-port.ts`.
+- Use kebab-case filenames with a `-port.ts` suffix.
+- Name inbound port contracts `<UseCase>PortInput`, `<UseCase>PortOutput`, and
+  `<UseCase>Port`.
+- Use cases implement the inbound port and expose
+  `execute(input): Promise<Result<Output>>`.
+- Unit-of-work ports name their transaction context `UnitOfWorkPortContext`.
+- Prefer file-local declarations plus final `export type { ... }` blocks for port types.

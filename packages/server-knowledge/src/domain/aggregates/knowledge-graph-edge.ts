@@ -11,7 +11,7 @@ import {
 import { z } from "zod";
 
 import { createInvalidKnowledgeGraphEdgeError } from "../errors/invalid-knowledge-graph-edge-error.ts";
-import { NodesRelated } from "../events/nodes-related.ts";
+import { createNodesRelatedEvent } from "../events/nodes-related-event.ts";
 import { Confidence } from "../value-objects/confidence.ts";
 import { EdgeId } from "../value-objects/edge-id.ts";
 import { EventId } from "../value-objects/event-id.ts";
@@ -147,7 +147,7 @@ class KnowledgeGraphEdge extends TenantAwareAggregateRoot<
       parsePropsResult.value,
     );
     edge.recordEvent(
-      NodesRelated(edge.id.value, input.metadata.createdAt, {
+      createNodesRelatedEvent(edge.id.value, input.metadata.createdAt, {
         fromId: edge.fromId.value,
         toId: edge.toId.value,
         relationship: edge.relationship,

@@ -7,7 +7,9 @@ type NodeEmbeddedPayload = {
 
 type NodeEmbeddedEvent = DomainEvent<"NodeEmbedded", NodeEmbeddedPayload>;
 
-const NodeEmbedded = defineEvent("NodeEmbedded")<NodeEmbeddedPayload>;
+const createNodeEmbeddedEvent = defineEvent(
+  "NodeEmbedded",
+)<NodeEmbeddedPayload>;
 
-export { NodeEmbedded };
+export { createNodeEmbeddedEvent };
 export type { NodeEmbeddedEvent };

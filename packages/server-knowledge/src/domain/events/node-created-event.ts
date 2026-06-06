@@ -9,7 +9,7 @@ type NodeCreatedPayload = {
 
 type NodeCreatedEvent = DomainEvent<"NodeCreated", NodeCreatedPayload>;
 
-const NodeCreated = defineEvent("NodeCreated")<NodeCreatedPayload>;
+const createNodeCreatedEvent = defineEvent("NodeCreated")<NodeCreatedPayload>;
 
-export { NodeCreated };
+export { createNodeCreatedEvent };
 export type { NodeCreatedEvent };

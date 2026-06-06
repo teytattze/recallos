@@ -1,5 +1,3 @@
-import { expect, test } from "bun:test";
-
 import {
   KnowledgeGraph,
   KnowledgeGraphNode,
@@ -7,10 +5,11 @@ import {
   NodeBody,
   EventId,
   createInvalidKnowledgeGraphError,
-  NodeCreated,
+  createNodeCreatedEvent,
   type ProcessEventPort,
   type UnitOfWorkPort,
 } from "@repo/server-knowledge";
+import { expect, test } from "bun:test";
 
 test("server-knowledge barrel exports representative public contracts", () => {
   const processEventPort = undefined as ProcessEventPort | undefined;
@@ -22,7 +21,7 @@ test("server-knowledge barrel exports representative public contracts", () => {
   expect(NodeBody).toBeDefined();
   expect(EventId).toBeDefined();
   expect(createInvalidKnowledgeGraphError).toBeDefined();
-  expect(NodeCreated).toBeDefined();
+  expect(createNodeCreatedEvent).toBeDefined();
   expect(processEventPort).toBeUndefined();
   expect(unitOfWorkPort).toBeUndefined();
 });

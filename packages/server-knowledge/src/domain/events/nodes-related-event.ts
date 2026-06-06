@@ -10,7 +10,9 @@ type NodesRelatedPayload = {
 
 type NodesRelatedEvent = DomainEvent<"NodesRelated", NodesRelatedPayload>;
 
-const NodesRelated = defineEvent("NodesRelated")<NodesRelatedPayload>;
+const createNodesRelatedEvent = defineEvent(
+  "NodesRelated",
+)<NodesRelatedPayload>;
 
-export { NodesRelated };
+export { createNodesRelatedEvent };
 export type { NodesRelatedEvent };

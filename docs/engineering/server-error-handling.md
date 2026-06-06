@@ -95,7 +95,7 @@ dead-letter behavior instead of HTTP status codes.
   combinators such as `ok`, `err`, `map`, `mapErr`, `andThen`, and `unwrapOr`.
 - `DomainError` carries `kind`, `category`, `message`, and optional `details`.
 - `defineError(kind, category)` creates typed error factories for context
-  `*.error.ts` files.
+  `domain/errors/*-error.ts` files.
 - `parseProps` wraps `zod.safeParse` and returns `Result` for expected invariant
   failures.
 - `parsePropsOrThrow` validates trusted or impossible states and throws on
@@ -106,6 +106,8 @@ dead-letter behavior instead of HTTP status codes.
 - Domain `create(input)` factories validate untrusted input and return `Result`.
 - Domain `restore(input)` factories validate trusted persisted data with
   `parsePropsOrThrow`.
+- Name error factories `create<ErrorName>Error` and error types
+  `<ErrorName>Error`.
 - Application use cases short-circuit on the first domain `Result.err`.
 - Async composition uses `Promise<Result<T, E>>`; do not add a `ResultAsync`
   abstraction unless repeated chaining pain appears in real code.
