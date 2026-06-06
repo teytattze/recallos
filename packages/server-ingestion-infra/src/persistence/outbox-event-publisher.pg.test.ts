@@ -1,6 +1,7 @@
 import type { Prisma } from "@repo/server-database";
 
 import { Event } from "@repo/server-ingestion";
+import { EntityMetadata, Tenant } from "@repo/server-kernel";
 import { expect, mock, test } from "bun:test";
 
 import { OutboxEventPublisher } from "./outbox-event-publisher.pg.ts";
@@ -10,14 +11,14 @@ const occurredAt = new Date("2026-01-01T00:00:00Z");
 
 function buildEvent(): Event {
   return Event.restore({
-    id: "01952d3f-0000-7000-8000-000000000000",
-    tenantType: "organization",
-    tenantId: "org1",
-    createdAt,
-    updatedAt: createdAt,
-    occurredAt,
-    tags: { source: "slack" },
-    body: { text: "hello" },
+    tenant: Tenant.create("organization", "org1"),
+    metadata: EntityMetadata.restore(createdAt, createdAt),
+    payload: {
+      id: "01952d3f-0000-7000-8000-000000000000",
+      occurredAt,
+      tags: { source: "slack" },
+      body: { text: "hello" },
+    },
   });
 }
 

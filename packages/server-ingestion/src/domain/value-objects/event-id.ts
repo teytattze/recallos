@@ -1,6 +1,6 @@
 import { Id } from "@repo/server-kernel";
 
-export class EventId extends Id {
+class EventId extends Id {
   static create(): EventId {
     return new EventId(Id.newValue());
   }
@@ -9,3 +9,5 @@ export class EventId extends Id {
     return new EventId(value);
   }
 }
+
+export { EventId };

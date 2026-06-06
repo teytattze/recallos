@@ -15,6 +15,7 @@
     "@repo/server-ingestion": "workspace:*"
   },
   "devDependencies": {
+    "@repo/server-kernel": "workspace:*",
     "@repo/typescript-config": "workspace:*"
   }
 }

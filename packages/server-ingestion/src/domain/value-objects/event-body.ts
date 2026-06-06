@@ -7,17 +7,23 @@ import {
 } from "@repo/server-kernel";
 import { z } from "zod";
 
-import { InvalidEvent } from "./invalid-event.error.ts";
+import { createInvalidEventError } from "../errors/invalid-event-error";
 
 const eventBodyPropsSchema = z.object({
   value: z
     .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
     .refine((v) => Object.keys(v).length > 0, "event body must not be empty"),
 });
-
 type EventBodyProps = z.infer<typeof eventBodyPropsSchema>;
 
-export class EventBody extends ValueObject<EventBodyProps> {
+type CreateEventBody = {
+  payload: Record<string, unknown>;
+};
+type RestoreEventBody = {
+  payload: Record<string, unknown>;
+};
+
+class EventBody extends ValueObject<EventBodyProps> {
   private constructor(props: EventBodyProps) {
     super(props);
   }
@@ -26,14 +32,22 @@ export class EventBody extends ValueObject<EventBodyProps> {
     return this._props.value;
   }
 
-  static create(value: Record<string, unknown>): Result<EventBody> {
+  static create(input: CreateEventBody): Result<EventBody> {
     return mapResult(
-      parseProps(eventBodyPropsSchema, { value }, InvalidEvent),
+      parseProps(
+        eventBodyPropsSchema,
+        { value: input.payload },
+        createInvalidEventError,
+      ),
       (props) => new EventBody(props),
     );
   }
 
-  static restore(value: Record<string, unknown>): EventBody {
-    return new EventBody(parsePropsOrThrow(eventBodyPropsSchema, { value }));
+  static restore(input: RestoreEventBody): EventBody {
+    return new EventBody(
+      parsePropsOrThrow(eventBodyPropsSchema, { value: input.payload }),
+    );
   }
 }
+
+export { EventBody };

@@ -1,5 +1,3 @@
-import type { EmptyObject, JsonObject } from "type-fest";
-
 import type { Id } from "./id.ts";
 
 import { AggregateRoot } from "./aggregate-root.ts";
@@ -8,7 +6,7 @@ import { Tenant } from "./tenant.ts";
 
 abstract class TenantAwareAggregateRoot<
   TId extends Id,
-  TProps extends JsonObject = EmptyObject,
+  TProps extends Record<string, unknown> = Record<never, never>,
 > extends AggregateRoot<TId, TProps> {
   protected readonly _tenant: Tenant;
 

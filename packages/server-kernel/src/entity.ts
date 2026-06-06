@@ -2,7 +2,7 @@ import type { Id } from "./id.ts";
 
 abstract class Entity<
   TId extends Id,
-  TProps extends Record<string, unknown> = Record<string, never>,
+  TProps extends Record<string, unknown> = Record<never, never>,
 > {
   protected readonly _id: TId;
   protected readonly _props: TProps;

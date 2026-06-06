@@ -1,10 +1,10 @@
 import { test, expect } from "bun:test";
 
-import { EventBody } from "./event-body.value-object.ts";
+import { EventBody } from "./event-body.ts";
 
 test("EventBody.create: given a non-empty payload, it should return ok", () => {
   // GIVEN / WHEN
-  const result = EventBody.create({ text: "hello" });
+  const result = EventBody.create({ payload: { text: "hello" } });
 
   // THEN
   expect(result.ok).toBe(true);
@@ -12,7 +12,7 @@ test("EventBody.create: given a non-empty payload, it should return ok", () => {
 
 test("EventBody.create: given an empty payload, it should return an InvalidEvent error", () => {
   // GIVEN / WHEN
-  const result = EventBody.create({});
+  const result = EventBody.create({ payload: {} });
 
   // THEN
   expect(result.ok).toBe(false);
@@ -23,11 +23,11 @@ test("EventBody.create: given an empty payload, it should return an InvalidEvent
 
 test("EventBody.restore: given a stored body, it should equal the same EventBody.create value", () => {
   // GIVEN
-  const created = EventBody.create({ text: "hello" });
+  const created = EventBody.create({ payload: { text: "hello" } });
   if (!created.ok) throw new Error("expected ok");
 
   // WHEN
-  const restored = EventBody.restore({ text: "hello" });
+  const restored = EventBody.restore({ payload: { text: "hello" } });
 
   // THEN
   expect(restored.equals(created.value)).toBe(true);
@@ -35,5 +35,5 @@ test("EventBody.restore: given a stored body, it should equal the same EventBody
 
 test("EventBody.restore: given an empty body, it should throw", () => {
   // GIVEN / WHEN / THEN
-  expect(() => EventBody.restore({})).toThrow();
+  expect(() => EventBody.restore({ payload: {} })).toThrow();
 });

@@ -1,4 +1,5 @@
 import {
+  EntityMetadata,
   errResult,
   okResult,
   type Clock,
@@ -6,32 +7,30 @@ import {
 } from "@repo/server-kernel";
 
 import type {
-  IngestEventUseCaseInput,
-  IngestEventUseCaseOutput,
-  IngestEventUseCasePort,
-} from "../ports/inbound/ingest-event-use-case.port.ts";
-import type { UnitOfWorkPort } from "../ports/outbound/unit-of-work.port.ts";
+  IngestEventPortInput,
+  IngestEventPortOutput,
+  IngestEventPort,
+} from "../ports/inbound/ingest-event-port.ts";
+import type { UnitOfWorkPort } from "../ports/outbound/unit-of-work-port.ts";
 
-import { Event } from "../../domain/event.aggregate.ts";
-import { InvalidEvent } from "../../domain/invalid-event.error.ts";
+import { Event } from "../../domain/aggregates/event.ts";
+import { createInvalidEventError } from "../../domain/errors/invalid-event-error.ts";
 
 const SQS_MAX_MESSAGE_BODY_BYTES = 262_144;
 
-export class IngestEventUseCase implements IngestEventUseCasePort {
+class IngestEventUseCase implements IngestEventPort {
   constructor(
     private readonly uow: UnitOfWorkPort,
     private readonly clock: Clock,
   ) {}
 
   async execute(
-    input: IngestEventUseCaseInput,
-  ): Promise<Result<IngestEventUseCaseOutput>> {
+    input: IngestEventPortInput,
+  ): Promise<Result<IngestEventPortOutput>> {
     const eventResult = Event.create({
       tenant: input.tenant,
-      createdAt: this.clock.now(),
-      occurredAt: input.payload.occurredAt,
-      tags: input.payload.tags,
-      body: input.payload.body,
+      metadata: EntityMetadata.create(this.clock.now()),
+      payload: input.payload,
     });
     if (!eventResult.ok) return eventResult;
 
@@ -48,7 +47,7 @@ export class IngestEventUseCase implements IngestEventUseCasePort {
     ).length;
     if (publishMessageBytes > SQS_MAX_MESSAGE_BODY_BYTES) {
       return errResult(
-        InvalidEvent(
+        createInvalidEventError(
           `event publish payload must not exceed ${SQS_MAX_MESSAGE_BODY_BYTES} bytes`,
         ),
       );
@@ -63,3 +62,5 @@ export class IngestEventUseCase implements IngestEventUseCasePort {
     return okResult({ eventId: event.id.value });
   }
 }
+
+export { IngestEventUseCase };

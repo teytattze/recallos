@@ -1,15 +1,15 @@
 import { createFixedClock, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
-import type { Event } from "../../domain/event.aggregate.ts";
-import type { EventLogRepositoryPort } from "../ports/outbound/event-log-repository.port.ts";
-import type { EventPublisherPort } from "../ports/outbound/event-publisher.port.ts";
+import type { Event } from "../../domain/aggregates/event.ts";
+import type { EventLogRepositoryPort } from "../ports/outbound/event-log-repository-port.ts";
+import type { EventPublisherPort } from "../ports/outbound/event-publisher-port.ts";
 import type {
-  UnitOfWorkContext,
+  UnitOfWorkPortContext,
   UnitOfWorkPort,
-} from "../ports/outbound/unit-of-work.port.ts";
+} from "../ports/outbound/unit-of-work-port.ts";
 
-import { IngestEventUseCase } from "./ingest-event.use-case.ts";
+import { IngestEventUseCase } from "./ingest-event-use-case.ts";
 
 class FakeEventLogRepository implements EventLogRepositoryPort {
   readonly appended: Event[] = [];
@@ -36,7 +36,7 @@ class FakeUnitOfWork implements UnitOfWorkPort {
   readonly publisher = new FakeEventPublisher();
   ran = 0;
 
-  transaction<T>(work: (ctx: UnitOfWorkContext) => Promise<T>): Promise<T> {
+  transaction<T>(work: (ctx: UnitOfWorkPortContext) => Promise<T>): Promise<T> {
     this.ran += 1;
     return work({ events: this.events, publisher: this.publisher });
   }

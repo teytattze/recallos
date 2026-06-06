@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
 
-import { EventId } from "./event-id.value-object.ts";
+import { EventId } from "./event-id.ts";
 
 test("EventId.create: given two calls, it should produce distinct non-empty ids", () => {
   // GIVEN / WHEN

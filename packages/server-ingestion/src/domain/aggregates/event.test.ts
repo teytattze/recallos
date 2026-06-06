@@ -1,18 +1,28 @@
-import { Tenant } from "@repo/server-kernel";
+import { EntityMetadata, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
-import { Event } from "./event.aggregate.ts";
+import { Event } from "./event.ts";
 
 const createdAt = new Date("2026-01-02T00:00:00Z");
 const occurredAt = new Date("2026-01-01T00:00:00Z");
 const tenant = Tenant.create("organization", "org1");
+const metadata = EntityMetadata.create(createdAt);
 
-const validInput = {
-  tenant,
-  createdAt,
+type EventPayload = {
+  occurredAt: Date;
+  tags: Record<string, string>;
+  body: Record<string, unknown>;
+};
+
+const validPayload: EventPayload = {
   occurredAt,
   tags: { source: "slack" },
   body: { text: "hello" },
+};
+const validInput = {
+  tenant,
+  metadata,
+  payload: validPayload,
 };
 
 test("Event.create: given valid input, it should return an ok Event", () => {
@@ -52,7 +62,10 @@ test("Event.create: given a fresh event, it should mint a distinct id each time"
 
 test("Event.create: given occurredAt equal to createdAt, it should be allowed", () => {
   // GIVEN / WHEN
-  const result = Event.create({ ...validInput, occurredAt: createdAt });
+  const result = Event.create({
+    ...validInput,
+    payload: { ...validInput.payload, occurredAt: createdAt },
+  });
 
   // THEN
   expect(result.ok).toBe(true);
@@ -68,9 +81,12 @@ test.each([
   ["a blank tag key", { tags: { "  ": "x" } }],
 ])(
   "Event.create: given %s, it should return an InvalidEvent error",
-  (_label, patch) => {
+  (_label, patch: Partial<EventPayload>) => {
     // GIVEN / WHEN
-    const result = Event.create({ ...validInput, ...patch });
+    const result = Event.create({
+      ...validInput,
+      payload: { ...validInput.payload, ...patch },
+    });
 
     // THEN
     expect(result.ok).toBe(false);
@@ -79,30 +95,31 @@ test.each([
   },
 );
 
-const storedRow = {
-  id: "01952d3f-0000-7000-8000-000000000000",
-  tenantType: "organization" as const,
-  tenantId: "org1",
-  createdAt,
-  updatedAt: new Date("2026-01-03T00:00:00Z"),
-  occurredAt,
-  tags: { source: "slack" },
-  body: { text: "hello" },
+const updatedAt = new Date("2026-01-03T00:00:00Z");
+const storedInput = {
+  tenant,
+  metadata: EntityMetadata.restore(createdAt, updatedAt),
+  payload: {
+    id: "01952d3f-0000-7000-8000-000000000000",
+    occurredAt,
+    tags: { source: "slack" },
+    body: { text: "hello" },
+  },
 };
 
 test("Event.restore: given a stored row, it should preserve the id and audit timestamps", () => {
   // GIVEN / WHEN
-  const event = Event.restore(storedRow);
+  const event = Event.restore(storedInput);
 
   // THEN
-  expect(event.id.value).toBe(storedRow.id);
-  expect(event.metadata.createdAt).toEqual(storedRow.createdAt);
-  expect(event.metadata.updatedAt).toEqual(storedRow.updatedAt);
+  expect(event.id.value).toBe(storedInput.payload.id);
+  expect(event.metadata.createdAt).toEqual(storedInput.metadata.createdAt);
+  expect(event.metadata.updatedAt).toEqual(storedInput.metadata.updatedAt);
 });
 
 test("Event.restore: given a stored row, it should restore the tenant", () => {
   // GIVEN / WHEN
-  const event = Event.restore(storedRow);
+  const event = Event.restore(storedInput);
 
   // THEN
   expect(event.tenant.equals(tenant)).toBe(true);
@@ -110,5 +127,10 @@ test("Event.restore: given a stored row, it should restore the tenant", () => {
 
 test("Event.restore: given a row with an empty body, it should throw", () => {
   // GIVEN / WHEN / THEN
-  expect(() => Event.restore({ ...storedRow, body: {} })).toThrow();
+  expect(() =>
+    Event.restore({
+      ...storedInput,
+      payload: { ...storedInput.payload, body: {} },
+    }),
+  ).toThrow();
 });
