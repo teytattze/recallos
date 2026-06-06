@@ -4,18 +4,20 @@ import type {
   UnitOfWorkPortContext,
 } from "@repo/server-ingestion";
 
-import { EventLogPostgresqlRepository } from "./event-log.repository.pg.ts";
-import { OutboxEventPublisher } from "./outbox-event-publisher.pg.ts";
+import { EventLogPrismaRepository } from "./event-log-prisma-repository.ts";
+import { OutboxEventPrismaPublisher } from "./outbox-event-prisma-publisher.ts";
 
-export class PrismaUnitOfWork implements UnitOfWorkPort {
+class PrismaUnitOfWork implements UnitOfWorkPort {
   constructor(private readonly prisma: PrismaClient) {}
 
   transaction<T>(work: (ctx: UnitOfWorkPortContext) => Promise<T>): Promise<T> {
     return this.prisma.$transaction((tx) =>
       work({
-        events: new EventLogPostgresqlRepository(tx),
-        publisher: new OutboxEventPublisher(tx),
+        events: new EventLogPrismaRepository(tx),
+        publisher: new OutboxEventPrismaPublisher(tx),
       }),
     );
   }
 }
+
+export { PrismaUnitOfWork };

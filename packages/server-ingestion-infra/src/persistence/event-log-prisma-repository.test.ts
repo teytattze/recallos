@@ -4,7 +4,7 @@ import { Event } from "@repo/server-ingestion";
 import { EntityMetadata, Tenant } from "@repo/server-kernel";
 import { expect, test } from "bun:test";
 
-import { OutboxEventPublisher } from "./outbox-event-publisher.pg.ts";
+import { EventLogPrismaRepository } from "./event-log-prisma-repository.ts";
 
 const createdAt = new Date("2026-01-02T00:00:00Z");
 const occurredAt = new Date("2026-01-01T00:00:00Z");
@@ -22,28 +22,29 @@ function buildEvent(): Event {
   });
 }
 
-test("OutboxEventPublisher.publish: given an event, it should write relay metadata without duplicating the body", async () => {
+test("EventLogPrismaRepository.insert: given an event, it should create a row mapping the aggregate's fields", async () => {
   // GIVEN
   const createCalls: unknown[] = [];
   const create = (args: unknown): Promise<void> => {
     createCalls.push(args);
     return Promise.resolve();
   };
-  const tx = { eventOutbox: { create } } as unknown as Prisma.TransactionClient;
-  const publisher = new OutboxEventPublisher(tx);
+  const prisma = { event: { create } } as unknown as Prisma.TransactionClient;
+  const repo = new EventLogPrismaRepository(prisma);
   const event = buildEvent();
 
   // WHEN
-  await publisher.publish(event);
+  await repo.insert(event);
 
   // THEN
   expect(createCalls).toHaveLength(1);
   expect(createCalls[0]).toEqual({
     data: {
-      eventId: event.id.value,
+      id: event.id.value,
       occurredAt,
       createdAt,
       tags: { source: "slack" },
+      body: { text: "hello" },
     },
   });
 });

@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@repo/server-database";
 
-import type { OutboxBroker } from "./outbox-broker.ts";
+import type { OutboxBrokerPort } from "./outbox-broker-port.ts";
 
 interface PendingOutboxRow {
   id: string;
@@ -11,14 +11,10 @@ interface PendingOutboxRow {
   body: Record<string, unknown>;
 }
 
-/** Drains pending `event_outbox` rows to the broker. Claim, publish and mark-sent
- *  run in one transaction: `FOR UPDATE SKIP LOCKED` lets parallel relays take
- *  disjoint batches, and the row stays `pending` (re-published, then deduped by
- *  the Worker) if the process dies before commit — at-least-once, never lost. */
-export class OutboxRelay {
+class OutboxRelay {
   constructor(
     private readonly prisma: PrismaClient,
-    private readonly broker: OutboxBroker,
+    private readonly broker: OutboxBrokerPort,
     private readonly batchSize: number,
   ) {}
 
@@ -55,3 +51,5 @@ export class OutboxRelay {
     });
   }
 }
+
+export { OutboxRelay };

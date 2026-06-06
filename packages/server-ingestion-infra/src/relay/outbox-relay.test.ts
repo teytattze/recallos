@@ -2,7 +2,7 @@ import type { PrismaClient } from "@repo/server-database";
 
 import { expect, test } from "bun:test";
 
-import type { OutboxBroker } from "./outbox-broker.ts";
+import type { OutboxBrokerPort } from "./outbox-broker-port.ts";
 
 import { OutboxRelay } from "./outbox-relay.ts";
 
@@ -47,7 +47,7 @@ test("OutboxRelay.relayBatch: given pending rows, it should publish each to the 
     publishedMessages.push(message);
     return Promise.resolve();
   };
-  const broker = { publish } as OutboxBroker;
+  const broker = { publish } as OutboxBrokerPort;
   const relay = new OutboxRelay(prisma, broker, 10);
 
   // WHEN
@@ -83,7 +83,7 @@ test("OutboxRelay.relayBatch: given no pending rows, it should publish nothing a
     publishedMessages.push(message);
     return Promise.resolve();
   };
-  const broker = { publish } as OutboxBroker;
+  const broker = { publish } as OutboxBrokerPort;
   const relay = new OutboxRelay(prisma, broker, 10);
 
   // WHEN
@@ -104,7 +104,7 @@ test("OutboxRelay.relayBatch: given the broker rejects, it should propagate and 
   };
   const prisma = buildPrisma([buildRow("1")], updateMany);
   const publish = (): Promise<void> => Promise.reject(new Error("sqs down"));
-  const broker = { publish } as OutboxBroker;
+  const broker = { publish } as OutboxBrokerPort;
   const relay = new OutboxRelay(prisma, broker, 10);
 
   // WHEN

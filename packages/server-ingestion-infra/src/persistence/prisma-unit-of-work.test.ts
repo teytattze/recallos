@@ -4,7 +4,7 @@ import { Event } from "@repo/server-ingestion";
 import { EntityMetadata, Tenant } from "@repo/server-kernel";
 import { expect, test } from "bun:test";
 
-import { PrismaUnitOfWork } from "./unit-of-work.pg.ts";
+import { PrismaUnitOfWork } from "./prisma-unit-of-work.ts";
 
 const createdAt = new Date("2026-01-02T00:00:00Z");
 const occurredAt = new Date("2026-01-01T00:00:00Z");

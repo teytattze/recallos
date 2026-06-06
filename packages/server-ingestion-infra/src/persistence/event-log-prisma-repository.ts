@@ -1,9 +1,7 @@
 import type { Prisma } from "@repo/server-database";
 import type { Event, EventLogRepositoryPort } from "@repo/server-ingestion";
 
-/** Accepts a `TransactionClient`, not the full `PrismaClient`, so the UnitOfWorkPort
- *  can bind it to the active transaction (a `PrismaClient` is also assignable). */
-export class EventLogPostgresqlRepository implements EventLogRepositoryPort {
+class EventLogPrismaRepository implements EventLogRepositoryPort {
   constructor(private readonly prisma: Prisma.TransactionClient) {}
 
   async insert(event: Event): Promise<void> {
@@ -18,3 +16,5 @@ export class EventLogPostgresqlRepository implements EventLogRepositoryPort {
     });
   }
 }
+
+export { EventLogPrismaRepository };
