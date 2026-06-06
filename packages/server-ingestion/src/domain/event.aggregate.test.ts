@@ -5,7 +5,7 @@ import { Event } from "./event.aggregate.ts";
 
 const createdAt = new Date("2026-01-02T00:00:00Z");
 const occurredAt = new Date("2026-01-01T00:00:00Z");
-const tenant = Tenant.organization("org1");
+const tenant = Tenant.create("organization", "org1");
 
 const validInput = {
   tenant,

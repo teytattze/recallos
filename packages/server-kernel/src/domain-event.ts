@@ -1,13 +1,36 @@
-/**
- * Something that happened in the domain. Aggregates record events as they
- * mutate; the application layer drains them after persistence and hands them to
- * a publisher port so other contexts react.
- *
- * `occurredAt` is minted from a {@link Clock} at the use-case boundary, never
- * read from the wall clock inside the domain, which must stay pure.
- */
-export interface DomainEvent {
-  readonly eventName: string;
-  readonly aggregateId: string;
-  readonly occurredAt: Date;
+import type { EmptyObject, JsonObject } from "type-fest";
+
+type DomainEvent<
+  TEventName extends string = string,
+  TPayload extends JsonObject = EmptyObject,
+> = Readonly<
+  TPayload & {
+    eventName: TEventName;
+    aggregateId: string;
+    createdAt: Date;
+  }
+>;
+
+function defineEvent<TEventName extends string>(
+  eventName: TEventName,
+): <TPayload extends JsonObject = EmptyObject>(
+  aggregateId: string,
+  createdAt: Date,
+  payload?: TPayload,
+) => DomainEvent<TEventName, TPayload> {
+  return function eventFactory<TPayload extends JsonObject = EmptyObject>(
+    aggregateId: string,
+    createdAt: Date,
+    payload?: TPayload,
+  ): DomainEvent<TEventName, TPayload> {
+    return {
+      ...payload,
+      eventName,
+      aggregateId,
+      createdAt,
+    } as DomainEvent<TEventName, TPayload>;
+  };
 }
+
+export { defineEvent };
+export type { DomainEvent };

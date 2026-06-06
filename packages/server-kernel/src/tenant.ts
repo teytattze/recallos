@@ -3,23 +3,22 @@ import { z } from "zod";
 import { parsePropsOrThrow } from "./schema.ts";
 import { ValueObject } from "./value-object.ts";
 
-export type TenantType = "user" | "organization";
+const tenantTypes = ["user", "organization"] as const;
 
-const tenantSchema = z.object({
-  type: z.enum(["user", "organization"]),
+const tenantPropsSchema = z.object({
+  type: z.enum(tenantTypes),
   id: z.string().min(1, "Tenant id must be a non-empty string"),
 });
+type TenantPropsSchema = z.infer<typeof tenantPropsSchema>;
+type TenantType = TenantPropsSchema["type"];
 
-/**
- * The owner an {@link AggregateRoot} belongs to — the access boundary for
- * RecallOS's memory. Identified by `id` (the `org_id`/`user_id` an authenticated
- * request resolves to); the same boundary is mirrored at the row level (RLS). An
- * empty `id` is an impossible state, so construction runs through
- * {@link parsePropsOrThrow} and **throws** rather than returning a {@link Result}.
- */
-export class Tenant extends ValueObject<{ type: TenantType; id: string }> {
+class Tenant extends ValueObject<TenantPropsSchema> {
   private constructor(type: TenantType, id: string) {
-    super(parsePropsOrThrow(tenantSchema, { type, id }));
+    super(parsePropsOrThrow(tenantPropsSchema, { type, id }));
+  }
+
+  static create(type: TenantType, id: string): Tenant {
+    return new Tenant(type, id);
   }
 
   get type(): TenantType {
@@ -29,16 +28,7 @@ export class Tenant extends ValueObject<{ type: TenantType; id: string }> {
   get id(): string {
     return this._props.id;
   }
-
-  static user(id: string): Tenant {
-    return new Tenant("user", id);
-  }
-
-  static organization(id: string): Tenant {
-    return new Tenant("organization", id);
-  }
-
-  static of(type: TenantType, id: string): Tenant {
-    return new Tenant(type, id);
-  }
 }
+
+export { Tenant };
+export type { TenantType };

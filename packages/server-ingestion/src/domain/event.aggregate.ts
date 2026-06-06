@@ -1,9 +1,11 @@
 import {
   EntityMetadata,
-  Result,
+  type Result,
   Tenant,
   TenantAwareAggregateRoot,
   type TenantType,
+  errResult,
+  okResult,
   parseProps,
   parsePropsOrThrow,
 } from "@repo/server-kernel";
@@ -83,10 +85,10 @@ export class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
 
     const eventProps = parsePropsResult.value;
     if (eventProps.occurredAt.getTime() > input.createdAt.getTime()) {
-      return Result.err(InvalidEvent("occurredAt cannot be in the future"));
+      return errResult(InvalidEvent("occurredAt cannot be in the future"));
     }
 
-    return Result.ok(
+    return okResult(
       new Event(
         EventId.create(),
         input.tenant,
@@ -99,7 +101,7 @@ export class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
   static restore(input: RestoreEventInput): Event {
     return new Event(
       EventId.restore(input.id),
-      Tenant.of(input.tenantType, input.tenantId),
+      Tenant.create(input.tenantType, input.tenantId),
       EntityMetadata.restore(input.createdAt, input.updatedAt),
       parsePropsOrThrow(eventPropsSchema, {
         occurredAt: input.occurredAt,

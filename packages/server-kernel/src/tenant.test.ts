@@ -2,27 +2,9 @@ import { test, expect } from "bun:test";
 
 import { Tenant } from "./tenant.ts";
 
-test("Tenant.user: given an id, it should build a user tenant", () => {
+test("Tenant.create: given a type and id, it should build that tenant", () => {
   // GIVEN / WHEN
-  const tenant = Tenant.user("u1");
-
-  // THEN
-  expect(tenant.type).toBe("user");
-  expect(tenant.id).toBe("u1");
-});
-
-test("Tenant.organization: given an id, it should build an organization tenant", () => {
-  // GIVEN / WHEN
-  const tenant = Tenant.organization("org1");
-
-  // THEN
-  expect(tenant.type).toBe("organization");
-  expect(tenant.id).toBe("org1");
-});
-
-test("Tenant.of: given a type and id, it should build that tenant", () => {
-  // GIVEN / WHEN
-  const tenant = Tenant.of("organization", "org2");
+  const tenant = Tenant.create("organization", "org2");
 
   // THEN
   expect(tenant.type).toBe("organization");
@@ -31,20 +13,24 @@ test("Tenant.of: given a type and id, it should build that tenant", () => {
 
 test("Tenant.equals: given the same type and id, it should return true", () => {
   // GIVEN / WHEN / THEN
-  expect(Tenant.user("u1").equals(Tenant.of("user", "u1"))).toBe(true);
+  expect(Tenant.create("user", "u1").equals(Tenant.create("user", "u1"))).toBe(
+    true,
+  );
 });
 
-test("Tenant.equals: given a differing type, it should return false", () => {
+test.each([
+  [
+    "a differing type",
+    Tenant.create("user", "x"),
+    Tenant.create("organization", "x"),
+  ],
+  ["a differing id", Tenant.create("user", "a"), Tenant.create("user", "b")],
+])("Tenant.equals: given %s, it should return false", (_label, a, b) => {
   // GIVEN / WHEN / THEN
-  expect(Tenant.user("x").equals(Tenant.organization("x"))).toBe(false);
+  expect(a.equals(b)).toBe(false);
 });
 
-test("Tenant.equals: given a differing id, it should return false", () => {
+test("Tenant.create: given an empty id, it should throw", () => {
   // GIVEN / WHEN / THEN
-  expect(Tenant.user("a").equals(Tenant.user("b"))).toBe(false);
-});
-
-test("Tenant constructor: given an empty id, it should throw", () => {
-  // GIVEN / WHEN / THEN
-  expect(() => Tenant.user("")).toThrow();
+  expect(() => Tenant.create("user", "")).toThrow();
 });

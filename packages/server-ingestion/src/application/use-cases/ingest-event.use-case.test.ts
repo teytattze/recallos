@@ -1,4 +1,4 @@
-import { fixedClock, Tenant } from "@repo/server-kernel";
+import { createFixedClock, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
 import type { Event } from "../../domain/event.aggregate.ts";
@@ -43,7 +43,7 @@ class FakeUnitOfWork implements UnitOfWorkPort {
 }
 
 const createdAt = new Date("2026-01-02T00:00:00Z");
-const tenant = Tenant.organization("org1");
+const tenant = Tenant.create("organization", "org1");
 
 const validInput = {
   tenant,
@@ -57,7 +57,7 @@ const validInput = {
 test("IngestEventUseCase.execute: given valid input, it should append the event and return its id", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, fixedClock(createdAt));
+  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
 
   // WHEN
   const result = await useCase.execute(validInput);
@@ -72,7 +72,7 @@ test("IngestEventUseCase.execute: given valid input, it should append the event 
 test("IngestEventUseCase.execute: given valid input, it should publish the same event through the outbox in one transaction", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, fixedClock(createdAt));
+  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
 
   // WHEN
   await useCase.execute(validInput);
@@ -88,7 +88,7 @@ test("IngestEventUseCase.execute: given valid input, it should publish the same 
 test("IngestEventUseCase.execute: given valid input, it should stamp the clock's time as the event's createdAt", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, fixedClock(createdAt));
+  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
 
   // WHEN
   await useCase.execute(validInput);
@@ -100,7 +100,7 @@ test("IngestEventUseCase.execute: given valid input, it should stamp the clock's
 test("IngestEventUseCase.execute: given valid input, it should pass the tenant to the event", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, fixedClock(createdAt));
+  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
 
   // WHEN
   await useCase.execute(validInput);
@@ -112,7 +112,7 @@ test("IngestEventUseCase.execute: given valid input, it should pass the tenant t
 test("IngestEventUseCase.execute: given an invalid event, it should return an InvalidEvent error without appending or publishing", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, fixedClock(createdAt));
+  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
   const future = new Date(createdAt.getTime() + 1000);
 
   // WHEN
@@ -133,7 +133,7 @@ test("IngestEventUseCase.execute: given an invalid event, it should return an In
 test("IngestEventUseCase.execute: given an event too large for SQS publication, it should reject without appending or publishing", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, fixedClock(createdAt));
+  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
 
   // WHEN
   const result = await useCase.execute({

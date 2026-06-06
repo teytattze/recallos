@@ -15,7 +15,7 @@ class TestId extends Id {
 const event = (eventName: string, aggregateId: string): DomainEvent => ({
   eventName,
   aggregateId,
-  occurredAt: new Date("2026-01-01T00:00:00Z"),
+  createdAt: new Date("2026-01-01T00:00:00Z"),
 });
 
 class TestAgg extends AggregateRoot<TestId, { n: number }> {

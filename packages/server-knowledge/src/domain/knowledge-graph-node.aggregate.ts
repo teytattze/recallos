@@ -1,9 +1,10 @@
 import {
   EntityMetadata,
-  Result,
+  type Result,
   Tenant,
   TenantAwareAggregateRoot,
   type TenantType,
+  okResult,
   parseProps,
   parsePropsOrThrow,
 } from "@repo/server-kernel";
@@ -115,15 +116,18 @@ export class KnowledgeGraphNode extends TenantAwareAggregateRoot<
       parsePropsResult.value,
     );
     node.recordEvent(
-      new NodeCreated(node.id.value, input.now, node.graphId.value, node.type),
+      NodeCreated(node.id.value, input.now, {
+        graphId: node.graphId.value,
+        type: node.type,
+      }),
     );
-    return Result.ok(node);
+    return okResult(node);
   }
 
   static restore(input: RestoreKnowledgeGraphNodeInput): KnowledgeGraphNode {
     return new KnowledgeGraphNode(
       NodeId.restore(input.id),
-      Tenant.of(input.tenantType, input.tenantId),
+      Tenant.create(input.tenantType, input.tenantId),
       EntityMetadata.restore(input.createdAt, input.updatedAt),
       parsePropsOrThrow(knowledgeGraphNodePropsSchema, {
         graphId: KnowledgeGraphId.restore(input.graphId),
@@ -154,12 +158,10 @@ export class KnowledgeGraphNode extends TenantAwareAggregateRoot<
     this.replaceProps({ ...this._props, embedding });
     this.touch(now);
     this.recordEvent(
-      new NodeEmbedded(
-        this.id.value,
-        now,
-        embedding.model,
-        embedding.dimensions,
-      ),
+      NodeEmbedded(this.id.value, now, {
+        model: embedding.model,
+        dimensions: embedding.dimensions,
+      }),
     );
   }
 
@@ -169,7 +171,7 @@ export class KnowledgeGraphNode extends TenantAwareAggregateRoot<
 
     this.replaceProps({ ...this._props, body: createBodyResult.value });
     this.touch(now);
-    return Result.ok(undefined);
+    return okResult(undefined);
   }
 
   /**

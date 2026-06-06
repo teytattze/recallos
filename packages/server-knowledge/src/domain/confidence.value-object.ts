@@ -1,8 +1,9 @@
 import {
-  Result,
   ValueObject,
+  mapResult,
   parseProps,
   parsePropsOrThrow,
+  type Result,
 } from "@repo/server-kernel";
 import { z } from "zod";
 
@@ -20,7 +21,7 @@ export class Confidence extends ValueObject<ConfidenceProps> {
   }
 
   static create(value: number): Result<Confidence> {
-    return Result.map(
+    return mapResult(
       parseProps(confidencePropsSchema, { value }, InvalidKnowledgeGraphEdge),
       (props) => new Confidence(props),
     );

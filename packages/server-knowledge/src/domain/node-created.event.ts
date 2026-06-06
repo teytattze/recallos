@@ -1,14 +1,15 @@
-import type { DomainEvent } from "@repo/server-kernel";
+import { defineEvent, type DomainEvent } from "@repo/server-kernel";
 
 import type { NodeType } from "./node-type.value-object.ts";
 
-export class NodeCreated implements DomainEvent {
-  readonly eventName = "NodeCreated";
+type NodeCreatedPayload = {
+  graphId: string;
+  type: NodeType;
+};
 
-  constructor(
-    readonly aggregateId: string,
-    readonly occurredAt: Date,
-    readonly graphId: string,
-    readonly type: NodeType,
-  ) {}
-}
+type NodeCreatedEvent = DomainEvent<"NodeCreated", NodeCreatedPayload>;
+
+const NodeCreated = defineEvent("NodeCreated")<NodeCreatedPayload>;
+
+export { NodeCreated };
+export type { NodeCreatedEvent };

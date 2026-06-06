@@ -9,7 +9,7 @@ import {
   PrismaUnitOfWork,
   SqsOutboxBroker,
 } from "@repo/server-ingestion-infra";
-import { fixedClock, Tenant } from "@repo/server-kernel";
+import { createFixedClock, Tenant } from "@repo/server-kernel";
 import { beforeEach, expect, test } from "bun:test";
 
 import { harness } from "./harness/index.ts";
@@ -18,7 +18,7 @@ const createdAt = new Date("2026-05-30T12:00:00.000Z");
 const occurredAt = new Date("2026-05-30T11:59:00.000Z");
 
 const ingestInput = {
-  tenant: Tenant.organization("org1"),
+  tenant: Tenant.create("organization", "org1"),
   payload: {
     occurredAt,
     tags: { source: "slack", type: "message" },
@@ -41,7 +41,7 @@ test("IngestEventUseCase over PrismaUnitOfWork: given a valid event, it should p
   const { prisma } = harness();
   const useCase = new IngestEventUseCase(
     new PrismaUnitOfWork(prisma),
-    fixedClock(createdAt),
+    createFixedClock(createdAt),
   );
 
   // when
@@ -79,7 +79,7 @@ test("OutboxRelay over SqsOutboxBroker: given a pending outbox row, it should pu
   const { prisma, sqs, queueUrl } = harness();
   const useCase = new IngestEventUseCase(
     new PrismaUnitOfWork(prisma),
-    fixedClock(createdAt),
+    createFixedClock(createdAt),
   );
   const ingest = await useCase.execute(ingestInput);
   if (!ingest.ok) throw new Error("expected ingest to succeed");
@@ -113,7 +113,7 @@ test("OutboxRelay: given rows it already marked sent, it should not republish th
   const { prisma, sqs, queueUrl } = harness();
   const useCase = new IngestEventUseCase(
     new PrismaUnitOfWork(prisma),
-    fixedClock(createdAt),
+    createFixedClock(createdAt),
   );
   const ingest = await useCase.execute(ingestInput);
   if (!ingest.ok) throw new Error("expected ingest to succeed");
