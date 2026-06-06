@@ -10,7 +10,7 @@
 - Owns base classes: `Entity`, `AggregateRoot`, `ValueObject`, `TenantAggregateRoot`.
 - Owns identity and ownership primitives: `Id`, `Tenant`/`TenantType`, `EntityMetadata`.
 - Owns contracts and primitives: `DomainEvent`, `DomainError`, `Clock`, `Result`.
-- Owns validation helpers: `parseProps`/`parsePropsOrThrow`, `defineError`, `InvariantViolation`, `fixedClock`.
+- Owns validation helpers: `parseProps`/`parsePropsOrThrow`, `defineError`, `InvariantViolation`, `createFixedClock`.
 - Accepts primitives only when reused across contexts and free of context-specific meaning.
 
 ## Boundaries

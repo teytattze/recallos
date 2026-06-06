@@ -1,12 +1,13 @@
-import type { DomainEvent } from "@repo/server-kernel";
+import { defineEvent, type DomainEvent } from "@repo/server-kernel";
 
-export class NodeEmbedded implements DomainEvent {
-  readonly eventName = "NodeEmbedded";
+type NodeEmbeddedPayload = {
+  model: string;
+  dimensions: number;
+};
 
-  constructor(
-    readonly aggregateId: string,
-    readonly occurredAt: Date,
-    readonly model: string,
-    readonly dimensions: number,
-  ) {}
-}
+type NodeEmbeddedEvent = DomainEvent<"NodeEmbedded", NodeEmbeddedPayload>;
+
+const NodeEmbedded = defineEvent("NodeEmbedded")<NodeEmbeddedPayload>;
+
+export { NodeEmbedded };
+export type { NodeEmbeddedEvent };

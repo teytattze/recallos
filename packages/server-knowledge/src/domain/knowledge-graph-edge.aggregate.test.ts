@@ -8,7 +8,7 @@ import { NodeId } from "./node-id.value-object.ts";
 
 const now = new Date("2026-01-02T00:00:00Z");
 const observedAt = new Date("2026-01-01T00:00:00Z");
-const tenant = Tenant.organization("org1");
+const tenant = Tenant.create("organization", "org1");
 
 const validInput = {
   tenant,

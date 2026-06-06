@@ -1,9 +1,5 @@
 import { z } from "zod";
 
-/**
- * Parsed once at startup by both `service` and `worker`, so the rest of the
- * code receives a typed {@link AppConfig} instead of reaching into `process.env`.
- */
 const configSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
@@ -15,13 +11,9 @@ const configSchema = z.object({
   DATABASE_URL: z.url(),
 });
 
-export type AppConfig = z.infer<typeof configSchema>;
+type Config = z.infer<typeof configSchema>;
 
-/**
- * Invalid or missing config is an unrecoverable fault, not an expected domain
- * failure — so this **throws** (fail-fast at boot) rather than returning a `Result`.
- */
-export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
+function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const result = configSchema.safeParse(env);
   if (!result.success) {
     throw new Error(
@@ -30,3 +22,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   }
   return result.data;
 }
+
+export { loadConfig };
+export type { Config };

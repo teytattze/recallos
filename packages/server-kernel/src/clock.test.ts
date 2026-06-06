@@ -1,20 +1,20 @@
 import { test, expect } from "bun:test";
 
-import { fixedClock } from "./clock.ts";
+import { createFixedClock } from "./clock.ts";
 
-test("fixedClock.now: given a fixed instant, it should return that instant on every call", () => {
+test("createFixedClock.now: given a fixed instant, it should return that instant on every call", () => {
   // GIVEN
   const at = new Date("2026-01-01T00:00:00Z");
-  const clock = fixedClock(at);
+  const clock = createFixedClock(at);
 
   // WHEN / THEN
   expect(clock.now()).toEqual(at);
   expect(clock.now()).toEqual(at);
 });
 
-test("fixedClock.now: given a mutated returned date, it should not affect later calls", () => {
+test("createFixedClock.now: given a mutated returned date, it should not affect later calls", () => {
   // GIVEN
-  const clock = fixedClock(new Date("2026-01-01T00:00:00Z"));
+  const clock = createFixedClock(new Date("2026-01-01T00:00:00Z"));
 
   // WHEN
   const first = clock.now();
@@ -24,10 +24,10 @@ test("fixedClock.now: given a mutated returned date, it should not affect later 
   expect(clock.now()).toEqual(new Date("2026-01-01T00:00:00Z"));
 });
 
-test("fixedClock.now: given the input date mutated after construction, it should not affect now", () => {
+test("createFixedClock.now: given the input date mutated after construction, it should not affect now", () => {
   // GIVEN
   const at = new Date("2026-01-01T00:00:00Z");
-  const clock = fixedClock(at);
+  const clock = createFixedClock(at);
 
   // WHEN
   at.setFullYear(2000);

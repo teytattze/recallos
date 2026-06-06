@@ -1,8 +1,9 @@
 import {
-  Result,
   ValueObject,
+  mapResult,
   parseProps,
   parsePropsOrThrow,
+  type Result,
 } from "@repo/server-kernel";
 import { z } from "zod";
 
@@ -26,7 +27,7 @@ export class EventBody extends ValueObject<EventBodyProps> {
   }
 
   static create(value: Record<string, unknown>): Result<EventBody> {
-    return Result.map(
+    return mapResult(
       parseProps(eventBodyPropsSchema, { value }, InvalidEvent),
       (props) => new EventBody(props),
     );

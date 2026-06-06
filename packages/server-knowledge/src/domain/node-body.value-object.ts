@@ -1,8 +1,9 @@
 import {
-  Result,
   ValueObject,
+  mapResult,
   parseProps,
   parsePropsOrThrow,
+  type Result,
 } from "@repo/server-kernel";
 import { z } from "zod";
 
@@ -29,7 +30,7 @@ export class NodeBody extends ValueObject<NodeBodyProps> {
   }
 
   static create(text: string): Result<NodeBody> {
-    return Result.map(
+    return mapResult(
       parseProps(nodeBodyPropsSchema, { text }, InvalidKnowledgeGraphNode),
       (props) => new NodeBody(props),
     );

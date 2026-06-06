@@ -1,9 +1,11 @@
 import {
   EntityMetadata,
-  Result,
+  type Result,
   Tenant,
   TenantAwareAggregateRoot,
   type TenantType,
+  errResult,
+  okResult,
   parseProps,
   parsePropsOrThrow,
 } from "@repo/server-kernel";
@@ -110,7 +112,7 @@ export class KnowledgeGraphEdge extends TenantAwareAggregateRoot<
     input: CreateKnowledgeGraphEdgeInput,
   ): Result<KnowledgeGraphEdge> {
     if (input.fromId.equals(input.toId)) {
-      return Result.err(
+      return errResult(
         InvalidKnowledgeGraphEdge("edge cannot connect a node to itself"),
       );
     }
@@ -140,21 +142,19 @@ export class KnowledgeGraphEdge extends TenantAwareAggregateRoot<
       parsePropsResult.value,
     );
     edge.recordEvent(
-      new NodesRelated(
-        edge.id.value,
-        input.now,
-        edge.fromId.value,
-        edge.toId.value,
-        edge.relationship,
-      ),
+      NodesRelated(edge.id.value, input.now, {
+        fromId: edge.fromId.value,
+        toId: edge.toId.value,
+        relationship: edge.relationship,
+      }),
     );
-    return Result.ok(edge);
+    return okResult(edge);
   }
 
   static restore(input: RestoreKnowledgeGraphEdgeInput): KnowledgeGraphEdge {
     return new KnowledgeGraphEdge(
       EdgeId.restore(input.id),
-      Tenant.of(input.tenantType, input.tenantId),
+      Tenant.create(input.tenantType, input.tenantId),
       EntityMetadata.restore(input.createdAt, input.updatedAt),
       parsePropsOrThrow(knowledgeGraphEdgePropsSchema, {
         graphId: KnowledgeGraphId.restore(input.graphId),
@@ -191,6 +191,6 @@ export class KnowledgeGraphEdge extends TenantAwareAggregateRoot<
           : this._props.observedAt,
     });
     this.touch(input.now);
-    return Result.ok(undefined);
+    return okResult(undefined);
   }
 }

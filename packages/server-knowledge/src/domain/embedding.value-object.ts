@@ -1,8 +1,9 @@
 import {
-  Result,
   ValueObject,
+  mapResult,
   parseProps,
   parsePropsOrThrow,
+  type Result,
 } from "@repo/server-kernel";
 import { z } from "zod";
 
@@ -30,7 +31,7 @@ export class Embedding extends ValueObject<EmbeddingProps> {
   }
 
   static create(vector: number[], model: string): Result<Embedding> {
-    return Result.map(
+    return mapResult(
       parseProps(
         embeddingPropsSchema,
         { vector, model, dimensions: vector.length },

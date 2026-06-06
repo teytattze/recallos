@@ -1,4 +1,9 @@
-import { type Clock, Result } from "@repo/server-kernel";
+import {
+  errResult,
+  okResult,
+  type Clock,
+  type Result,
+} from "@repo/server-kernel";
 
 import type {
   IngestEventUseCaseInput,
@@ -42,7 +47,7 @@ export class IngestEventUseCase implements IngestEventUseCasePort {
       JSON.stringify(publishMessage),
     ).length;
     if (publishMessageBytes > SQS_MAX_MESSAGE_BODY_BYTES) {
-      return Result.err(
+      return errResult(
         InvalidEvent(
           `event publish payload must not exceed ${SQS_MAX_MESSAGE_BODY_BYTES} bytes`,
         ),
@@ -55,6 +60,6 @@ export class IngestEventUseCase implements IngestEventUseCasePort {
       await events.insert(event);
       await publisher.publish(event);
     });
-    return Result.ok({ eventId: event.id.value });
+    return okResult({ eventId: event.id.value });
   }
 }

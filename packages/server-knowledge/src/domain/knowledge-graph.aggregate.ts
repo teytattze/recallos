@@ -1,9 +1,10 @@
 import {
   EntityMetadata,
-  Result,
+  type Result,
   Tenant,
   TenantAwareAggregateRoot,
   type TenantType,
+  okResult,
   parseProps,
   parsePropsOrThrow,
 } from "@repo/server-kernel";
@@ -66,7 +67,7 @@ export class KnowledgeGraph extends TenantAwareAggregateRoot<
     );
     if (!parsePropsResult.ok) return parsePropsResult;
 
-    return Result.ok(
+    return okResult(
       new KnowledgeGraph(
         KnowledgeGraphId.create(),
         input.tenant,
@@ -79,7 +80,7 @@ export class KnowledgeGraph extends TenantAwareAggregateRoot<
   static restore(input: RestoreKnowledgeGraphInput): KnowledgeGraph {
     return new KnowledgeGraph(
       KnowledgeGraphId.restore(input.id),
-      Tenant.of(input.tenantType, input.tenantId),
+      Tenant.create(input.tenantType, input.tenantId),
       EntityMetadata.restore(input.createdAt, input.updatedAt),
       parsePropsOrThrow(knowledgeGraphPropsSchema, {
         name: input.name,

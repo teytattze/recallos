@@ -30,7 +30,7 @@ const fixedMeta = EntityMetadata.create(new Date("2026-01-01T00:00:00Z"));
 
 test("TenantAwareAggregateRoot.tenant: given a constructed aggregate, it should return the injected tenant", () => {
   // GIVEN
-  const tenant = Tenant.organization("org1");
+  const tenant = Tenant.create("organization", "org1");
   const agg = TestTenantAwareAgg.of(TestId.from("a1"), tenant, fixedMeta);
 
   // WHEN / THEN
@@ -41,7 +41,7 @@ test("TenantAwareAggregateRoot.metadata: given a constructed aggregate, it shoul
   // GIVEN
   const agg = TestTenantAwareAgg.of(
     TestId.from("a1"),
-    Tenant.user("u1"),
+    Tenant.create("user", "u1"),
     fixedMeta,
   );
 
@@ -53,13 +53,13 @@ test("TenantAwareAggregateRoot.pullDomainEvents: given a prior drain, it should 
   // GIVEN
   const agg = TestTenantAwareAgg.of(
     TestId.from("a1"),
-    Tenant.user("u1"),
+    Tenant.create("user", "u1"),
     fixedMeta,
   );
   agg.raise({
     eventName: "Happened",
     aggregateId: "a1",
-    occurredAt: new Date("2026-01-01T00:00:00Z"),
+    createdAt: new Date("2026-01-01T00:00:00Z"),
   });
   agg.pullDomainEvents();
 
