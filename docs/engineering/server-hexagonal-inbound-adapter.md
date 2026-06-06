@@ -2,7 +2,7 @@
 
 ## Intent
 
-- Translate external triggers into use-case calls.
+- Translate external triggers into use cases.
 
 ## Pattern
 
@@ -13,5 +13,5 @@
 ## Boundaries
 
 - Depends on `@repo/server-<context>`, `@repo/server-platform`, and transport frameworks like `hono`.
-- Avoid business logic.
+- No business logic.
 - Apps never import each other.
