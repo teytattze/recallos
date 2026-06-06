@@ -4,7 +4,6 @@ import { test, expect } from "bun:test";
 import { EventId } from "../value-objects/event-id.ts";
 import { KnowledgeGraphId } from "../value-objects/knowledge-graph-id.ts";
 import { NodeId } from "../value-objects/node-id.ts";
-
 import { KnowledgeGraphEdge } from "./knowledge-graph-edge.ts";
 
 const now = new Date("2026-01-02T00:00:00Z");

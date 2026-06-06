@@ -14,7 +14,9 @@ type ProcessEventPortInput = {
 type ProcessEventPortOutput = undefined;
 
 interface ProcessEventPort {
-  execute(input: ProcessEventPortInput): Promise<Result<ProcessEventPortOutput>>;
+  execute(
+    input: ProcessEventPortInput,
+  ): Promise<Result<ProcessEventPortOutput>>;
 }
 
 export type { ProcessEventPortInput, ProcessEventPortOutput, ProcessEventPort };

@@ -5,7 +5,6 @@ import { Embedding } from "../value-objects/embedding.ts";
 import { EventId } from "../value-objects/event-id.ts";
 import { KnowledgeGraphId } from "../value-objects/knowledge-graph-id.ts";
 import { NodeBody } from "../value-objects/node-body.ts";
-
 import { KnowledgeGraphNode } from "./knowledge-graph-node.ts";
 
 const now = new Date("2026-01-01T00:00:00Z");

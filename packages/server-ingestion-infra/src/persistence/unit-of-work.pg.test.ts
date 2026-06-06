@@ -2,7 +2,7 @@ import type { PrismaClient } from "@repo/server-database";
 
 import { Event } from "@repo/server-ingestion";
 import { EntityMetadata, Tenant } from "@repo/server-kernel";
-import { expect, mock, test } from "bun:test";
+import { expect, test } from "bun:test";
 
 import { PrismaUnitOfWork } from "./unit-of-work.pg.ts";
 
@@ -23,28 +23,38 @@ function buildEvent(): Event {
 }
 
 test("PrismaUnitOfWork.transaction: given work that uses both ports, it should run it against the same transaction client", async () => {
-  // given
-  const eventCreate = mock(() => Promise.resolve());
-  const outboxCreate = mock(() => Promise.resolve());
+  // GIVEN
+  const eventCreateCalls: unknown[] = [];
+  const outboxCreateCalls: unknown[] = [];
+  const eventCreate = (args: unknown): Promise<void> => {
+    eventCreateCalls.push(args);
+    return Promise.resolve();
+  };
+  const outboxCreate = (args: unknown): Promise<void> => {
+    outboxCreateCalls.push(args);
+    return Promise.resolve();
+  };
   const tx = {
     event: { create: eventCreate },
     eventOutbox: { create: outboxCreate },
   };
-  const $transaction = mock((fn: (client: typeof tx) => Promise<unknown>) =>
-    fn(tx),
-  );
+  let transactionCount = 0;
+  const $transaction = (fn: (client: typeof tx) => Promise<unknown>) => {
+    transactionCount += 1;
+    return fn(tx);
+  };
   const prisma = { $transaction } as unknown as PrismaClient;
   const uow = new PrismaUnitOfWork(prisma);
   const event = buildEvent();
 
-  // when
+  // WHEN
   await uow.transaction(async ({ events, publisher }) => {
     await events.insert(event);
     await publisher.publish(event);
   });
 
-  // then
-  expect($transaction).toHaveBeenCalledTimes(1);
-  expect(eventCreate).toHaveBeenCalledTimes(1);
-  expect(outboxCreate).toHaveBeenCalledTimes(1);
+  // THEN
+  expect(transactionCount).toBe(1);
+  expect(eventCreateCalls).toHaveLength(1);
+  expect(outboxCreateCalls).toHaveLength(1);
 });

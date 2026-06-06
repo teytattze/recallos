@@ -2,7 +2,6 @@ import { EntityMetadata, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
 import { Embedding } from "../value-objects/embedding.ts";
-
 import { KnowledgeGraph } from "./knowledge-graph.ts";
 
 const now = new Date("2026-01-01T00:00:00Z");

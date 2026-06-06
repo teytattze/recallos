@@ -2,7 +2,7 @@ import type { Prisma } from "@repo/server-database";
 
 import { Event } from "@repo/server-ingestion";
 import { EntityMetadata, Tenant } from "@repo/server-kernel";
-import { expect, mock, test } from "bun:test";
+import { expect, test } from "bun:test";
 
 import { OutboxEventPublisher } from "./outbox-event-publisher.pg.ts";
 
@@ -23,18 +23,22 @@ function buildEvent(): Event {
 }
 
 test("OutboxEventPublisher.publish: given an event, it should write relay metadata without duplicating the body", async () => {
-  // given
-  const create = mock(() => Promise.resolve());
+  // GIVEN
+  const createCalls: unknown[] = [];
+  const create = (args: unknown): Promise<void> => {
+    createCalls.push(args);
+    return Promise.resolve();
+  };
   const tx = { eventOutbox: { create } } as unknown as Prisma.TransactionClient;
   const publisher = new OutboxEventPublisher(tx);
   const event = buildEvent();
 
-  // when
+  // WHEN
   await publisher.publish(event);
 
-  // then
-  expect(create).toHaveBeenCalledTimes(1);
-  expect(create).toHaveBeenCalledWith({
+  // THEN
+  expect(createCalls).toHaveLength(1);
+  expect(createCalls[0]).toEqual({
     data: {
       eventId: event.id.value,
       occurredAt,

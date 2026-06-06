@@ -2,7 +2,7 @@ import type { PrismaClient } from "@repo/server-database";
 
 import { Event } from "@repo/server-ingestion";
 import { EntityMetadata, Tenant } from "@repo/server-kernel";
-import { expect, mock, test } from "bun:test";
+import { expect, test } from "bun:test";
 
 import { EventLogPostgresqlRepository } from "./event-log.repository.pg.ts";
 
@@ -23,18 +23,22 @@ function buildEvent(): Event {
 }
 
 test("EventLogPostgresqlRepository.insert: given an event, it should create a row mapping the aggregate's fields", async () => {
-  // given
-  const create = mock(() => Promise.resolve());
+  // GIVEN
+  const createCalls: unknown[] = [];
+  const create = (args: unknown): Promise<void> => {
+    createCalls.push(args);
+    return Promise.resolve();
+  };
   const prisma = { event: { create } } as unknown as PrismaClient;
   const repo = new EventLogPostgresqlRepository(prisma);
   const event = buildEvent();
 
-  // when
+  // WHEN
   await repo.insert(event);
 
-  // then
-  expect(create).toHaveBeenCalledTimes(1);
-  expect(create).toHaveBeenCalledWith({
+  // THEN
+  expect(createCalls).toHaveLength(1);
+  expect(createCalls[0]).toEqual({
     data: {
       id: event.id.value,
       occurredAt,
