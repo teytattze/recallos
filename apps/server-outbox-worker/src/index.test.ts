@@ -8,10 +8,10 @@ const validEnv = {
 };
 
 test("loadWorkerConfig: given valid env, it should parse with batch-size and idle-delay defaults", () => {
-  // when
+  // WHEN
   const config = loadWorkerConfig(validEnv);
 
-  // then
+  // THEN
   expect(config.AWS_REGION).toBe("us-east-1");
   expect(config.SQS_QUEUE_URL).toBe(validEnv.SQS_QUEUE_URL);
   expect(config.OUTBOX_RELAY_BATCH_SIZE).toBe(10);
@@ -19,17 +19,17 @@ test("loadWorkerConfig: given valid env, it should parse with batch-size and idl
 });
 
 test("loadWorkerConfig: given a missing queue url, it should throw", () => {
-  // when / then
+  // WHEN / THEN
   expect(() => loadWorkerConfig({ AWS_REGION: "us-east-1" })).toThrow(
     /Invalid worker configuration/,
   );
 });
 
-test("GET /api/v1/health: it should respond ok", async () => {
-  // when
+test("GET /api/v1/health: given a health request, it should respond ok", async () => {
+  // WHEN
   const res = await app.request("/api/v1/health");
 
-  // then
+  // THEN
   expect(res.status).toBe(200);
   expect(await res.json()).toEqual({ message: "ok" });
 });

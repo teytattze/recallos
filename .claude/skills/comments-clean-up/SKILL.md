@@ -25,10 +25,9 @@ Do not scan or rewrite untouched repo comments just because they look weak.
 4. Keep a comment only when it explains non-obvious rationale: an invariant,
    boundary, trade-off, gotcha, compatibility constraint, or stale-but-needed
    context.
-5. Preserve test structure markers such as `// GIVEN`, `// WHEN`, `// THEN`,
-   `// given`, `// when`, and `// then` when the surrounding test file uses that
-   style. These markers make test phases scan-friendly and are not low-value
-   comments.
+5. Preserve test structure markers such as `// GIVEN`, `// WHEN`, `// THEN`, when
+   the surrounding test file uses that style. These markers make test phases
+   scan-friendly and are not low-value comments.
 6. Cut or compress comments that restate names/signatures, explain obvious code,
    duplicate nearby context, include generic usage examples, or define concepts
    the type/API already makes clear.

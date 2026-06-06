@@ -1,5 +1,3 @@
-import type { EmptyObject, JsonObject } from "type-fest";
-
 import type { DomainEvent } from "./domain-event.ts";
 import type { Id } from "./id.ts";
 
@@ -8,7 +6,7 @@ import { EntityMetadata } from "./metadata.ts";
 
 abstract class AggregateRoot<
   TId extends Id,
-  TProps extends JsonObject = EmptyObject,
+  TProps extends Record<string, unknown> = Record<never, never>,
 > extends Entity<TId, TProps> {
   private readonly _domainEvents: DomainEvent[] = [];
 

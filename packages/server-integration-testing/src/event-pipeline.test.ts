@@ -37,17 +37,17 @@ beforeEach(async () => {
 });
 
 test("IngestEventUseCase over PrismaUnitOfWork: given a valid event, it should persist an events row and a pending outbox row in one transaction", async () => {
-  // given
+  // GIVEN
   const { prisma } = harness();
   const useCase = new IngestEventUseCase(
     new PrismaUnitOfWork(prisma),
     createFixedClock(createdAt),
   );
 
-  // when
+  // WHEN
   const result = await useCase.execute(ingestInput);
 
-  // then
+  // THEN
   expect(result.ok).toBe(true);
   if (!result.ok) throw new Error("expected ingest to succeed");
   const { eventId } = result.value;
@@ -75,7 +75,7 @@ test("IngestEventUseCase over PrismaUnitOfWork: given a valid event, it should p
 });
 
 test("OutboxRelay over SqsOutboxBroker: given a pending outbox row, it should publish it to SQS and mark the row sent", async () => {
-  // given
+  // GIVEN
   const { prisma, sqs, queueUrl } = harness();
   const useCase = new IngestEventUseCase(
     new PrismaUnitOfWork(prisma),
@@ -87,10 +87,10 @@ test("OutboxRelay over SqsOutboxBroker: given a pending outbox row, it should pu
 
   const relay = new OutboxRelay(prisma, new SqsOutboxBroker(sqs, queueUrl), 10);
 
-  // when
+  // WHEN
   const relayed = await relay.relayBatch();
 
-  // then
+  // THEN
   expect(relayed).toBe(1);
 
   const outbox = await prisma.eventOutbox.findFirstOrThrow();
@@ -109,7 +109,7 @@ test("OutboxRelay over SqsOutboxBroker: given a pending outbox row, it should pu
 });
 
 test("OutboxRelay: given rows it already marked sent, it should not republish them on the next pass", async () => {
-  // given
+  // GIVEN
   const { prisma, sqs, queueUrl } = harness();
   const useCase = new IngestEventUseCase(
     new PrismaUnitOfWork(prisma),
@@ -119,11 +119,11 @@ test("OutboxRelay: given rows it already marked sent, it should not republish th
   if (!ingest.ok) throw new Error("expected ingest to succeed");
   const relay = new OutboxRelay(prisma, new SqsOutboxBroker(sqs, queueUrl), 10);
 
-  // when
+  // WHEN
   const first = await relay.relayBatch();
   const second = await relay.relayBatch();
 
-  // then
+  // THEN
   expect(first).toBe(1);
   expect(second).toBe(0);
 });

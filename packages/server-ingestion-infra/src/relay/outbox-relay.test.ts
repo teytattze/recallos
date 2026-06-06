@@ -1,8 +1,8 @@
 import type { PrismaClient } from "@repo/server-database";
 
-import { expect, mock, test } from "bun:test";
+import { expect, test } from "bun:test";
 
-import type { OutboxBroker } from "./outbox-broker.ts";
+import type { OutboxBrokerPort } from "./outbox-broker-port.ts";
 
 import { OutboxRelay } from "./outbox-relay.ts";
 
@@ -20,14 +20,12 @@ function buildRow(id: string) {
   };
 }
 
-/** A Prisma stub whose `$transaction` runs the work against a tx that returns
- *  `rows` from the claim query — so the relay can be driven without a database. */
 function buildPrisma(
   rows: ReturnType<typeof buildRow>[],
   updateMany: (args: unknown) => Promise<unknown>,
 ) {
   const tx = {
-    $queryRaw: mock(() => Promise.resolve(rows)),
+    $queryRaw: () => Promise.resolve(rows),
     eventOutbox: { updateMany },
   };
   return {
@@ -36,62 +34,80 @@ function buildPrisma(
 }
 
 test("OutboxRelay.relayBatch: given pending rows, it should publish each to the broker and mark them sent", async () => {
-  // given
+  // GIVEN
   const rows = [buildRow("1"), buildRow("2")];
-  const updateMany = mock((_args: unknown) => Promise.resolve({ count: 2 }));
+  const updateManyCalls: unknown[] = [];
+  const updateMany = (args: unknown): Promise<{ count: number }> => {
+    updateManyCalls.push(args);
+    return Promise.resolve({ count: 2 });
+  };
   const prisma = buildPrisma(rows, updateMany);
-  const publish = mock((_message: unknown) => Promise.resolve());
-  const broker = { publish } as OutboxBroker;
+  const publishedMessages: unknown[] = [];
+  const publish = (message: unknown): Promise<void> => {
+    publishedMessages.push(message);
+    return Promise.resolve();
+  };
+  const broker = { publish } as OutboxBrokerPort;
   const relay = new OutboxRelay(prisma, broker, 10);
 
-  // when
+  // WHEN
   const relayed = await relay.relayBatch();
 
-  // then
+  // THEN
   expect(relayed).toBe(2);
-  expect(publish).toHaveBeenCalledTimes(2);
-  expect(publish).toHaveBeenNthCalledWith(1, {
+  expect(publishedMessages).toHaveLength(2);
+  expect(publishedMessages[0]).toEqual({
     eventId: "event-1",
     occurredAt,
     createdAt,
     tags: { source: "slack" },
     body: { text: "hello 1" },
   });
-  expect(updateMany).toHaveBeenCalledTimes(1);
-  expect(updateMany.mock.calls[0]?.[0]).toEqual({
+  expect(updateManyCalls).toHaveLength(1);
+  expect(updateManyCalls[0]).toEqual({
     where: { id: { in: ["1", "2"] } },
     data: { status: "sent", sentAt: expect.any(Date) },
   });
 });
 
 test("OutboxRelay.relayBatch: given no pending rows, it should publish nothing and return 0", async () => {
-  // given
-  const updateMany = mock((_args: unknown) => Promise.resolve({ count: 0 }));
+  // GIVEN
+  const updateManyCalls: unknown[] = [];
+  const updateMany = (args: unknown): Promise<{ count: number }> => {
+    updateManyCalls.push(args);
+    return Promise.resolve({ count: 0 });
+  };
   const prisma = buildPrisma([], updateMany);
-  const publish = mock((_message: unknown) => Promise.resolve());
-  const broker = { publish } as OutboxBroker;
+  const publishedMessages: unknown[] = [];
+  const publish = (message: unknown): Promise<void> => {
+    publishedMessages.push(message);
+    return Promise.resolve();
+  };
+  const broker = { publish } as OutboxBrokerPort;
   const relay = new OutboxRelay(prisma, broker, 10);
 
-  // when
+  // WHEN
   const relayed = await relay.relayBatch();
 
-  // then
+  // THEN
   expect(relayed).toBe(0);
-  expect(publish).not.toHaveBeenCalled();
-  expect(updateMany).not.toHaveBeenCalled();
+  expect(publishedMessages).toHaveLength(0);
+  expect(updateManyCalls).toHaveLength(0);
 });
 
 test("OutboxRelay.relayBatch: given the broker rejects, it should propagate and not mark any row sent", async () => {
-  // given — a publish failure must abort before mark-sent so the row stays pending
-  const updateMany = mock((_args: unknown) => Promise.resolve({ count: 0 }));
+  // GIVEN
+  const updateManyCalls: unknown[] = [];
+  const updateMany = (args: unknown): Promise<{ count: number }> => {
+    updateManyCalls.push(args);
+    return Promise.resolve({ count: 0 });
+  };
   const prisma = buildPrisma([buildRow("1")], updateMany);
-  const publish = mock((_message: unknown) =>
-    Promise.reject(new Error("sqs down")),
-  );
-  const broker = { publish } as OutboxBroker;
+  const publish = (): Promise<void> => Promise.reject(new Error("sqs down"));
+  const broker = { publish } as OutboxBrokerPort;
   const relay = new OutboxRelay(prisma, broker, 10);
 
-  // when
+  // WHEN
   let caught: unknown;
   try {
     await relay.relayBatch();
@@ -99,8 +115,8 @@ test("OutboxRelay.relayBatch: given the broker rejects, it should propagate and 
     caught = error;
   }
 
-  // then
+  // THEN
   expect(caught).toBeInstanceOf(Error);
   expect((caught as Error).message).toBe("sqs down");
-  expect(updateMany).not.toHaveBeenCalled();
+  expect(updateManyCalls).toHaveLength(0);
 });

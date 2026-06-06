@@ -1,11 +1,9 @@
 import { SendMessageCommand, type SQSClient } from "@aws-sdk/client-sqs";
 
-import type { OutboxBroker } from "./outbox-broker.ts";
+import type { OutboxBrokerPort } from "./outbox-broker-port.ts";
 import type { OutboxMessage } from "./outbox-message.ts";
 
-/** SQS's managed retries and DLQ are the delivery guarantee; the relay only
- *  needs the send to succeed before it marks the row sent. */
-export class SqsOutboxBroker implements OutboxBroker {
+class SqsOutboxBroker implements OutboxBrokerPort {
   constructor(
     private readonly sqs: SQSClient,
     private readonly queueUrl: string,
@@ -20,3 +18,5 @@ export class SqsOutboxBroker implements OutboxBroker {
     );
   }
 }
+
+export { SqsOutboxBroker };
