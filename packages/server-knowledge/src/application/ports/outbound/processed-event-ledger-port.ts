@@ -1,8 +1,8 @@
-import type { EventId } from "../../../domain/event-id.value-object.ts";
+import type { EventId } from "../../../domain/value-objects/event-id.ts";
 
-export type ProcessedEventLedgerStatus = "done" | "failed";
+type ProcessedEventLedgerStatus = "done" | "failed";
 
-export interface ProcessedEventLedgerPort {
+interface ProcessedEventLedgerPort {
   seen(eventId: EventId, extractorVersion: string): Promise<boolean>;
   record(
     eventId: EventId,
@@ -12,3 +12,5 @@ export interface ProcessedEventLedgerPort {
     attempts: number,
   ): Promise<void>;
 }
+
+export type { ProcessedEventLedgerStatus, ProcessedEventLedgerPort };

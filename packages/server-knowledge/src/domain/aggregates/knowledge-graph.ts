@@ -1,37 +1,38 @@
 import {
   EntityMetadata,
   type Result,
-  Tenant,
+  type Tenant,
   TenantAwareAggregateRoot,
-  type TenantType,
   okResult,
   parseProps,
   parsePropsOrThrow,
 } from "@repo/server-kernel";
 import { z } from "zod";
 
-import type { Embedding } from "./embedding.value-object.ts";
+import type { Embedding } from "../value-objects/embedding.ts";
 
-import { InvalidKnowledgeGraph } from "./invalid-knowledge-graph.error.ts";
-import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
+import { createInvalidKnowledgeGraphError } from "../errors/invalid-knowledge-graph-error.ts";
+import { KnowledgeGraphId } from "../value-objects/knowledge-graph-id.ts";
 
-export type CreateKnowledgeGraphInput = {
+type CreateKnowledgeGraphInput = {
   tenant: Tenant;
-  name: string;
-  embeddingModel: string;
-  embeddingDimensions: number;
-  now: Date;
+  metadata: EntityMetadata;
+  payload: {
+    name: string;
+    embeddingModel: string;
+    embeddingDimensions: number;
+  };
 };
 
-export type RestoreKnowledgeGraphInput = {
-  id: string;
-  tenantType: TenantType;
-  tenantId: string;
-  name: string;
-  embeddingModel: string;
-  embeddingDimensions: number;
-  createdAt: Date;
-  updatedAt: Date;
+type RestoreKnowledgeGraphInput = {
+  tenant: Tenant;
+  metadata: EntityMetadata;
+  payload: {
+    id: string;
+    name: string;
+    embeddingModel: string;
+    embeddingDimensions: number;
+  };
 };
 
 const knowledgeGraphPropsSchema = z.object({
@@ -42,7 +43,7 @@ const knowledgeGraphPropsSchema = z.object({
 
 type KnowledgeGraphProps = z.infer<typeof knowledgeGraphPropsSchema>;
 
-export class KnowledgeGraph extends TenantAwareAggregateRoot<
+class KnowledgeGraph extends TenantAwareAggregateRoot<
   KnowledgeGraphId,
   KnowledgeGraphProps
 > {
@@ -59,11 +60,11 @@ export class KnowledgeGraph extends TenantAwareAggregateRoot<
     const parsePropsResult = parseProps(
       knowledgeGraphPropsSchema,
       {
-        name: input.name,
-        embeddingModel: input.embeddingModel,
-        embeddingDimensions: input.embeddingDimensions,
+        name: input.payload.name,
+        embeddingModel: input.payload.embeddingModel,
+        embeddingDimensions: input.payload.embeddingDimensions,
       },
-      InvalidKnowledgeGraph,
+      createInvalidKnowledgeGraphError,
     );
     if (!parsePropsResult.ok) return parsePropsResult;
 
@@ -71,7 +72,7 @@ export class KnowledgeGraph extends TenantAwareAggregateRoot<
       new KnowledgeGraph(
         KnowledgeGraphId.create(),
         input.tenant,
-        EntityMetadata.create(input.now),
+        input.metadata,
         parsePropsResult.value,
       ),
     );
@@ -79,13 +80,13 @@ export class KnowledgeGraph extends TenantAwareAggregateRoot<
 
   static restore(input: RestoreKnowledgeGraphInput): KnowledgeGraph {
     return new KnowledgeGraph(
-      KnowledgeGraphId.restore(input.id),
-      Tenant.create(input.tenantType, input.tenantId),
-      EntityMetadata.restore(input.createdAt, input.updatedAt),
+      KnowledgeGraphId.restore(input.payload.id),
+      input.tenant,
+      input.metadata,
       parsePropsOrThrow(knowledgeGraphPropsSchema, {
-        name: input.name,
-        embeddingModel: input.embeddingModel,
-        embeddingDimensions: input.embeddingDimensions,
+        name: input.payload.name,
+        embeddingModel: input.payload.embeddingModel,
+        embeddingDimensions: input.payload.embeddingDimensions,
       }),
     );
   }
@@ -98,3 +99,5 @@ export class KnowledgeGraph extends TenantAwareAggregateRoot<
     );
   }
 }
+
+export { KnowledgeGraph };

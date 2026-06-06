@@ -1,6 +1,6 @@
 import { Id } from "@repo/server-kernel";
 
-export class KnowledgeGraphId extends Id {
+class KnowledgeGraphId extends Id {
   static create(): KnowledgeGraphId {
     return new KnowledgeGraphId(Id.newValue());
   }
@@ -9,3 +9,5 @@ export class KnowledgeGraphId extends Id {
     return new KnowledgeGraphId(value);
   }
 }
+
+export { KnowledgeGraphId };

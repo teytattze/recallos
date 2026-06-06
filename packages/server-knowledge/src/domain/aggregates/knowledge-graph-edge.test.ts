@@ -1,25 +1,29 @@
-import { Tenant } from "@repo/server-kernel";
+import { EntityMetadata, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
-import { EventId } from "./event-id.value-object.ts";
-import { KnowledgeGraphEdge } from "./knowledge-graph-edge.aggregate.ts";
-import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
-import { NodeId } from "./node-id.value-object.ts";
+import { EventId } from "../value-objects/event-id.ts";
+import { KnowledgeGraphId } from "../value-objects/knowledge-graph-id.ts";
+import { NodeId } from "../value-objects/node-id.ts";
+
+import { KnowledgeGraphEdge } from "./knowledge-graph-edge.ts";
 
 const now = new Date("2026-01-02T00:00:00Z");
 const observedAt = new Date("2026-01-01T00:00:00Z");
 const tenant = Tenant.create("organization", "org1");
+const metadata = EntityMetadata.create(now);
 
 const validInput = {
   tenant,
-  graphId: KnowledgeGraphId.create(),
-  fromId: NodeId.create(),
-  toId: NodeId.create(),
-  relationship: "MENTIONS" as const,
-  confidence: 0.9,
-  sourceEventIds: [EventId.create()],
-  observedAt,
-  now,
+  metadata,
+  payload: {
+    graphId: KnowledgeGraphId.create(),
+    fromId: NodeId.create(),
+    toId: NodeId.create(),
+    relationship: "MENTIONS" as const,
+    confidence: 0.9,
+    sourceEventIds: [EventId.create()],
+    observedAt,
+  },
 };
 
 test("KnowledgeGraphEdge.create: given valid input, it should return an ok edge", () => {
@@ -57,7 +61,10 @@ test.each([
   "KnowledgeGraphEdge.create: given %s, it should return an InvalidKnowledgeGraphEdge error",
   (_label, patch) => {
     // GIVEN / WHEN
-    const result = KnowledgeGraphEdge.create({ ...validInput, ...patch });
+    const result = KnowledgeGraphEdge.create({
+      ...validInput,
+      payload: { ...validInput.payload, ...patch },
+    });
 
     // THEN
     expect(result.ok).toBe(false);
@@ -68,18 +75,18 @@ test.each([
 );
 
 const storedRow = {
-  id: "01952d3f-0000-7000-8000-000000000010",
-  tenantType: "organization" as const,
-  tenantId: "org1",
-  graphId: "01952d3f-0000-7000-8000-000000000011",
-  fromId: "01952d3f-0000-7000-8000-000000000012",
-  toId: "01952d3f-0000-7000-8000-000000000013",
-  relationship: "MENTIONS" as const,
-  confidence: 0.9,
-  sourceEventIds: ["01952d3f-0000-7000-8000-000000000014"],
-  observedAt,
-  createdAt: now,
-  updatedAt: new Date("2026-01-03T00:00:00Z"),
+  tenant,
+  metadata: EntityMetadata.restore(now, new Date("2026-01-03T00:00:00Z")),
+  payload: {
+    id: "01952d3f-0000-7000-8000-000000000010",
+    graphId: "01952d3f-0000-7000-8000-000000000011",
+    fromId: "01952d3f-0000-7000-8000-000000000012",
+    toId: "01952d3f-0000-7000-8000-000000000013",
+    relationship: "MENTIONS" as const,
+    confidence: 0.9,
+    sourceEventIds: ["01952d3f-0000-7000-8000-000000000014"],
+    observedAt,
+  },
 };
 
 test("KnowledgeGraphEdge.restore: given a stored row, it should preserve the id and audit timestamps", () => {
@@ -87,9 +94,9 @@ test("KnowledgeGraphEdge.restore: given a stored row, it should preserve the id 
   const edge = KnowledgeGraphEdge.restore(storedRow);
 
   // THEN
-  expect(edge.id.value).toBe(storedRow.id);
-  expect(edge.metadata.createdAt).toEqual(storedRow.createdAt);
-  expect(edge.metadata.updatedAt).toEqual(storedRow.updatedAt);
+  expect(edge.id.value).toBe(storedRow.payload.id);
+  expect(edge.metadata.createdAt).toEqual(storedRow.metadata.createdAt);
+  expect(edge.metadata.updatedAt).toEqual(storedRow.metadata.updatedAt);
 });
 
 test("KnowledgeGraphEdge.restore: given a stored row, it should restore the tenant", () => {
@@ -103,7 +110,10 @@ test("KnowledgeGraphEdge.restore: given a stored row, it should restore the tena
 test("KnowledgeGraphEdge.restore: given a row with out-of-range confidence, it should throw", () => {
   // GIVEN / WHEN / THEN
   expect(() =>
-    KnowledgeGraphEdge.restore({ ...storedRow, confidence: 2 }),
+    KnowledgeGraphEdge.restore({
+      ...storedRow,
+      payload: { ...storedRow.payload, confidence: 2 },
+    }),
   ).toThrow();
 });
 

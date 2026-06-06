@@ -1,18 +1,22 @@
-import { Tenant } from "@repo/server-kernel";
+import { EntityMetadata, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
-import { Embedding } from "./embedding.value-object.ts";
-import { KnowledgeGraph } from "./knowledge-graph.aggregate.ts";
+import { Embedding } from "../value-objects/embedding.ts";
+
+import { KnowledgeGraph } from "./knowledge-graph.ts";
 
 const now = new Date("2026-01-01T00:00:00Z");
 const tenant = Tenant.create("organization", "org1");
+const metadata = EntityMetadata.create(now);
 
 const validInput = {
   tenant,
-  name: "people",
-  embeddingModel: "text-embedding-3-small",
-  embeddingDimensions: 1536,
-  now,
+  metadata,
+  payload: {
+    name: "people",
+    embeddingModel: "text-embedding-3-small",
+    embeddingDimensions: 1536,
+  },
 };
 
 test("KnowledgeGraph.create: given valid input, it should return an ok KnowledgeGraph", () => {
@@ -60,7 +64,10 @@ test.each([
   "KnowledgeGraph.create: given %s, it should return an InvalidKnowledgeGraph error",
   (_label, patch) => {
     // GIVEN / WHEN
-    const result = KnowledgeGraph.create({ ...validInput, ...patch });
+    const result = KnowledgeGraph.create({
+      ...validInput,
+      payload: { ...validInput.payload, ...patch },
+    });
 
     // THEN
     expect(result.ok).toBe(false);
@@ -71,14 +78,14 @@ test.each([
 );
 
 const storedRow = {
-  id: "01952d3f-0000-7000-8000-000000000000",
-  tenantType: "organization" as const,
-  tenantId: "org1",
-  name: "people",
-  embeddingModel: "text-embedding-3-small",
-  embeddingDimensions: 1536,
-  createdAt: now,
-  updatedAt: new Date("2026-01-03T00:00:00Z"),
+  tenant,
+  metadata: EntityMetadata.restore(now, new Date("2026-01-03T00:00:00Z")),
+  payload: {
+    id: "01952d3f-0000-7000-8000-000000000000",
+    name: "people",
+    embeddingModel: "text-embedding-3-small",
+    embeddingDimensions: 1536,
+  },
 };
 
 test("KnowledgeGraph.restore: given a stored row, it should preserve the id and audit timestamps", () => {
@@ -86,9 +93,9 @@ test("KnowledgeGraph.restore: given a stored row, it should preserve the id and 
   const graph = KnowledgeGraph.restore(storedRow);
 
   // THEN
-  expect(graph.id.value).toBe(storedRow.id);
-  expect(graph.metadata.createdAt).toEqual(storedRow.createdAt);
-  expect(graph.metadata.updatedAt).toEqual(storedRow.updatedAt);
+  expect(graph.id.value).toBe(storedRow.payload.id);
+  expect(graph.metadata.createdAt).toEqual(storedRow.metadata.createdAt);
+  expect(graph.metadata.updatedAt).toEqual(storedRow.metadata.updatedAt);
 });
 
 test("KnowledgeGraph.restore: given a stored row, it should restore the tenant", () => {
@@ -101,24 +108,46 @@ test("KnowledgeGraph.restore: given a stored row, it should restore the tenant",
 
 test("KnowledgeGraph.restore: given a row with a blank name, it should throw", () => {
   // GIVEN / WHEN / THEN
-  expect(() => KnowledgeGraph.restore({ ...storedRow, name: "  " })).toThrow();
+  expect(() =>
+    KnowledgeGraph.restore({
+      ...storedRow,
+      payload: { ...storedRow.payload, name: "  " },
+    }),
+  ).toThrow();
 });
 
 const graph = KnowledgeGraph.restore(storedRow);
 
 test("KnowledgeGraph.accepts: given an embedding matching the graph's model and dimensions, it should return true", () => {
   // GIVEN
-  const embedding = Embedding.restore([0.1], "text-embedding-3-small", 1536);
+  const embedding = Embedding.restore({
+    payload: {
+      vector: [0.1],
+      model: "text-embedding-3-small",
+      dimensions: 1536,
+    },
+  });
 
   // WHEN / THEN
   expect(graph.accepts(embedding)).toBe(true);
 });
 
 test.each([
-  ["a model mismatch", Embedding.restore([0.1], "other-model", 1536)],
+  [
+    "a model mismatch",
+    Embedding.restore({
+      payload: { vector: [0.1], model: "other-model", dimensions: 1536 },
+    }),
+  ],
   [
     "a dimension mismatch",
-    Embedding.restore([0.1], "text-embedding-3-small", 768),
+    Embedding.restore({
+      payload: {
+        vector: [0.1],
+        model: "text-embedding-3-small",
+        dimensions: 768,
+      },
+    }),
   ],
 ])(
   "KnowledgeGraph.accepts: given %s, it should return false",

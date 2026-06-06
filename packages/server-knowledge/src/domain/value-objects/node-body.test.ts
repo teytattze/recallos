@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
 
-import { NodeBody } from "./node-body.value-object.ts";
+import { NodeBody } from "./node-body.ts";
 
 const MAX_NODE_BODY_LENGTH = 10_000;
 
@@ -9,7 +9,7 @@ test.each([
   ["text at the maximum length", "a".repeat(MAX_NODE_BODY_LENGTH)],
 ])("NodeBody.create: given %s, it should return ok", (_label, text) => {
   // GIVEN / WHEN
-  const result = NodeBody.create(text);
+  const result = NodeBody.create({ payload: text });
 
   // THEN
   expect(result.ok).toBe(true);
@@ -23,7 +23,7 @@ test.each([
   "NodeBody.create: given %s, it should return an InvalidKnowledgeGraphNode error",
   (_label, text) => {
     // GIVEN / WHEN
-    const result = NodeBody.create(text);
+    const result = NodeBody.create({ payload: text });
 
     // THEN
     expect(result.ok).toBe(false);
@@ -35,14 +35,16 @@ test.each([
 
 test("NodeBody.create: given surrounding whitespace, it should trim before storing", () => {
   // GIVEN
-  const created = NodeBody.create("  hello  ");
+  const created = NodeBody.create({ payload: "  hello  " });
   if (!created.ok) throw new Error("expected ok");
 
   // WHEN / THEN
-  expect(created.value.equals(NodeBody.restore("hello"))).toBe(true);
+  expect(created.value.equals(NodeBody.restore({ payload: "hello" }))).toBe(
+    true,
+  );
 });
 
 test("NodeBody.restore: given empty text, it should throw", () => {
   // GIVEN / WHEN / THEN
-  expect(() => NodeBody.restore("")).toThrow();
+  expect(() => NodeBody.restore({ payload: "" })).toThrow();
 });

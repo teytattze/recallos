@@ -5,7 +5,7 @@ import { Id } from "@repo/server-kernel";
  * these for provenance; it never dereferences them, so the id is modeled locally
  * rather than imported from the ingestion context.
  */
-export class EventId extends Id {
+class EventId extends Id {
   static create(): EventId {
     return new EventId(Id.newValue());
   }
@@ -14,3 +14,5 @@ export class EventId extends Id {
     return new EventId(value);
   }
 }
+
+export { EventId };

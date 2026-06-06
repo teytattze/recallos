@@ -1,6 +1,6 @@
 import { Id } from "@repo/server-kernel";
 
-export class EdgeId extends Id {
+class EdgeId extends Id {
   static create(): EdgeId {
     return new EdgeId(Id.newValue());
   }
@@ -9,3 +9,5 @@ export class EdgeId extends Id {
     return new EdgeId(value);
   }
 }
+
+export { EdgeId };

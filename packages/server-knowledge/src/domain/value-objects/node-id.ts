@@ -1,6 +1,6 @@
 import { Id } from "@repo/server-kernel";
 
-export class NodeId extends Id {
+class NodeId extends Id {
   static create(): NodeId {
     return new NodeId(Id.newValue());
   }
@@ -9,3 +9,5 @@ export class NodeId extends Id {
     return new NodeId(value);
   }
 }
+
+export { NodeId };

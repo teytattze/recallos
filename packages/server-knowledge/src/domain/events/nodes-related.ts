@@ -1,6 +1,6 @@
 import { defineEvent, type DomainEvent } from "@repo/server-kernel";
 
-import type { RelationshipType } from "./relationship-type.value-object.ts";
+import type { RelationshipType } from "../value-objects/relationship-type.ts";
 
 type NodesRelatedPayload = {
   fromId: string;

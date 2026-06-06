@@ -1,4 +1,4 @@
-export const NODE_TYPES = [
+const NODE_TYPES = [
   "PERSON",
   "ORGANIZATION",
   "DOCUMENT",
@@ -10,4 +10,7 @@ export const NODE_TYPES = [
   "SYSTEM",
 ] as const;
 
-export type NodeType = (typeof NODE_TYPES)[number];
+type NodeType = (typeof NODE_TYPES)[number];
+
+export { NODE_TYPES };
+export type { NodeType };

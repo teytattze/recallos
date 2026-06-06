@@ -1,45 +1,46 @@
 import {
   EntityMetadata,
   type Result,
-  Tenant,
+  type Tenant,
   TenantAwareAggregateRoot,
-  type TenantType,
   okResult,
   parseProps,
   parsePropsOrThrow,
 } from "@repo/server-kernel";
 import { z } from "zod";
 
-import { Embedding } from "./embedding.value-object.ts";
-import { EventId } from "./event-id.value-object.ts";
-import { InvalidKnowledgeGraphNode } from "./invalid-knowledge-graph-node.error.ts";
-import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
-import { NodeBody } from "./node-body.value-object.ts";
-import { NodeCreated } from "./node-created.event.ts";
-import { NodeEmbedded } from "./node-embedded.event.ts";
-import { NodeId } from "./node-id.value-object.ts";
-import { NODE_TYPES, type NodeType } from "./node-type.value-object.ts";
+import { createInvalidKnowledgeGraphNodeError } from "../errors/invalid-knowledge-graph-node-error.ts";
+import { NodeCreated } from "../events/node-created.ts";
+import { NodeEmbedded } from "../events/node-embedded.ts";
+import { Embedding } from "../value-objects/embedding.ts";
+import { EventId } from "../value-objects/event-id.ts";
+import { KnowledgeGraphId } from "../value-objects/knowledge-graph-id.ts";
+import { NodeBody } from "../value-objects/node-body.ts";
+import { NodeId } from "../value-objects/node-id.ts";
+import { NODE_TYPES, type NodeType } from "../value-objects/node-type.ts";
 
-export type CreateKnowledgeGraphNodeInput = {
+type CreateKnowledgeGraphNodeInput = {
   tenant: Tenant;
-  graphId: KnowledgeGraphId;
-  type: NodeType;
-  body: string;
-  eventIds: EventId[];
-  now: Date;
+  metadata: EntityMetadata;
+  payload: {
+    graphId: KnowledgeGraphId;
+    type: NodeType;
+    body: string;
+    eventIds: EventId[];
+  };
 };
 
-export type RestoreKnowledgeGraphNodeInput = {
-  id: string;
-  tenantType: TenantType;
-  tenantId: string;
-  graphId: string;
-  type: NodeType;
-  body: string;
-  eventIds: string[];
-  embedding: { vector: number[]; model: string; dimensions: number } | null;
-  createdAt: Date;
-  updatedAt: Date;
+type RestoreKnowledgeGraphNodeInput = {
+  tenant: Tenant;
+  metadata: EntityMetadata;
+  payload: {
+    id: string;
+    graphId: string;
+    type: NodeType;
+    body: string;
+    eventIds: string[];
+    embedding: { vector: number[]; model: string; dimensions: number } | null;
+  };
 };
 
 const knowledgeGraphNodePropsSchema = z.object({
@@ -57,7 +58,7 @@ type KnowledgeGraphNodeProps = z.infer<typeof knowledgeGraphNodePropsSchema>;
 const dedupeEventIds = (eventIds: EventId[]): EventId[] =>
   Array.from(new Map(eventIds.map((id) => [id.value, id])).values());
 
-export class KnowledgeGraphNode extends TenantAwareAggregateRoot<
+class KnowledgeGraphNode extends TenantAwareAggregateRoot<
   NodeId,
   KnowledgeGraphNodeProps
 > {
@@ -93,30 +94,30 @@ export class KnowledgeGraphNode extends TenantAwareAggregateRoot<
   static create(
     input: CreateKnowledgeGraphNodeInput,
   ): Result<KnowledgeGraphNode> {
-    const createBodyResult = NodeBody.create(input.body);
+    const createBodyResult = NodeBody.create({ payload: input.payload.body });
     if (!createBodyResult.ok) return createBodyResult;
 
     const parsePropsResult = parseProps(
       knowledgeGraphNodePropsSchema,
       {
-        graphId: input.graphId,
-        type: input.type,
+        graphId: input.payload.graphId,
+        type: input.payload.type,
         body: createBodyResult.value,
-        eventIds: dedupeEventIds(input.eventIds),
+        eventIds: dedupeEventIds(input.payload.eventIds),
         embedding: null,
       },
-      InvalidKnowledgeGraphNode,
+      createInvalidKnowledgeGraphNodeError,
     );
     if (!parsePropsResult.ok) return parsePropsResult;
 
     const node = new KnowledgeGraphNode(
       NodeId.create(),
       input.tenant,
-      EntityMetadata.create(input.now),
+      input.metadata,
       parsePropsResult.value,
     );
     node.recordEvent(
-      NodeCreated(node.id.value, input.now, {
+      NodeCreated(node.id.value, input.metadata.createdAt, {
         graphId: node.graphId.value,
         type: node.type,
       }),
@@ -126,20 +127,22 @@ export class KnowledgeGraphNode extends TenantAwareAggregateRoot<
 
   static restore(input: RestoreKnowledgeGraphNodeInput): KnowledgeGraphNode {
     return new KnowledgeGraphNode(
-      NodeId.restore(input.id),
-      Tenant.create(input.tenantType, input.tenantId),
-      EntityMetadata.restore(input.createdAt, input.updatedAt),
+      NodeId.restore(input.payload.id),
+      input.tenant,
+      input.metadata,
       parsePropsOrThrow(knowledgeGraphNodePropsSchema, {
-        graphId: KnowledgeGraphId.restore(input.graphId),
-        type: input.type,
-        body: NodeBody.restore(input.body),
-        eventIds: input.eventIds.map((id) => EventId.restore(id)),
-        embedding: input.embedding
-          ? Embedding.restore(
-              input.embedding.vector,
-              input.embedding.model,
-              input.embedding.dimensions,
-            )
+        graphId: KnowledgeGraphId.restore(input.payload.graphId),
+        type: input.payload.type,
+        body: NodeBody.restore({ payload: input.payload.body }),
+        eventIds: input.payload.eventIds.map((id) => EventId.restore(id)),
+        embedding: input.payload.embedding
+          ? Embedding.restore({
+              payload: {
+                vector: input.payload.embedding.vector,
+                model: input.payload.embedding.model,
+                dimensions: input.payload.embedding.dimensions,
+              },
+            })
           : null,
       }),
     );
@@ -166,7 +169,7 @@ export class KnowledgeGraphNode extends TenantAwareAggregateRoot<
   }
 
   reviseBody(body: string, now: Date): Result<void> {
-    const createBodyResult = NodeBody.create(body);
+    const createBodyResult = NodeBody.create({ payload: body });
     if (!createBodyResult.ok) return createBodyResult;
 
     this.replaceProps({ ...this._props, body: createBodyResult.value });
@@ -182,3 +185,5 @@ export class KnowledgeGraphNode extends TenantAwareAggregateRoot<
     this.attachEvents(duplicate.eventIds, now);
   }
 }
+
+export { KnowledgeGraphNode };

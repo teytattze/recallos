@@ -1,9 +1,8 @@
 import {
   EntityMetadata,
   type Result,
-  Tenant,
+  type Tenant,
   TenantAwareAggregateRoot,
-  type TenantType,
   errResult,
   okResult,
   parseProps,
@@ -11,43 +10,45 @@ import {
 } from "@repo/server-kernel";
 import { z } from "zod";
 
-import { Confidence } from "./confidence.value-object.ts";
-import { EdgeId } from "./edge-id.value-object.ts";
-import { EventId } from "./event-id.value-object.ts";
-import { InvalidKnowledgeGraphEdge } from "./invalid-knowledge-graph-edge.error.ts";
-import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
-import { NodeId } from "./node-id.value-object.ts";
-import { NodesRelated } from "./nodes-related.event.ts";
+import { createInvalidKnowledgeGraphEdgeError } from "../errors/invalid-knowledge-graph-edge-error.ts";
+import { NodesRelated } from "../events/nodes-related.ts";
+import { Confidence } from "../value-objects/confidence.ts";
+import { EdgeId } from "../value-objects/edge-id.ts";
+import { EventId } from "../value-objects/event-id.ts";
+import { KnowledgeGraphId } from "../value-objects/knowledge-graph-id.ts";
+import { NodeId } from "../value-objects/node-id.ts";
 import {
   RELATIONSHIP_TYPES,
   type RelationshipType,
-} from "./relationship-type.value-object.ts";
+} from "../value-objects/relationship-type.ts";
 
-export type CreateKnowledgeGraphEdgeInput = {
+type CreateKnowledgeGraphEdgeInput = {
   tenant: Tenant;
-  graphId: KnowledgeGraphId;
-  fromId: NodeId;
-  toId: NodeId;
-  relationship: RelationshipType;
-  confidence: number;
-  sourceEventIds: EventId[];
-  observedAt: Date;
-  now: Date;
+  metadata: EntityMetadata;
+  payload: {
+    graphId: KnowledgeGraphId;
+    fromId: NodeId;
+    toId: NodeId;
+    relationship: RelationshipType;
+    confidence: number;
+    sourceEventIds: EventId[];
+    observedAt: Date;
+  };
 };
 
-export type RestoreKnowledgeGraphEdgeInput = {
-  id: string;
-  tenantType: TenantType;
-  tenantId: string;
-  graphId: string;
-  fromId: string;
-  toId: string;
-  relationship: RelationshipType;
-  confidence: number;
-  sourceEventIds: string[];
-  observedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
+type RestoreKnowledgeGraphEdgeInput = {
+  tenant: Tenant;
+  metadata: EntityMetadata;
+  payload: {
+    id: string;
+    graphId: string;
+    fromId: string;
+    toId: string;
+    relationship: RelationshipType;
+    confidence: number;
+    sourceEventIds: string[];
+    observedAt: Date;
+  };
 };
 
 const knowledgeGraphEdgePropsSchema = z.object({
@@ -67,7 +68,7 @@ type KnowledgeGraphEdgeProps = z.infer<typeof knowledgeGraphEdgePropsSchema>;
 const dedupeEventIds = (eventIds: EventId[]): EventId[] =>
   Array.from(new Map(eventIds.map((id) => [id.value, id])).values());
 
-export class KnowledgeGraphEdge extends TenantAwareAggregateRoot<
+class KnowledgeGraphEdge extends TenantAwareAggregateRoot<
   EdgeId,
   KnowledgeGraphEdgeProps
 > {
@@ -111,38 +112,42 @@ export class KnowledgeGraphEdge extends TenantAwareAggregateRoot<
   static create(
     input: CreateKnowledgeGraphEdgeInput,
   ): Result<KnowledgeGraphEdge> {
-    if (input.fromId.equals(input.toId)) {
+    if (input.payload.fromId.equals(input.payload.toId)) {
       return errResult(
-        InvalidKnowledgeGraphEdge("edge cannot connect a node to itself"),
+        createInvalidKnowledgeGraphEdgeError(
+          "edge cannot connect a node to itself",
+        ),
       );
     }
 
-    const createConfidenceResult = Confidence.create(input.confidence);
+    const createConfidenceResult = Confidence.create({
+      payload: input.payload.confidence,
+    });
     if (!createConfidenceResult.ok) return createConfidenceResult;
 
     const parsePropsResult = parseProps(
       knowledgeGraphEdgePropsSchema,
       {
-        graphId: input.graphId,
-        fromId: input.fromId,
-        toId: input.toId,
-        relationship: input.relationship,
+        graphId: input.payload.graphId,
+        fromId: input.payload.fromId,
+        toId: input.payload.toId,
+        relationship: input.payload.relationship,
         confidence: createConfidenceResult.value,
-        sourceEventIds: dedupeEventIds(input.sourceEventIds),
-        observedAt: input.observedAt,
+        sourceEventIds: dedupeEventIds(input.payload.sourceEventIds),
+        observedAt: input.payload.observedAt,
       },
-      InvalidKnowledgeGraphEdge,
+      createInvalidKnowledgeGraphEdgeError,
     );
     if (!parsePropsResult.ok) return parsePropsResult;
 
     const edge = new KnowledgeGraphEdge(
       EdgeId.create(),
       input.tenant,
-      EntityMetadata.create(input.now),
+      input.metadata,
       parsePropsResult.value,
     );
     edge.recordEvent(
-      NodesRelated(edge.id.value, input.now, {
+      NodesRelated(edge.id.value, input.metadata.createdAt, {
         fromId: edge.fromId.value,
         toId: edge.toId.value,
         relationship: edge.relationship,
@@ -153,17 +158,19 @@ export class KnowledgeGraphEdge extends TenantAwareAggregateRoot<
 
   static restore(input: RestoreKnowledgeGraphEdgeInput): KnowledgeGraphEdge {
     return new KnowledgeGraphEdge(
-      EdgeId.restore(input.id),
-      Tenant.create(input.tenantType, input.tenantId),
-      EntityMetadata.restore(input.createdAt, input.updatedAt),
+      EdgeId.restore(input.payload.id),
+      input.tenant,
+      input.metadata,
       parsePropsOrThrow(knowledgeGraphEdgePropsSchema, {
-        graphId: KnowledgeGraphId.restore(input.graphId),
-        fromId: NodeId.restore(input.fromId),
-        toId: NodeId.restore(input.toId),
-        relationship: input.relationship,
-        confidence: Confidence.restore(input.confidence),
-        sourceEventIds: input.sourceEventIds.map((id) => EventId.restore(id)),
-        observedAt: input.observedAt,
+        graphId: KnowledgeGraphId.restore(input.payload.graphId),
+        fromId: NodeId.restore(input.payload.fromId),
+        toId: NodeId.restore(input.payload.toId),
+        relationship: input.payload.relationship,
+        confidence: Confidence.restore({ payload: input.payload.confidence }),
+        sourceEventIds: input.payload.sourceEventIds.map((id) =>
+          EventId.restore(id),
+        ),
+        observedAt: input.payload.observedAt,
       }),
     );
   }
@@ -175,7 +182,9 @@ export class KnowledgeGraphEdge extends TenantAwareAggregateRoot<
     observedAt: Date;
     now: Date;
   }): Result<void> {
-    const createConfidenceResult = Confidence.create(input.confidence);
+    const createConfidenceResult = Confidence.create({
+      payload: input.confidence,
+    });
     if (!createConfidenceResult.ok) return createConfidenceResult;
 
     this.replaceProps({
@@ -194,3 +203,5 @@ export class KnowledgeGraphEdge extends TenantAwareAggregateRoot<
     return okResult(undefined);
   }
 }
+
+export { KnowledgeGraphEdge };

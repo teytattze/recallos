@@ -1,4 +1,4 @@
-export const RELATIONSHIP_TYPES = [
+const RELATIONSHIP_TYPES = [
   "MENTIONS",
   "AUTHORED_BY",
   "SENT_BY",
@@ -13,4 +13,7 @@ export const RELATIONSHIP_TYPES = [
   "RELATED_TO",
 ] as const;
 
-export type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
+type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
+
+export { RELATIONSHIP_TYPES };
+export type { RelationshipType };

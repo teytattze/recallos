@@ -1,29 +1,36 @@
-import { Tenant } from "@repo/server-kernel";
+import { EntityMetadata, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
-import { Embedding } from "./embedding.value-object.ts";
-import { EventId } from "./event-id.value-object.ts";
-import { KnowledgeGraphId } from "./knowledge-graph-id.value-object.ts";
-import { KnowledgeGraphNode } from "./knowledge-graph-node.aggregate.ts";
-import { NodeBody } from "./node-body.value-object.ts";
+import { Embedding } from "../value-objects/embedding.ts";
+import { EventId } from "../value-objects/event-id.ts";
+import { KnowledgeGraphId } from "../value-objects/knowledge-graph-id.ts";
+import { NodeBody } from "../value-objects/node-body.ts";
+
+import { KnowledgeGraphNode } from "./knowledge-graph-node.ts";
 
 const now = new Date("2026-01-01T00:00:00Z");
 const later = new Date("2026-01-05T00:00:00Z");
 const tenant = Tenant.create("organization", "org1");
+const metadata = EntityMetadata.create(now);
 
 const validInput = {
   tenant,
-  graphId: KnowledgeGraphId.create(),
-  type: "PERSON" as const,
-  body: "Ada Lovelace",
-  eventIds: [EventId.create()],
-  now,
+  metadata,
+  payload: {
+    graphId: KnowledgeGraphId.create(),
+    type: "PERSON" as const,
+    body: "Ada Lovelace",
+    eventIds: [EventId.create()],
+  },
 };
 
 const createNode = (
-  patch: Partial<typeof validInput> = {},
+  patch: Partial<typeof validInput.payload> = {},
 ): KnowledgeGraphNode => {
-  const result = KnowledgeGraphNode.create({ ...validInput, ...patch });
+  const result = KnowledgeGraphNode.create({
+    ...validInput,
+    payload: { ...validInput.payload, ...patch },
+  });
   if (!result.ok) throw new Error("expected ok node");
   return result.value;
 };
@@ -70,7 +77,10 @@ test.each([
   "KnowledgeGraphNode.create: given %s, it should return an InvalidKnowledgeGraphNode error",
   (_label, patch) => {
     // GIVEN / WHEN
-    const result = KnowledgeGraphNode.create({ ...validInput, ...patch });
+    const result = KnowledgeGraphNode.create({
+      ...validInput,
+      payload: { ...validInput.payload, ...patch },
+    });
 
     // THEN
     expect(result.ok).toBe(false);
@@ -87,7 +97,7 @@ test("KnowledgeGraphNode.create: given only duplicate source events, it should s
   // WHEN
   const result = KnowledgeGraphNode.create({
     ...validInput,
-    eventIds: [eventId, eventId],
+    payload: { ...validInput.payload, eventIds: [eventId, eventId] },
   });
 
   // THEN
@@ -95,16 +105,16 @@ test("KnowledgeGraphNode.create: given only duplicate source events, it should s
 });
 
 const storedRow = {
-  id: "01952d3f-0000-7000-8000-000000000001",
-  tenantType: "organization" as const,
-  tenantId: "org1",
-  graphId: "01952d3f-0000-7000-8000-000000000002",
-  type: "PERSON" as const,
-  body: "Ada Lovelace",
-  eventIds: ["01952d3f-0000-7000-8000-000000000003"],
-  embedding: null,
-  createdAt: now,
-  updatedAt: new Date("2026-01-03T00:00:00Z"),
+  tenant,
+  metadata: EntityMetadata.restore(now, new Date("2026-01-03T00:00:00Z")),
+  payload: {
+    id: "01952d3f-0000-7000-8000-000000000001",
+    graphId: "01952d3f-0000-7000-8000-000000000002",
+    type: "PERSON" as const,
+    body: "Ada Lovelace",
+    eventIds: ["01952d3f-0000-7000-8000-000000000003"],
+    embedding: null,
+  },
 };
 
 test("KnowledgeGraphNode.restore: given a stored row, it should preserve the id and audit timestamps", () => {
@@ -112,9 +122,9 @@ test("KnowledgeGraphNode.restore: given a stored row, it should preserve the id 
   const node = KnowledgeGraphNode.restore(storedRow);
 
   // THEN
-  expect(node.id.value).toBe(storedRow.id);
-  expect(node.metadata.createdAt).toEqual(storedRow.createdAt);
-  expect(node.metadata.updatedAt).toEqual(storedRow.updatedAt);
+  expect(node.id.value).toBe(storedRow.payload.id);
+  expect(node.metadata.createdAt).toEqual(storedRow.metadata.createdAt);
+  expect(node.metadata.updatedAt).toEqual(storedRow.metadata.updatedAt);
 });
 
 test("KnowledgeGraphNode.restore: given a stored row, it should restore the tenant", () => {
@@ -128,7 +138,10 @@ test("KnowledgeGraphNode.restore: given a stored row, it should restore the tena
 test("KnowledgeGraphNode.restore: given a row with no source events, it should throw", () => {
   // GIVEN / WHEN / THEN
   expect(() =>
-    KnowledgeGraphNode.restore({ ...storedRow, eventIds: [] }),
+    KnowledgeGraphNode.restore({
+      ...storedRow,
+      payload: { ...storedRow.payload, eventIds: [] },
+    }),
   ).toThrow();
 });
 
@@ -175,10 +188,12 @@ test("KnowledgeGraphNode.assignEmbedding: given a node born without one, it shou
   // GIVEN
   const node = createNode();
   node.pullDomainEvents();
-  const embeddingResult = Embedding.create(
-    [0.1, 0.2, 0.3],
-    "text-embedding-3-small",
-  );
+  const embeddingResult = Embedding.create({
+    payload: {
+      vector: [0.1, 0.2, 0.3],
+      model: "text-embedding-3-small",
+    },
+  });
   if (!embeddingResult.ok) throw new Error("expected ok embedding");
 
   // WHEN
@@ -200,7 +215,9 @@ test("KnowledgeGraphNode.reviseBody: given new text, it should replace the body"
 
   // THEN
   expect(result.ok).toBe(true);
-  expect(node.body.equals(NodeBody.restore("Augusta Ada King"))).toBe(true);
+  expect(
+    node.body.equals(NodeBody.restore({ payload: "Augusta Ada King" })),
+  ).toBe(true);
   expect(node.metadata.updatedAt).toEqual(later);
 });
 
