@@ -2,7 +2,7 @@
 
 ## Intent
 
-- Keep unit tests readable and cheap to maintain.
+- Keep unit tests readable and cheap.
 
 ## Pattern
 
@@ -10,11 +10,11 @@
 - Keep tests beside the code as `*.test.ts`.
 - Use one `test` per behavior; avoid `describe` nesting.
 - Test behavior through the public surface.
-- Prefer dependency injection with fakes or stubs.
-- Use `bun:test` `mock`/`spyOn` only to intercept a real side-effect.
+- Use dependency injection with fakes or stubs.
+- Use `mock`/`spyOn` only to intercept real side effects.
 
 ## Conventions
 
 - Name tests `<function>: given <condition>, it should <expected outcome>`.
-- Structure the body as given / when / then; multiple assertions about the same behaviour are fine.
-- Consolidate similar-behaviour tests into a single `test` block (e.g. via `test.each`) rather than repeating near-identical blocks.
+- Structure the body as given / when / then; multiple assertions about one behavior are fine.
+- Consolidate similar behavior with `test.each` instead of repeating blocks.

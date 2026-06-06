@@ -3,7 +3,7 @@
 ## Intent
 
 - Make expected business failures explicit in type signatures.
-- Let exceptional faults bubble to the runtime boundary.
+- Let exceptional faults reach the runtime boundary.
 - Keep transport concerns out of the domain and application core.
 
 ## Pattern
@@ -12,46 +12,32 @@
 - Use `throw` for faults the caller cannot sensibly handle.
 - Reconcile both forms at the inbound adapter boundary.
 - Represent expected failures as tagged `DomainError` values, not error classes.
-- Treat `DomainError.category` as domain-level routing metadata, not an HTTP status.
+- Treat `DomainError.category` as routing metadata, not an HTTP status.
 
-The split is based on who can act on the failure. If the next caller should make
-a business decision, return `Result`. If the only meaningful response is
-logging, retrying, or returning a generic failure, throw and let the boundary
-handle it.
+If the caller can make a business decision, return `Result`.
+If the response is logging, retrying, or generic failure, throw.
 
 ## Layer Rules
 
-| Layer             | Rule                                                                                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Domain            | Return `Result` for expected invariant and validation failures. Throw only for impossible states and defensive assertions.                       |
-| Application       | Use cases and inbound ports return `Promise<Result<T, DomainError>>` when they have business outcomes to report.                                 |
-| Outbound adapters | Throw for infrastructure faults. Model expected absence or conflicts in the outbound port contract as `null`, `Result`, or a named return shape. |
-| Inbound adapters  | Catch thrown faults and unwrap `Result` values into transport responses, worker retry decisions, or dead-letter decisions.                       |
+- Domain: return `Result` for expected invariant and validation failures.
+  Throw only for impossible states and assertions.
+- Application: use cases and inbound ports return `Promise<Result<T, DomainError>>` for business outcomes.
+- Outbound adapters: throw for infrastructure faults.
+  Model expected absence or conflicts as `null`, `Result`, or a named shape.
+- Inbound adapters: catch thrown faults and unwrap `Result` values into transport responses or worker decisions.
 
 ## Expected Failures
 
-Expected failures are part of the contract:
+Expected failures are contract outcomes:
 
 - value-object or aggregate construction rejects invalid input;
 - an aggregate refuses a state transition;
 - a requested entity is absent and the caller must choose what to do;
 - a uniqueness, quota, authorization, or policy rule blocks the request.
 
-Expected failures use `Result<T, E>`, where `E` is usually a context-specific
-union of `DomainError` values:
-
-```ts
-const EmailInvalid = defineError("EmailInvalid", "validation");
-const QuotaExceeded = defineError("QuotaExceeded", "conflict");
-
-type CaptureEventError =
-  | ReturnType<typeof EmailInvalid>
-  | ReturnType<typeof QuotaExceeded>;
-```
-
-Inside a context, switch on `error.kind` when concrete behavior differs. At
-transport boundaries, route by `error.category` unless a specific kind truly
-needs special rendering.
+Return `Result<T, E>`, where `E` is a context-specific union of `DomainError` values.
+Inside a context, switch on `error.kind` when behavior differs.
+At transport boundaries, route by `error.category`; render specific kinds only when required.
 
 ## Exceptional Faults
 
@@ -63,13 +49,12 @@ Exceptional faults are not part of the business contract:
 - a supposedly impossible branch is reached;
 - configuration is invalid at boot.
 
-These failures throw. Do not convert them into `Result.err` just to avoid a
-`try/catch`. The inbound adapter owns the catch-all handler, logging, and
-generic failure response.
+These failures throw. Do not convert them into `Result.err` to avoid `try/catch`.
+The inbound adapter owns catch-all handling, logging, and generic responses.
 
 ## Boundary Mapping
 
-Inbound adapters are the only place expected failures and thrown faults meet.
+Inbound adapters are where expected failures and thrown faults meet.
 
 - `Result.ok(value)` maps to the successful transport response.
 - `Result.err(error)` maps by `DomainError.category`.
@@ -86,20 +71,16 @@ Default HTTP category mapping:
 | `forbidden`  | `403`       |
 | `unexpected` | `500`       |
 
-Worker adapters use the same distinction but map to acknowledge, retry, or
-dead-letter behavior instead of HTTP status codes.
+Worker adapters map the same distinction to acknowledge, retry, or dead-letter behavior.
 
 ## Kernel Primitives
 
 - `Result<T, E = DomainError>` is the shared success/failure union plus
-  combinators such as `ok`, `err`, `map`, `mapErr`, `andThen`, and `unwrapOr`.
+  `ok`, `err`, `map`, `mapErr`, `andThen`, and `unwrapOr`.
 - `DomainError` carries `kind`, `category`, `message`, and optional `details`.
-- `defineError(kind, category)` creates typed error factories for context
-  `domain/errors/*-error.ts` files.
-- `parseProps` wraps `zod.safeParse` and returns `Result` for expected invariant
-  failures.
-- `parsePropsOrThrow` validates trusted or impossible states and throws on
-  failure.
+- `defineError(kind, category)` creates typed error factories for `domain/errors/*-error.ts`.
+- `parseProps` wraps `zod.safeParse` and returns `Result`.
+- `parsePropsOrThrow` validates trusted or impossible states and throws on failure.
 
 ## Conventions
 
@@ -109,12 +90,9 @@ dead-letter behavior instead of HTTP status codes.
 - Name error factories `create<ErrorName>Error` and error types
   `<ErrorName>Error`.
 - Application use cases short-circuit on the first domain `Result.err`.
-- Async composition uses `Promise<Result<T, E>>`; do not add a `ResultAsync`
-  abstraction unless repeated chaining pain appears in real code.
-- zod errors never escape the pure core directly; wrap them with `parseProps` or
-  `parsePropsOrThrow`.
-- Avoid `category: "unexpected"` for real infrastructure faults. Prefer
-  throwing.
+- Async composition uses `Promise<Result<T, E>>`; do not add `ResultAsync`.
+- zod errors never escape the pure core; wrap them with `parseProps` or `parsePropsOrThrow`.
+- Do not use `category: "unexpected"` for real infrastructure faults; throw.
 
 ## Anti-Patterns
 
