@@ -7,7 +7,7 @@ import {
 } from "@repo/server-kernel";
 import { z } from "zod";
 
-import { createInvalidKnowledgeGraphNodeError } from "../errors/invalid-knowledge-graph-node-error.ts";
+import { createInvalidGraphNodeError } from "../errors/invalid-graph-node-error.ts";
 
 const MAX_NODE_BODY_LENGTH = 10_000;
 
@@ -22,37 +22,37 @@ const nodeBodyPropsSchema = z.object({
     ),
 });
 
-type NodeBodyProps = z.infer<typeof nodeBodyPropsSchema>;
+type GraphNodeBodyProps = z.infer<typeof nodeBodyPropsSchema>;
 
-type CreateNodeBodyInput = {
+type CreateGraphNodeBodyInput = {
   payload: string;
 };
 
-type RestoreNodeBodyInput = {
+type RestoreGraphNodeBodyInput = {
   payload: string;
 };
 
-class NodeBody extends ValueObject<NodeBodyProps> {
-  private constructor(props: NodeBodyProps) {
+class GraphNodeBody extends ValueObject<GraphNodeBodyProps> {
+  private constructor(props: GraphNodeBodyProps) {
     super(props);
   }
 
-  static create(input: CreateNodeBodyInput): Result<NodeBody> {
+  static create(input: CreateGraphNodeBodyInput): Result<GraphNodeBody> {
     return mapResult(
       parseProps(
         nodeBodyPropsSchema,
         { text: input.payload },
-        createInvalidKnowledgeGraphNodeError,
+        createInvalidGraphNodeError,
       ),
-      (props) => new NodeBody(props),
+      (props) => new GraphNodeBody(props),
     );
   }
 
-  static restore(input: RestoreNodeBodyInput): NodeBody {
-    return new NodeBody(
+  static restore(input: RestoreGraphNodeBodyInput): GraphNodeBody {
+    return new GraphNodeBody(
       parsePropsOrThrow(nodeBodyPropsSchema, { text: input.payload }),
     );
   }
 }
 
-export { NodeBody };
+export { GraphNodeBody };

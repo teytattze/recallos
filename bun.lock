@@ -167,6 +167,7 @@
       "name": "@repo/server-knowledge",
       "dependencies": {
         "@repo/server-kernel": "workspace:*",
+        "es-toolkit": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {

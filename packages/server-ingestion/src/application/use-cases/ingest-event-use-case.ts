@@ -3,7 +3,6 @@ import {
   errResult,
   okResult,
   type Clock,
-  type Result,
 } from "@repo/server-kernel";
 
 import type {
@@ -24,27 +23,30 @@ class IngestEventUseCase implements IngestEventPort {
     private readonly clock: Clock,
   ) {}
 
-  async execute(
-    input: IngestEventPortInput,
-  ): Promise<Result<IngestEventPortOutput>> {
+  async execute(input: IngestEventPortInput): IngestEventPortOutput {
     const eventResult = Event.create({
       tenant: input.tenant,
       metadata: EntityMetadata.create(this.clock.now()),
       payload: input.payload,
     });
-    if (!eventResult.ok) return eventResult;
 
+    if (!eventResult.ok) {
+      return eventResult;
+    }
     const event = eventResult.value;
+
     const publishMessage = {
       eventId: event.id.value,
       occurredAt: event.occurredAt,
       createdAt: event.metadata.createdAt,
       tags: event.tags.entries,
       body: event.body.value,
+      graphId: event.graphId.value,
     };
     const publishMessageBytes = new TextEncoder().encode(
       JSON.stringify(publishMessage),
     ).length;
+
     if (publishMessageBytes > SQS_MAX_MESSAGE_BODY_BYTES) {
       return errResult(
         createInvalidEventError(
@@ -52,13 +54,11 @@ class IngestEventUseCase implements IngestEventPort {
         ),
       );
     }
-
-    // Insert and outbox-write must commit together, or a crash between them
-    // would lose the notification or leave a phantom (see outbox decision record).
     await this.uow.transaction(async ({ events, publisher }) => {
       await events.insert(event);
       await publisher.publish(event);
     });
+
     return okResult({ eventId: event.id.value });
   }
 }

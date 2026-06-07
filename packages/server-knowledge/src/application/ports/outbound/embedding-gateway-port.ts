@@ -1,5 +1,7 @@
 interface EmbeddingGatewayPort {
-  embed(texts: string[], model: string): Promise<number[][]>;
+  embed(input: {
+    payload: { texts: string[]; model: string };
+  }): Promise<number[][]>;
 }
 
 export type { EmbeddingGatewayPort };

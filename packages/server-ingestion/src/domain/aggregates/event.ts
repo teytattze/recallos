@@ -13,12 +13,16 @@ import { z } from "zod";
 import { createInvalidEventError } from "../errors/invalid-event-error";
 import { EventBody } from "../value-objects/event-body";
 import { EventId } from "../value-objects/event-id";
+import { GraphId } from "../value-objects/graph-id";
 import { Tags } from "../value-objects/tags";
 
 const eventPropsSchema = z.object({
   occurredAt: z.date(),
+
   tags: z.custom<Tags>((v) => v instanceof Tags),
   body: z.custom<EventBody>((v) => v instanceof EventBody),
+
+  graphId: z.custom<GraphId>((v) => v instanceof GraphId),
 });
 type EventProps = z.infer<typeof eventPropsSchema>;
 
@@ -29,6 +33,7 @@ type CreateEventInput = {
     occurredAt: Date;
     tags: Record<string, string>;
     body: Record<string, unknown>;
+    graphId: string;
   };
 };
 
@@ -40,6 +45,7 @@ type RestoreEventInput = {
     occurredAt: Date;
     tags: Record<string, string>;
     body: Record<string, unknown>;
+    graphId: string;
   };
 };
 
@@ -64,12 +70,17 @@ class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
     if (!createBodyResult.ok) {
       return createBodyResult;
     }
+
+    const graphId = GraphId.restore({
+      payload: input.payload.graphId,
+    });
     const parsePropsResult = parseProps(
       eventPropsSchema,
       {
         occurredAt: input.payload.occurredAt,
         tags: createTagsResult.value,
         body: createBodyResult.value,
+        graphId,
       },
       createInvalidEventError,
     );
@@ -98,6 +109,7 @@ class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
         occurredAt: input.payload.occurredAt,
         tags: Tags.restore({ payload: input.payload.tags }),
         body: EventBody.restore({ payload: input.payload.body }),
+        graphId: GraphId.restore({ payload: input.payload.graphId }),
       }),
     );
   }
@@ -112,6 +124,10 @@ class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
 
   get body(): EventBody {
     return this._props.body;
+  }
+
+  get graphId(): GraphId {
+    return this._props.graphId;
   }
 }
 

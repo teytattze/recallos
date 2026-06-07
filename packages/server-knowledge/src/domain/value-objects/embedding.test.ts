@@ -43,7 +43,7 @@ test.each([
   ["an empty vector", [] as number[], "text-embedding-3-small"],
   ["a blank model", [0.1, 0.2], "   "],
 ])(
-  "Embedding.create: given %s, it should return an InvalidKnowledgeGraphNode error",
+  "Embedding.create: given %s, it should return an InvalidGraphNode error",
   (_label, vector, model) => {
     // GIVEN / WHEN
     const result = Embedding.create({ payload: { vector, model } });
@@ -51,7 +51,7 @@ test.each([
     // THEN
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.error.kind).toBe("InvalidKnowledgeGraphNode");
+    expect(result.error.kind).toBe("InvalidGraphNode");
     expect(result.error.category).toBe("validation");
   },
 );

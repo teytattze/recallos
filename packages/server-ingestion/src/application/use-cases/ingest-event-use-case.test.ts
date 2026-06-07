@@ -44,6 +44,7 @@ class FakeUnitOfWork implements UnitOfWorkPort {
 
 const createdAt = new Date("2026-01-02T00:00:00Z");
 const tenant = Tenant.create("organization", "org1");
+const graphId = "01952d3f-0000-7000-8000-000000000100";
 
 const validInput = {
   tenant,
@@ -51,6 +52,7 @@ const validInput = {
     occurredAt: new Date("2026-01-01T00:00:00Z"),
     tags: { source: "slack" },
     body: { text: "hello" },
+    graphId,
   },
 };
 
@@ -107,6 +109,18 @@ test("IngestEventUseCase.execute: given valid input, it should pass the tenant t
 
   // THEN
   expect(uow.events.appended[0]!.tenant).toBe(tenant);
+});
+
+test("IngestEventUseCase.execute: given valid input, it should pass the graph id to the event", async () => {
+  // GIVEN
+  const uow = new FakeUnitOfWork();
+  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
+
+  // WHEN
+  await useCase.execute(validInput);
+
+  // THEN
+  expect(uow.events.appended[0]!.graphId.value).toBe(graphId);
 });
 
 test("IngestEventUseCase.execute: given an invalid event, it should return an InvalidEvent error without appending or publishing", async () => {

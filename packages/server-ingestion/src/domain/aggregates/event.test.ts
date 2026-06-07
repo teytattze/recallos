@@ -7,17 +7,20 @@ const createdAt = new Date("2026-01-02T00:00:00Z");
 const occurredAt = new Date("2026-01-01T00:00:00Z");
 const tenant = Tenant.create("organization", "org1");
 const metadata = EntityMetadata.create(createdAt);
+const graphId = "01952d3f-0000-7000-8000-000000000100";
 
 type EventPayload = {
   occurredAt: Date;
   tags: Record<string, string>;
   body: Record<string, unknown>;
+  graphId: string;
 };
 
 const validPayload: EventPayload = {
   occurredAt,
   tags: { source: "slack" },
   body: { text: "hello" },
+  graphId,
 };
 const validInput = {
   tenant,
@@ -47,6 +50,14 @@ test("Event.create: given valid input, it should preserve the tenant", () => {
 
   // THEN
   expect(result.ok && result.value.tenant).toBe(tenant);
+});
+
+test("Event.create: given valid input, it should preserve the graph id", () => {
+  // GIVEN / WHEN
+  const result = Event.create(validInput);
+
+  // THEN
+  expect(result.ok && result.value.graphId.value).toBe(graphId);
 });
 
 test("Event.create: given a fresh event, it should mint a distinct id each time", () => {
@@ -104,6 +115,7 @@ const storedInput = {
     occurredAt,
     tags: { source: "slack" },
     body: { text: "hello" },
+    graphId,
   },
 };
 
@@ -123,6 +135,14 @@ test("Event.restore: given a stored row, it should restore the tenant", () => {
 
   // THEN
   expect(event.tenant.equals(tenant)).toBe(true);
+});
+
+test("Event.restore: given a stored row, it should restore the graph id", () => {
+  // GIVEN / WHEN
+  const event = Event.restore(storedInput);
+
+  // THEN
+  expect(event.graphId.value).toBe(graphId);
 });
 
 test("Event.restore: given a row with an empty body, it should throw", () => {
