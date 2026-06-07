@@ -56,7 +56,7 @@ const validInput = {
   },
 };
 
-test("IngestEventUseCase.execute: given valid input, it should append the event and return its id", async () => {
+test("IngestEventUseCase.execute: given valid input, it should append and publish the event in one transaction", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
   const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
@@ -67,59 +67,15 @@ test("IngestEventUseCase.execute: given valid input, it should append the event 
   // THEN
   expect(result.ok).toBe(true);
   if (!result.ok) return;
+  expect(uow.ran).toBe(1);
   expect(uow.events.appended.length).toBe(1);
   expect(result.value.eventId).toBe(uow.events.appended[0]!.id.value);
-});
-
-test("IngestEventUseCase.execute: given valid input, it should publish the same event through the outbox in one transaction", async () => {
-  // GIVEN
-  const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
-
-  // WHEN
-  await useCase.execute(validInput);
-
-  // THEN
-  expect(uow.ran).toBe(1);
   expect(uow.publisher.published.length).toBe(1);
   expect(uow.publisher.published[0]!.id.value).toBe(
     uow.events.appended[0]!.id.value,
   );
-});
-
-test("IngestEventUseCase.execute: given valid input, it should stamp the clock's time as the event's createdAt", async () => {
-  // GIVEN
-  const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
-
-  // WHEN
-  await useCase.execute(validInput);
-
-  // THEN
   expect(uow.events.appended[0]!.metadata.createdAt).toEqual(createdAt);
-});
-
-test("IngestEventUseCase.execute: given valid input, it should pass the tenant to the event", async () => {
-  // GIVEN
-  const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
-
-  // WHEN
-  await useCase.execute(validInput);
-
-  // THEN
   expect(uow.events.appended[0]!.tenant).toBe(tenant);
-});
-
-test("IngestEventUseCase.execute: given valid input, it should pass the graph id to the event", async () => {
-  // GIVEN
-  const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
-
-  // WHEN
-  await useCase.execute(validInput);
-
-  // THEN
   expect(uow.events.appended[0]!.graphId.value).toBe(graphId);
 });
 

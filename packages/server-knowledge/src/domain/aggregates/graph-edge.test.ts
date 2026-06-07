@@ -23,28 +23,15 @@ const validInput = {
   },
 };
 
-test("GraphEdge.create: given valid input, it should return an ok edge", () => {
+test("GraphEdge.create: given valid input, it should return an edge with metadata and tenant", () => {
   // GIVEN / WHEN
   const result = GraphEdge.create(validInput);
 
   // THEN
   expect(result.ok).toBe(true);
-});
-
-test("GraphEdge.create: given valid input, it should stamp now as the created-at metadata", () => {
-  // GIVEN / WHEN
-  const result = GraphEdge.create(validInput);
-
-  // THEN
-  expect(result.ok && result.value.metadata.createdAt).toEqual(now);
-});
-
-test("GraphEdge.create: given valid input, it should preserve the tenant", () => {
-  // GIVEN / WHEN
-  const result = GraphEdge.create(validInput);
-
-  // THEN
-  expect(result.ok && result.value.tenant).toBe(tenant);
+  if (!result.ok) return;
+  expect(result.value.metadata.createdAt).toEqual(now);
+  expect(result.value.tenant).toBe(tenant);
 });
 
 const sameNode = GraphNodeId.create();
@@ -85,7 +72,7 @@ const storedRow = {
   },
 };
 
-test("GraphEdge.restore: given a stored row, it should preserve the id and audit timestamps", () => {
+test("GraphEdge.restore: given a stored row, it should preserve persisted identity and tenant", () => {
   // GIVEN / WHEN
   const edge = GraphEdge.restore(storedRow);
 
@@ -93,13 +80,6 @@ test("GraphEdge.restore: given a stored row, it should preserve the id and audit
   expect(edge.id.value).toBe(storedRow.payload.id);
   expect(edge.metadata.createdAt).toEqual(storedRow.metadata.createdAt);
   expect(edge.metadata.updatedAt).toEqual(storedRow.metadata.updatedAt);
-});
-
-test("GraphEdge.restore: given a stored row, it should restore the tenant", () => {
-  // GIVEN / WHEN
-  const edge = GraphEdge.restore(storedRow);
-
-  // THEN
   expect(edge.tenant.equals(tenant)).toBe(true);
 });
 

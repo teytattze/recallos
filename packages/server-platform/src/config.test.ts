@@ -25,16 +25,10 @@ test("loadConfig: given only the required DATABASE_URL, it should apply defaults
   });
 });
 
-test("loadConfig: given a missing DATABASE_URL, it should throw", () => {
-  expect(() => loadConfig({})).toThrow(/Invalid environment configuration/);
-});
-
-test("loadConfig: given an unparseable PORT, it should throw", () => {
-  expect(() => loadConfig({ PORT: "abc" })).toThrow(
-    /Invalid environment configuration/,
-  );
-});
-
-test("loadConfig: given an unknown NODE_ENV, it should throw", () => {
-  expect(() => loadConfig({ NODE_ENV: "staging" })).toThrow();
+test.each([
+  ["a missing DATABASE_URL", {}],
+  ["an unparseable PORT", { PORT: "abc" }],
+  ["an unknown NODE_ENV", { NODE_ENV: "staging" }],
+])("loadConfig: given %s, it should throw", (_label, env) => {
+  expect(() => loadConfig(env)).toThrow(/Invalid environment configuration/);
 });

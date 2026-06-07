@@ -11,19 +11,12 @@ class TestId extends Id {
   }
 }
 
-test("Id.value: given a constructed id, it should return the wrapped string", () => {
+test("Id: given a constructed id, it should expose the wrapped string", () => {
   // GIVEN
   const id = TestId.from("abc");
 
   // WHEN / THEN
   expect(id.value).toBe("abc");
-});
-
-test("Id.toString: given a constructed id, it should return the wrapped string", () => {
-  // GIVEN
-  const id = TestId.from("abc");
-
-  // WHEN / THEN
   expect(id.toString()).toBe("abc");
 });
 

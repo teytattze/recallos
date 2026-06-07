@@ -18,29 +18,16 @@ const validInput = {
   },
 };
 
-test("Graph.create: given valid input, it should return an ok Graph", () => {
+test("Graph.create: given valid input, it should return a Graph with metadata and tenant", () => {
   // GIVEN / WHEN
   const result = Graph.create(validInput);
 
   // THEN
   expect(result.ok).toBe(true);
-});
-
-test("Graph.create: given valid input, it should stamp now as both created-at and updated-at metadata", () => {
-  // GIVEN / WHEN
-  const result = Graph.create(validInput);
-
-  // THEN
-  expect(result.ok && result.value.metadata.createdAt).toEqual(now);
-  expect(result.ok && result.value.metadata.updatedAt).toEqual(now);
-});
-
-test("Graph.create: given valid input, it should preserve the tenant", () => {
-  // GIVEN / WHEN
-  const result = Graph.create(validInput);
-
-  // THEN
-  expect(result.ok && result.value.tenant).toBe(tenant);
+  if (!result.ok) return;
+  expect(result.value.metadata.createdAt).toEqual(now);
+  expect(result.value.metadata.updatedAt).toEqual(now);
+  expect(result.value.tenant).toBe(tenant);
 });
 
 test("Graph.create: given a fresh graph, it should mint a distinct id each time", () => {
@@ -87,7 +74,7 @@ const storedRow = {
   },
 };
 
-test("Graph.restore: given a stored row, it should preserve the id and audit timestamps", () => {
+test("Graph.restore: given a stored row, it should preserve persisted identity and tenant", () => {
   // GIVEN / WHEN
   const graph = Graph.restore(storedRow);
 
@@ -95,13 +82,6 @@ test("Graph.restore: given a stored row, it should preserve the id and audit tim
   expect(graph.id.value).toBe(storedRow.payload.id);
   expect(graph.metadata.createdAt).toEqual(storedRow.metadata.createdAt);
   expect(graph.metadata.updatedAt).toEqual(storedRow.metadata.updatedAt);
-});
-
-test("Graph.restore: given a stored row, it should restore the tenant", () => {
-  // GIVEN / WHEN
-  const graph = Graph.restore(storedRow);
-
-  // THEN
   expect(graph.tenant.equals(tenant)).toBe(true);
 });
 

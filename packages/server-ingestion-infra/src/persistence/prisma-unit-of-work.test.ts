@@ -8,6 +8,7 @@ import { PrismaUnitOfWork } from "./prisma-unit-of-work.ts";
 
 const createdAt = new Date("2026-01-02T00:00:00Z");
 const occurredAt = new Date("2026-01-01T00:00:00Z");
+const graphId = "01952d3f-0000-7000-8000-000000000100";
 
 function buildEvent(): Event {
   return Event.restore({
@@ -18,6 +19,7 @@ function buildEvent(): Event {
       occurredAt,
       tags: { source: "slack" },
       body: { text: "hello" },
+      graphId,
     },
   });
 }

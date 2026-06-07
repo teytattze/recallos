@@ -27,7 +27,7 @@ test("EntityMetadata.restore: given explicit dates, it should return them throug
   expect(metadata.updatedAt).toEqual(updatedAt);
 });
 
-test("EntityMetadata.touch: given a later instant, it should advance updatedAt and keep createdAt", () => {
+test("EntityMetadata.touch: given a later instant, it should return advanced metadata without mutating the original", () => {
   // GIVEN
   const created = new Date("2026-01-01T00:00:00Z");
   const later = new Date("2026-03-01T00:00:00Z");
@@ -39,17 +39,6 @@ test("EntityMetadata.touch: given a later instant, it should advance updatedAt a
   // THEN
   expect(touched.createdAt).toEqual(created);
   expect(touched.updatedAt).toEqual(later);
-});
-
-test("EntityMetadata.touch: given a later instant, it should not mutate the original", () => {
-  // GIVEN
-  const created = new Date("2026-01-01T00:00:00Z");
-  const original = EntityMetadata.create(created);
-
-  // WHEN
-  const touched = original.touch(new Date("2026-03-01T00:00:00Z"));
-
-  // THEN
   expect(touched).not.toBe(original);
   expect(original.updatedAt).toEqual(created);
 });

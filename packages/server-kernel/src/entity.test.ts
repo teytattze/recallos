@@ -41,36 +41,30 @@ test("Entity.replaceProps: given new props, it should update the exposed value",
   expect(entity.name).toBe("second");
 });
 
-test("Entity.equals: given the same instance, it should return true", () => {
-  // GIVEN
-  const entity = TestEntity.of(TestId.from("e1"), "first");
-
-  // WHEN / THEN
-  expect(entity.equals(entity)).toBe(true);
+test.each([
+  [
+    "the same instance",
+    TestEntity.of(TestId.from("e1"), "first"),
+    (entity: TestEntity) => entity,
+  ],
+  [
+    "the same id but different props",
+    TestEntity.of(TestId.from("e1"), "first"),
+    () => TestEntity.of(TestId.from("e1"), "second"),
+  ],
+])("Entity.equals: given %s, it should return true", (_label, a, b) => {
+  // GIVEN / WHEN / THEN
+  expect(a.equals(b(a))).toBe(true);
 });
 
-test("Entity.equals: given the same id but different props, it should return true", () => {
-  // GIVEN
-  const a = TestEntity.of(TestId.from("e1"), "first");
-  const b = TestEntity.of(TestId.from("e1"), "second");
-
-  // WHEN / THEN
-  expect(a.equals(b)).toBe(true);
-});
-
-test("Entity.equals: given a different id, it should return false", () => {
-  // GIVEN
-  const a = TestEntity.of(TestId.from("e1"), "same");
-  const b = TestEntity.of(TestId.from("e2"), "same");
-
-  // WHEN / THEN
+test.each([
+  [
+    "a different id",
+    TestEntity.of(TestId.from("e1"), "same"),
+    TestEntity.of(TestId.from("e2"), "same"),
+  ],
+  ["undefined", TestEntity.of(TestId.from("e1"), "first"), undefined],
+])("Entity.equals: given %s, it should return false", (_label, a, b) => {
+  // GIVEN / WHEN / THEN
   expect(a.equals(b)).toBe(false);
-});
-
-test("Entity.equals: given undefined, it should return false", () => {
-  // GIVEN
-  const entity = TestEntity.of(TestId.from("e1"), "first");
-
-  // WHEN / THEN
-  expect(entity.equals(undefined)).toBe(false);
 });

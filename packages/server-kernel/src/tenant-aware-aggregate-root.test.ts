@@ -28,24 +28,13 @@ class TestTenantAwareAgg extends TenantAwareAggregateRoot<TestId> {
 
 const fixedMeta = EntityMetadata.create(new Date("2026-01-01T00:00:00Z"));
 
-test("TenantAwareAggregateRoot.tenant: given a constructed aggregate, it should return the injected tenant", () => {
+test("TenantAwareAggregateRoot: given a constructed aggregate, it should expose tenant and metadata", () => {
   // GIVEN
   const tenant = Tenant.create("organization", "org1");
   const agg = TestTenantAwareAgg.of(TestId.from("a1"), tenant, fixedMeta);
 
   // WHEN / THEN
   expect(agg.tenant).toBe(tenant);
-});
-
-test("TenantAwareAggregateRoot.metadata: given a constructed aggregate, it should expose inherited metadata", () => {
-  // GIVEN
-  const agg = TestTenantAwareAgg.of(
-    TestId.from("a1"),
-    Tenant.create("user", "u1"),
-    fixedMeta,
-  );
-
-  // WHEN / THEN
   expect(agg.metadata).toBe(fixedMeta);
 });
 

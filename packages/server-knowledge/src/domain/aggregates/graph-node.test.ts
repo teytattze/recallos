@@ -33,28 +33,15 @@ const createNode = (
   return result.value;
 };
 
-test("GraphNode.create: given valid input, it should return an ok node", () => {
+test("GraphNode.create: given valid input, it should return a node with metadata and tenant", () => {
   // GIVEN / WHEN
   const result = GraphNode.create(validInput);
 
   // THEN
   expect(result.ok).toBe(true);
-});
-
-test("GraphNode.create: given valid input, it should stamp now as the created-at metadata", () => {
-  // GIVEN / WHEN
-  const result = GraphNode.create(validInput);
-
-  // THEN
-  expect(result.ok && result.value.metadata.createdAt).toEqual(now);
-});
-
-test("GraphNode.create: given valid input, it should preserve the tenant", () => {
-  // GIVEN / WHEN
-  const result = GraphNode.create(validInput);
-
-  // THEN
-  expect(result.ok && result.value.tenant).toBe(tenant);
+  if (!result.ok) return;
+  expect(result.value.metadata.createdAt).toEqual(now);
+  expect(result.value.tenant).toBe(tenant);
 });
 
 test("GraphNode.create: given a fresh node, it should mint a distinct id each time", () => {
@@ -114,7 +101,7 @@ const storedRow = {
   },
 };
 
-test("GraphNode.restore: given a stored row, it should preserve the id and audit timestamps", () => {
+test("GraphNode.restore: given a stored row, it should preserve persisted identity and tenant", () => {
   // GIVEN / WHEN
   const node = GraphNode.restore(storedRow);
 
@@ -122,13 +109,6 @@ test("GraphNode.restore: given a stored row, it should preserve the id and audit
   expect(node.id.value).toBe(storedRow.payload.id);
   expect(node.metadata.createdAt).toEqual(storedRow.metadata.createdAt);
   expect(node.metadata.updatedAt).toEqual(storedRow.metadata.updatedAt);
-});
-
-test("GraphNode.restore: given a stored row, it should restore the tenant", () => {
-  // GIVEN / WHEN
-  const node = GraphNode.restore(storedRow);
-
-  // THEN
   expect(node.tenant.equals(tenant)).toBe(true);
 });
 
@@ -231,7 +211,7 @@ test("GraphNode.reviseBody: given a blank body, it should return an InvalidGraph
   expect(result.error.kind).toBe("InvalidGraphNode");
 });
 
-test("GraphNode.absorb: given a duplicate, the survivor should gain the duplicate's eventIds", () => {
+test("GraphNode.absorb: given a duplicate, it should merge eventIds idempotently", () => {
   // GIVEN
   const survivor = createNode({ eventIds: [EventId.create()] });
   const duplicate = createNode({ eventIds: [EventId.create()] });
@@ -241,13 +221,6 @@ test("GraphNode.absorb: given a duplicate, the survivor should gain the duplicat
 
   // THEN
   expect(survivor.eventIds).toHaveLength(2);
-});
-
-test("GraphNode.absorb: given the same duplicate twice, the second absorb should be a no-op", () => {
-  // GIVEN
-  const survivor = createNode({ eventIds: [EventId.create()] });
-  const duplicate = createNode({ eventIds: [EventId.create()] });
-  survivor.absorb(duplicate, later);
 
   // WHEN
   survivor.absorb(duplicate, later);

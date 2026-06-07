@@ -13,54 +13,40 @@ class TestVO extends ValueObject<TestProps> {
   }
 }
 
-test("ValueObject.equals: given undefined, it should return false", () => {
-  // GIVEN
-  const vo = TestVO.of("x", [], new Date(0));
-
-  // WHEN / THEN
-  expect(vo.equals(undefined)).toBe(false);
+test.each([
+  [
+    "the same instance",
+    TestVO.of("x", [], new Date(0)),
+    (vo: TestVO) => vo,
+  ],
+  [
+    "structurally equal props",
+    TestVO.of("x", ["t1", "t2"], new Date("2026-01-01T00:00:00Z")),
+    () => TestVO.of("x", ["t1", "t2"], new Date("2026-01-01T00:00:00Z")),
+  ],
+])("ValueObject.equals: given %s, it should return true", (_label, a, b) => {
+  // GIVEN / WHEN / THEN
+  expect(a.equals(b(a))).toBe(true);
 });
 
-test("ValueObject.equals: given the same instance, it should return true", () => {
-  // GIVEN
-  const vo = TestVO.of("x", [], new Date(0));
-
-  // WHEN / THEN
-  expect(vo.equals(vo)).toBe(true);
-});
-
-test("ValueObject.equals: given structurally equal props, it should return true", () => {
-  // GIVEN
-  const a = TestVO.of("x", ["t1", "t2"], new Date("2026-01-01T00:00:00Z"));
-  const b = TestVO.of("x", ["t1", "t2"], new Date("2026-01-01T00:00:00Z"));
-
-  // WHEN / THEN
-  expect(a.equals(b)).toBe(true);
-});
-
-test("ValueObject.equals: given a differing primitive, it should return false", () => {
-  // GIVEN
-  const a = TestVO.of("x", ["t"], new Date(0));
-  const b = TestVO.of("y", ["t"], new Date(0));
-
-  // WHEN / THEN
-  expect(a.equals(b)).toBe(false);
-});
-
-test("ValueObject.equals: given a differing array length, it should return false", () => {
-  // GIVEN
-  const a = TestVO.of("x", ["t1", "t2"], new Date(0));
-  const b = TestVO.of("x", ["t1"], new Date(0));
-
-  // WHEN / THEN
-  expect(a.equals(b)).toBe(false);
-});
-
-test("ValueObject.equals: given a differing Date time, it should return false", () => {
-  // GIVEN
-  const a = TestVO.of("x", [], new Date("2026-01-01T00:00:00Z"));
-  const b = TestVO.of("x", [], new Date("2026-01-02T00:00:00Z"));
-
-  // WHEN / THEN
+test.each([
+  ["undefined", TestVO.of("x", [], new Date(0)), undefined],
+  [
+    "a differing primitive",
+    TestVO.of("x", ["t"], new Date(0)),
+    TestVO.of("y", ["t"], new Date(0)),
+  ],
+  [
+    "a differing array length",
+    TestVO.of("x", ["t1", "t2"], new Date(0)),
+    TestVO.of("x", ["t1"], new Date(0)),
+  ],
+  [
+    "a differing Date time",
+    TestVO.of("x", [], new Date("2026-01-01T00:00:00Z")),
+    TestVO.of("x", [], new Date("2026-01-02T00:00:00Z")),
+  ],
+])("ValueObject.equals: given %s, it should return false", (_label, a, b) => {
+  // GIVEN / WHEN / THEN
   expect(a.equals(b)).toBe(false);
 });
