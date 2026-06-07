@@ -26,13 +26,13 @@ class ProcessEventUseCase implements ProcessEventPort {
 
   async execute(input: ProcessEventPortInput): ProcessEventPortOutput {
     const eventId = EventId.restore({ payload: input.payload.event.id });
-    const isAlreadyProcessed = await this.processedEventRepository.seen({
+    const isAlreadyProcessed = await this.processedEventRepository.exists({
       payload: { eventId },
     });
+
     if (isAlreadyProcessed) {
       return okResult(undefined);
     }
-
     const graphId = GraphId.restore({
       payload: input.payload.event.graphId,
     });
@@ -59,11 +59,10 @@ class ProcessEventUseCase implements ProcessEventPort {
       },
     });
 
-    const relatedGraphNodes =
-      await this.graphNodeRepository.searchByEmbedding({
-        tenant: input.tenant,
-        payload: { embedding },
-      });
+    const relatedGraphNodes = await this.graphNodeRepository.searchByEmbedding({
+      tenant: input.tenant,
+      payload: { embedding },
+    });
 
     const graphEdges: GraphEdge[] = [];
     for (const node of relatedGraphNodes) {
