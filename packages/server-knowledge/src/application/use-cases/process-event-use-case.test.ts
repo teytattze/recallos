@@ -1,14 +1,7 @@
-import {
-  EntityMetadata,
-  Tenant,
-  createFixedClock,
-} from "@repo/server-kernel";
+import { EntityMetadata, Tenant, createFixedClock } from "@repo/server-kernel";
 import { expect, test } from "bun:test";
 
 import type { GraphEdge } from "../../domain/aggregates/graph-edge.ts";
-import { GraphNode } from "../../domain/aggregates/graph-node.ts";
-import { EventId } from "../../domain/value-objects/event-id.ts";
-import { GraphId } from "../../domain/value-objects/graph-id.ts";
 import type { EmbeddingGatewayPort } from "../ports/outbound/embedding-gateway-port.ts";
 import type { GraphEdgeRepositoryPort } from "../ports/outbound/graph-edge-repository-port.ts";
 import type { GraphNodeRepositoryPort } from "../ports/outbound/graph-node-repository-port.ts";
@@ -18,6 +11,9 @@ import type {
   UnitOfWorkPortContext,
 } from "../ports/outbound/unit-of-work-port.ts";
 
+import { GraphNode } from "../../domain/aggregates/graph-node.ts";
+import { EventId } from "../../domain/value-objects/event-id.ts";
+import { GraphId } from "../../domain/value-objects/graph-id.ts";
 import { ProcessEventUseCase } from "./process-event-use-case.ts";
 
 class FakeEmbeddingGateway implements EmbeddingGatewayPort {
@@ -34,7 +30,7 @@ class FakeProcessedEventRepository implements ProcessedEventRepositoryPort {
 
   constructor(private readonly seenResult: boolean) {}
 
-  seen(): Promise<boolean> {
+  exists(): Promise<boolean> {
     return Promise.resolve(this.seenResult);
   }
 
@@ -127,10 +123,7 @@ test("ProcessEventUseCase.execute: given an already-processed event, it should r
   const embeddingGateway = new FakeEmbeddingGateway();
   const processedEventRepository = new FakeProcessedEventRepository(true);
   const graphNodeRepository = new FakeGraphNodeRepository([]);
-  const uow = new FakeUnitOfWork(
-    graphNodeRepository,
-    processedEventRepository,
-  );
+  const uow = new FakeUnitOfWork(graphNodeRepository, processedEventRepository);
   const useCase = new ProcessEventUseCase(
     createFixedClock(now),
     embeddingGateway,
@@ -157,10 +150,7 @@ test("ProcessEventUseCase.execute: given a new event, it should create a node, r
   const graphNodeRepository = new FakeGraphNodeRepository([
     createRelatedNode(),
   ]);
-  const uow = new FakeUnitOfWork(
-    graphNodeRepository,
-    processedEventRepository,
-  );
+  const uow = new FakeUnitOfWork(graphNodeRepository, processedEventRepository);
   const useCase = new ProcessEventUseCase(
     createFixedClock(now),
     embeddingGateway,
