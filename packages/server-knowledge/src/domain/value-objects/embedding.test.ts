@@ -2,7 +2,7 @@ import { test, expect } from "bun:test";
 
 import { Embedding } from "./embedding.ts";
 
-test("Embedding.create: given a non-empty vector, it should return ok", () => {
+test("Embedding.create: given a non-empty vector, it should return ok and derive dimensions", () => {
   // GIVEN / WHEN
   const result = Embedding.create({
     payload: {
@@ -13,21 +13,9 @@ test("Embedding.create: given a non-empty vector, it should return ok", () => {
 
   // THEN
   expect(result.ok).toBe(true);
-});
-
-test("Embedding.create: given a vector, it should derive dimensions from the vector length", () => {
-  // GIVEN
-  const created = Embedding.create({
-    payload: {
-      vector: [0.1, 0.2, 0.3],
-      model: "text-embedding-3-small",
-    },
-  });
-  if (!created.ok) throw new Error("expected ok");
-
-  // WHEN / THEN
+  if (!result.ok) return;
   expect(
-    created.value.equals(
+    result.value.equals(
       Embedding.restore({
         payload: {
           vector: [0.1, 0.2, 0.3],
@@ -43,7 +31,7 @@ test.each([
   ["an empty vector", [] as number[], "text-embedding-3-small"],
   ["a blank model", [0.1, 0.2], "   "],
 ])(
-  "Embedding.create: given %s, it should return an InvalidKnowledgeGraphNode error",
+  "Embedding.create: given %s, it should return an InvalidGraphNode error",
   (_label, vector, model) => {
     // GIVEN / WHEN
     const result = Embedding.create({ payload: { vector, model } });
@@ -51,32 +39,21 @@ test.each([
     // THEN
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.error.kind).toBe("InvalidKnowledgeGraphNode");
+    expect(result.error.kind).toBe("InvalidGraphNode");
     expect(result.error.category).toBe("validation");
   },
 );
 
-test("Embedding.restore: given non-positive dimensions, it should throw", () => {
+test.each([
+  ["non-positive dimensions", { vector: [0.1], dimensions: 0 }],
+  ["an empty vector", { vector: [], dimensions: 1 }],
+])("Embedding.restore: given %s, it should throw", (_label, patch) => {
   // GIVEN / WHEN / THEN
   expect(() =>
     Embedding.restore({
       payload: {
-        vector: [0.1],
         model: "text-embedding-3-small",
-        dimensions: 0,
-      },
-    }),
-  ).toThrow();
-});
-
-test("Embedding.restore: given an empty vector, it should throw", () => {
-  // GIVEN / WHEN / THEN
-  expect(() =>
-    Embedding.restore({
-      payload: {
-        vector: [],
-        model: "text-embedding-3-small",
-        dimensions: 1,
+        ...patch,
       },
     }),
   ).toThrow();

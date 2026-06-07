@@ -18,7 +18,7 @@ test.each([
   ["a value above 1", 1.01],
   ["a value below 0", -0.01],
 ])(
-  "Confidence.create: given %s, it should return an InvalidKnowledgeGraphEdge error",
+  "Confidence.create: given %s, it should return an InvalidGraphEdge error",
   (_label, value) => {
     // GIVEN / WHEN
     const result = Confidence.create({ payload: value });
@@ -26,7 +26,7 @@ test.each([
     // THEN
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.error.kind).toBe("InvalidKnowledgeGraphEdge");
+    expect(result.error.kind).toBe("InvalidGraphEdge");
     expect(result.error.category).toBe("validation");
   },
 );

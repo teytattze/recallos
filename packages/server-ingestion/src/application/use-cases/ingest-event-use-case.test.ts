@@ -44,6 +44,7 @@ class FakeUnitOfWork implements UnitOfWorkPort {
 
 const createdAt = new Date("2026-01-02T00:00:00Z");
 const tenant = Tenant.create("organization", "org1");
+const graphId = "01952d3f-0000-7000-8000-000000000100";
 
 const validInput = {
   tenant,
@@ -51,10 +52,11 @@ const validInput = {
     occurredAt: new Date("2026-01-01T00:00:00Z"),
     tags: { source: "slack" },
     body: { text: "hello" },
+    graphId,
   },
 };
 
-test("IngestEventUseCase.execute: given valid input, it should append the event and return its id", async () => {
+test("IngestEventUseCase.execute: given valid input, it should append and publish the event in one transaction", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
   const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
@@ -65,48 +67,16 @@ test("IngestEventUseCase.execute: given valid input, it should append the event 
   // THEN
   expect(result.ok).toBe(true);
   if (!result.ok) return;
+  expect(uow.ran).toBe(1);
   expect(uow.events.appended.length).toBe(1);
   expect(result.value.eventId).toBe(uow.events.appended[0]!.id.value);
-});
-
-test("IngestEventUseCase.execute: given valid input, it should publish the same event through the outbox in one transaction", async () => {
-  // GIVEN
-  const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
-
-  // WHEN
-  await useCase.execute(validInput);
-
-  // THEN
-  expect(uow.ran).toBe(1);
   expect(uow.publisher.published.length).toBe(1);
   expect(uow.publisher.published[0]!.id.value).toBe(
     uow.events.appended[0]!.id.value,
   );
-});
-
-test("IngestEventUseCase.execute: given valid input, it should stamp the clock's time as the event's createdAt", async () => {
-  // GIVEN
-  const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
-
-  // WHEN
-  await useCase.execute(validInput);
-
-  // THEN
   expect(uow.events.appended[0]!.metadata.createdAt).toEqual(createdAt);
-});
-
-test("IngestEventUseCase.execute: given valid input, it should pass the tenant to the event", async () => {
-  // GIVEN
-  const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
-
-  // WHEN
-  await useCase.execute(validInput);
-
-  // THEN
   expect(uow.events.appended[0]!.tenant).toBe(tenant);
+  expect(uow.events.appended[0]!.graphId.value).toBe(graphId);
 });
 
 test("IngestEventUseCase.execute: given an invalid event, it should return an InvalidEvent error without appending or publishing", async () => {

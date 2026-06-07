@@ -7,7 +7,7 @@ import {
 } from "@repo/server-kernel";
 import { z } from "zod";
 
-import { createInvalidKnowledgeGraphEdgeError } from "../errors/invalid-knowledge-graph-edge-error.ts";
+import { createInvalidGraphEdgeError } from "../errors/invalid-graph-edge-error.ts";
 
 const confidencePropsSchema = z.object({
   value: z.number().min(0).max(1),
@@ -33,7 +33,7 @@ class Confidence extends ValueObject<ConfidenceProps> {
       parseProps(
         confidencePropsSchema,
         { value: input.payload },
-        createInvalidKnowledgeGraphEdgeError,
+        createInvalidGraphEdgeError,
       ),
       (props) => new Confidence(props),
     );

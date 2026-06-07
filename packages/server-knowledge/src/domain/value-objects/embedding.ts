@@ -7,7 +7,7 @@ import {
 } from "@repo/server-kernel";
 import { z } from "zod";
 
-import { createInvalidKnowledgeGraphNodeError } from "../errors/invalid-knowledge-graph-node-error.ts";
+import { createInvalidGraphNodeError } from "../errors/invalid-graph-node-error.ts";
 
 const embeddingPropsSchema = z.object({
   vector: z.array(z.number()).min(1, "embedding vector must not be empty"),
@@ -37,14 +37,6 @@ class Embedding extends ValueObject<EmbeddingProps> {
     super(props);
   }
 
-  get model(): string {
-    return this._props.model;
-  }
-
-  get dimensions(): number {
-    return this._props.dimensions;
-  }
-
   static create(input: CreateEmbeddingInput): Result<Embedding> {
     return mapResult(
       parseProps(
@@ -54,7 +46,7 @@ class Embedding extends ValueObject<EmbeddingProps> {
           model: input.payload.model,
           dimensions: input.payload.vector.length,
         },
-        createInvalidKnowledgeGraphNodeError,
+        createInvalidGraphNodeError,
       ),
       (props) => new Embedding(props),
     );
@@ -68,6 +60,14 @@ class Embedding extends ValueObject<EmbeddingProps> {
         dimensions: input.payload.dimensions,
       }),
     );
+  }
+
+  get model(): string {
+    return this._props.model;
+  }
+
+  get dimensions(): number {
+    return this._props.dimensions;
   }
 }
 

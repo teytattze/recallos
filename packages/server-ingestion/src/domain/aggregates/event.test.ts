@@ -7,17 +7,20 @@ const createdAt = new Date("2026-01-02T00:00:00Z");
 const occurredAt = new Date("2026-01-01T00:00:00Z");
 const tenant = Tenant.create("organization", "org1");
 const metadata = EntityMetadata.create(createdAt);
+const graphId = "01952d3f-0000-7000-8000-000000000100";
 
 type EventPayload = {
   occurredAt: Date;
   tags: Record<string, string>;
   body: Record<string, unknown>;
+  graphId: string;
 };
 
 const validPayload: EventPayload = {
   occurredAt,
   tags: { source: "slack" },
   body: { text: "hello" },
+  graphId,
 };
 const validInput = {
   tenant,
@@ -25,28 +28,16 @@ const validInput = {
   payload: validPayload,
 };
 
-test("Event.create: given valid input, it should return an ok Event", () => {
+test("Event.create: given valid input, it should return an Event with metadata and ownership", () => {
   // GIVEN / WHEN
   const result = Event.create(validInput);
 
   // THEN
   expect(result.ok).toBe(true);
-});
-
-test("Event.create: given valid input, it should stamp createdAt as the created-at metadata", () => {
-  // GIVEN / WHEN
-  const result = Event.create(validInput);
-
-  // THEN
-  expect(result.ok && result.value.metadata.createdAt).toEqual(createdAt);
-});
-
-test("Event.create: given valid input, it should preserve the tenant", () => {
-  // GIVEN / WHEN
-  const result = Event.create(validInput);
-
-  // THEN
-  expect(result.ok && result.value.tenant).toBe(tenant);
+  if (!result.ok) return;
+  expect(result.value.metadata.createdAt).toEqual(createdAt);
+  expect(result.value.tenant).toBe(tenant);
+  expect(result.value.graphId.value).toBe(graphId);
 });
 
 test("Event.create: given a fresh event, it should mint a distinct id each time", () => {
@@ -104,10 +95,11 @@ const storedInput = {
     occurredAt,
     tags: { source: "slack" },
     body: { text: "hello" },
+    graphId,
   },
 };
 
-test("Event.restore: given a stored row, it should preserve the id and audit timestamps", () => {
+test("Event.restore: given a stored row, it should preserve persisted identity and ownership", () => {
   // GIVEN / WHEN
   const event = Event.restore(storedInput);
 
@@ -115,14 +107,8 @@ test("Event.restore: given a stored row, it should preserve the id and audit tim
   expect(event.id.value).toBe(storedInput.payload.id);
   expect(event.metadata.createdAt).toEqual(storedInput.metadata.createdAt);
   expect(event.metadata.updatedAt).toEqual(storedInput.metadata.updatedAt);
-});
-
-test("Event.restore: given a stored row, it should restore the tenant", () => {
-  // GIVEN / WHEN
-  const event = Event.restore(storedInput);
-
-  // THEN
   expect(event.tenant.equals(tenant)).toBe(true);
+  expect(event.graphId.value).toBe(graphId);
 });
 
 test("Event.restore: given a row with an empty body, it should throw", () => {

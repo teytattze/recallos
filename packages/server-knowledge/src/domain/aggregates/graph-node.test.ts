@@ -3,9 +3,9 @@ import { test, expect } from "bun:test";
 
 import { Embedding } from "../value-objects/embedding.ts";
 import { EventId } from "../value-objects/event-id.ts";
-import { KnowledgeGraphId } from "../value-objects/knowledge-graph-id.ts";
-import { NodeBody } from "../value-objects/node-body.ts";
-import { KnowledgeGraphNode } from "./knowledge-graph-node.ts";
+import { GraphId } from "../value-objects/graph-id.ts";
+import { GraphNodeBody } from "../value-objects/graph-node-body.ts";
+import { GraphNode } from "./graph-node.ts";
 
 const now = new Date("2026-01-01T00:00:00Z");
 const later = new Date("2026-01-05T00:00:00Z");
@@ -16,8 +16,7 @@ const validInput = {
   tenant,
   metadata,
   payload: {
-    graphId: KnowledgeGraphId.create(),
-    type: "PERSON" as const,
+    graphId: GraphId.create(),
     body: "Ada Lovelace",
     eventIds: [EventId.create()],
   },
@@ -25,8 +24,8 @@ const validInput = {
 
 const createNode = (
   patch: Partial<typeof validInput.payload> = {},
-): KnowledgeGraphNode => {
-  const result = KnowledgeGraphNode.create({
+): GraphNode => {
+  const result = GraphNode.create({
     ...validInput,
     payload: { ...validInput.payload, ...patch },
   });
@@ -34,34 +33,21 @@ const createNode = (
   return result.value;
 };
 
-test("KnowledgeGraphNode.create: given valid input, it should return an ok node", () => {
+test("GraphNode.create: given valid input, it should return a node with metadata and tenant", () => {
   // GIVEN / WHEN
-  const result = KnowledgeGraphNode.create(validInput);
+  const result = GraphNode.create(validInput);
 
   // THEN
   expect(result.ok).toBe(true);
+  if (!result.ok) return;
+  expect(result.value.metadata.createdAt).toEqual(now);
+  expect(result.value.tenant).toBe(tenant);
 });
 
-test("KnowledgeGraphNode.create: given valid input, it should stamp now as the created-at metadata", () => {
+test("GraphNode.create: given a fresh node, it should mint a distinct id each time", () => {
   // GIVEN / WHEN
-  const result = KnowledgeGraphNode.create(validInput);
-
-  // THEN
-  expect(result.ok && result.value.metadata.createdAt).toEqual(now);
-});
-
-test("KnowledgeGraphNode.create: given valid input, it should preserve the tenant", () => {
-  // GIVEN / WHEN
-  const result = KnowledgeGraphNode.create(validInput);
-
-  // THEN
-  expect(result.ok && result.value.tenant).toBe(tenant);
-});
-
-test("KnowledgeGraphNode.create: given a fresh node, it should mint a distinct id each time", () => {
-  // GIVEN / WHEN
-  const a = KnowledgeGraphNode.create(validInput);
-  const b = KnowledgeGraphNode.create(validInput);
+  const a = GraphNode.create(validInput);
+  const b = GraphNode.create(validInput);
 
   // THEN
   expect(a.ok && b.ok && a.value.id.value).not.toBe(
@@ -73,10 +59,10 @@ test.each([
   ["a blank body", { body: "   " }],
   ["no source events", { eventIds: [] }],
 ])(
-  "KnowledgeGraphNode.create: given %s, it should return an InvalidKnowledgeGraphNode error",
+  "GraphNode.create: given %s, it should return an InvalidGraphNode error",
   (_label, patch) => {
     // GIVEN / WHEN
-    const result = KnowledgeGraphNode.create({
+    const result = GraphNode.create({
       ...validInput,
       payload: { ...validInput.payload, ...patch },
     });
@@ -84,17 +70,17 @@ test.each([
     // THEN
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.error.kind).toBe("InvalidKnowledgeGraphNode");
+    expect(result.error.kind).toBe("InvalidGraphNode");
     expect(result.error.category).toBe("validation");
   },
 );
 
-test("KnowledgeGraphNode.create: given only duplicate source events, it should still be allowed", () => {
+test("GraphNode.create: given only duplicate source events, it should still be allowed", () => {
   // GIVEN
   const eventId = EventId.create();
 
   // WHEN
-  const result = KnowledgeGraphNode.create({
+  const result = GraphNode.create({
     ...validInput,
     payload: { ...validInput.payload, eventIds: [eventId, eventId] },
   });
@@ -109,42 +95,34 @@ const storedRow = {
   payload: {
     id: "01952d3f-0000-7000-8000-000000000001",
     graphId: "01952d3f-0000-7000-8000-000000000002",
-    type: "PERSON" as const,
     body: "Ada Lovelace",
     eventIds: ["01952d3f-0000-7000-8000-000000000003"],
     embedding: null,
   },
 };
 
-test("KnowledgeGraphNode.restore: given a stored row, it should preserve the id and audit timestamps", () => {
+test("GraphNode.restore: given a stored row, it should preserve persisted identity and tenant", () => {
   // GIVEN / WHEN
-  const node = KnowledgeGraphNode.restore(storedRow);
+  const node = GraphNode.restore(storedRow);
 
   // THEN
   expect(node.id.value).toBe(storedRow.payload.id);
   expect(node.metadata.createdAt).toEqual(storedRow.metadata.createdAt);
   expect(node.metadata.updatedAt).toEqual(storedRow.metadata.updatedAt);
-});
-
-test("KnowledgeGraphNode.restore: given a stored row, it should restore the tenant", () => {
-  // GIVEN / WHEN
-  const node = KnowledgeGraphNode.restore(storedRow);
-
-  // THEN
   expect(node.tenant.equals(tenant)).toBe(true);
 });
 
-test("KnowledgeGraphNode.restore: given a row with no source events, it should throw", () => {
+test("GraphNode.restore: given a row with no source events, it should throw", () => {
   // GIVEN / WHEN / THEN
   expect(() =>
-    KnowledgeGraphNode.restore({
+    GraphNode.restore({
       ...storedRow,
       payload: { ...storedRow.payload, eventIds: [] },
     }),
   ).toThrow();
 });
 
-test("KnowledgeGraphNode.create: given a fresh node, it should record a NodeCreated event", () => {
+test("GraphNode.create: given a fresh node, it should record a NodeCreated event", () => {
   // GIVEN
   const node = createNode();
 
@@ -157,7 +135,7 @@ test("KnowledgeGraphNode.create: given a fresh node, it should record a NodeCrea
   expect(events[0]?.aggregateId).toBe(node.id.value);
 });
 
-test("KnowledgeGraphNode.attachEvents: given a new event, it should union it into the provenance", () => {
+test("GraphNode.attachEvents: given a new event, it should union it into the provenance", () => {
   // GIVEN
   const node = createNode();
   const fresh = EventId.create();
@@ -170,20 +148,20 @@ test("KnowledgeGraphNode.attachEvents: given a new event, it should union it int
   expect(node.metadata.updatedAt).toEqual(later);
 });
 
-test("KnowledgeGraphNode.attachEvents: given an already-attached event, it should be an idempotent no-op", () => {
+test("GraphNode.attachEvents: given an already-attached event, it should be an idempotent no-op", () => {
   // GIVEN
   const node = createNode();
   const existing = node.eventIds[0]!;
 
   // WHEN
-  node.attachEvents([EventId.restore(existing.value)], later);
+  node.attachEvents([EventId.restore({ payload: existing.value })], later);
 
   // THEN
   expect(node.eventIds).toHaveLength(1);
   expect(node.metadata.updatedAt).toEqual(now);
 });
 
-test("KnowledgeGraphNode.assignEmbedding: given a node born without one, it should flip embedding from null", () => {
+test("GraphNode.assignEmbedding: given a node born without one, it should flip embedding from null", () => {
   // GIVEN
   const node = createNode();
   node.pullDomainEvents();
@@ -205,7 +183,7 @@ test("KnowledgeGraphNode.assignEmbedding: given a node born without one, it shou
   expect(events[0]?.eventName).toBe("NodeEmbedded");
 });
 
-test("KnowledgeGraphNode.reviseBody: given new text, it should replace the body", () => {
+test("GraphNode.reviseBody: given new text, it should replace the body", () => {
   // GIVEN
   const node = createNode();
 
@@ -215,12 +193,12 @@ test("KnowledgeGraphNode.reviseBody: given new text, it should replace the body"
   // THEN
   expect(result.ok).toBe(true);
   expect(
-    node.body.equals(NodeBody.restore({ payload: "Augusta Ada King" })),
+    node.body.equals(GraphNodeBody.restore({ payload: "Augusta Ada King" })),
   ).toBe(true);
   expect(node.metadata.updatedAt).toEqual(later);
 });
 
-test("KnowledgeGraphNode.reviseBody: given a blank body, it should return an InvalidKnowledgeGraphNode error", () => {
+test("GraphNode.reviseBody: given a blank body, it should return an InvalidGraphNode error", () => {
   // GIVEN
   const node = createNode();
 
@@ -230,10 +208,10 @@ test("KnowledgeGraphNode.reviseBody: given a blank body, it should return an Inv
   // THEN
   expect(result.ok).toBe(false);
   if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidKnowledgeGraphNode");
+  expect(result.error.kind).toBe("InvalidGraphNode");
 });
 
-test("KnowledgeGraphNode.absorb: given a duplicate, the survivor should gain the duplicate's eventIds", () => {
+test("GraphNode.absorb: given a duplicate, it should merge eventIds idempotently", () => {
   // GIVEN
   const survivor = createNode({ eventIds: [EventId.create()] });
   const duplicate = createNode({ eventIds: [EventId.create()] });
@@ -243,13 +221,6 @@ test("KnowledgeGraphNode.absorb: given a duplicate, the survivor should gain the
 
   // THEN
   expect(survivor.eventIds).toHaveLength(2);
-});
-
-test("KnowledgeGraphNode.absorb: given the same duplicate twice, the second absorb should be a no-op", () => {
-  // GIVEN
-  const survivor = createNode({ eventIds: [EventId.create()] });
-  const duplicate = createNode({ eventIds: [EventId.create()] });
-  survivor.absorb(duplicate, later);
 
   // WHEN
   survivor.absorb(duplicate, later);

@@ -1,11 +1,11 @@
-import type { KnowledgeGraphEdgeRepositoryPort } from "./knowledge-graph-edge-repository-port.ts";
-import type { KnowledgeGraphNodeRepositoryPort } from "./knowledge-graph-node-repository-port.ts";
-import type { ProcessedEventLedgerPort } from "./processed-event-ledger-port.ts";
+import type { GraphEdgeRepositoryPort } from "./graph-edge-repository-port.ts";
+import type { GraphNodeRepositoryPort } from "./graph-node-repository-port.ts";
+import type { ProcessedEventRepositoryPort } from "./processed-event-repository-port.ts";
 
 interface UnitOfWorkPortContext {
-  nodes: KnowledgeGraphNodeRepositoryPort;
-  edges: KnowledgeGraphEdgeRepositoryPort;
-  ledger: ProcessedEventLedgerPort;
+  graphNodeRepository: GraphNodeRepositoryPort;
+  graphEdgeRepository: GraphEdgeRepositoryPort;
+  processedEventRepository: ProcessedEventRepositoryPort;
 }
 
 interface UnitOfWorkPort {

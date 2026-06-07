@@ -11,10 +11,10 @@ import { z } from "zod";
 
 import type { Embedding } from "../value-objects/embedding.ts";
 
-import { createInvalidKnowledgeGraphError } from "../errors/invalid-knowledge-graph-error.ts";
-import { KnowledgeGraphId } from "../value-objects/knowledge-graph-id.ts";
+import { createInvalidGraphError } from "../errors/invalid-graph-error.ts";
+import { GraphId } from "../value-objects/graph-id.ts";
 
-type CreateKnowledgeGraphInput = {
+type CreateGraphInput = {
   tenant: Tenant;
   metadata: EntityMetadata;
   payload: {
@@ -24,7 +24,7 @@ type CreateKnowledgeGraphInput = {
   };
 };
 
-type RestoreKnowledgeGraphInput = {
+type RestoreGraphInput = {
   tenant: Tenant;
   metadata: EntityMetadata;
   payload: {
@@ -35,42 +35,42 @@ type RestoreKnowledgeGraphInput = {
   };
 };
 
-const knowledgeGraphPropsSchema = z.object({
-  name: z.string().trim().min(1, "knowledge graph name must not be empty"),
+const graphPropsSchema = z.object({
+  name: z.string().trim().min(1, "graph name must not be empty"),
   embeddingModel: z.string().trim().min(1, "embedding model must be provided"),
   embeddingDimensions: z.number().int().positive(),
 });
 
-type KnowledgeGraphProps = z.infer<typeof knowledgeGraphPropsSchema>;
+type GraphProps = z.infer<typeof graphPropsSchema>;
 
-class KnowledgeGraph extends TenantAwareAggregateRoot<
-  KnowledgeGraphId,
-  KnowledgeGraphProps
+class Graph extends TenantAwareAggregateRoot<
+  GraphId,
+  GraphProps
 > {
   private constructor(
-    id: KnowledgeGraphId,
+    id: GraphId,
     tenant: Tenant,
     metadata: EntityMetadata,
-    props: KnowledgeGraphProps,
+    props: GraphProps,
   ) {
     super(id, tenant, metadata, props);
   }
 
-  static create(input: CreateKnowledgeGraphInput): Result<KnowledgeGraph> {
+  static create(input: CreateGraphInput): Result<Graph> {
     const parsePropsResult = parseProps(
-      knowledgeGraphPropsSchema,
+      graphPropsSchema,
       {
         name: input.payload.name,
         embeddingModel: input.payload.embeddingModel,
         embeddingDimensions: input.payload.embeddingDimensions,
       },
-      createInvalidKnowledgeGraphError,
+      createInvalidGraphError,
     );
     if (!parsePropsResult.ok) return parsePropsResult;
 
     return okResult(
-      new KnowledgeGraph(
-        KnowledgeGraphId.create(),
+      new Graph(
+        GraphId.create(),
         input.tenant,
         input.metadata,
         parsePropsResult.value,
@@ -78,12 +78,12 @@ class KnowledgeGraph extends TenantAwareAggregateRoot<
     );
   }
 
-  static restore(input: RestoreKnowledgeGraphInput): KnowledgeGraph {
-    return new KnowledgeGraph(
-      KnowledgeGraphId.restore(input.payload.id),
+  static restore(input: RestoreGraphInput): Graph {
+    return new Graph(
+      GraphId.restore({ payload: input.payload.id }),
       input.tenant,
       input.metadata,
-      parsePropsOrThrow(knowledgeGraphPropsSchema, {
+      parsePropsOrThrow(graphPropsSchema, {
         name: input.payload.name,
         embeddingModel: input.payload.embeddingModel,
         embeddingDimensions: input.payload.embeddingDimensions,
@@ -100,4 +100,4 @@ class KnowledgeGraph extends TenantAwareAggregateRoot<
   }
 }
 
-export { KnowledgeGraph };
+export { Graph };
