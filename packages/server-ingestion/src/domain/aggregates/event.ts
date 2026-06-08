@@ -22,7 +22,9 @@ import { GraphId } from "../value-objects/graph-id";
 const eventPropsSchema = z.object({
   external: z.custom<EventExternal>((v) => v instanceof EventExternal),
   graphId: z.custom<GraphId>((v) => v instanceof GraphId),
-  raw: z.custom<JsonObject>((data) => z.json().parse(data)).brand<"EventRaw">(),
+  raw: z
+    .custom<JsonObject>((data) => z.json().safeParse(data).success)
+    .brand<"EventRaw">(),
 });
 
 type EventProps = z.output<typeof eventPropsSchema>;
@@ -52,11 +54,18 @@ class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
     const graphId = GraphId.restore({
       payload: input.payload.graphId,
     });
+    const externalResult = EventExternal.create({
+      payload: input.payload.external,
+    });
+
+    if (!externalResult.ok) {
+      return externalResult;
+    }
 
     const parsePropsResult = parseProps(
       eventPropsSchema,
       {
-        external: EventExternal.restore({ payload: input.payload.external }),
+        external: externalResult.value,
         graphId,
         raw: input.payload.raw,
       },

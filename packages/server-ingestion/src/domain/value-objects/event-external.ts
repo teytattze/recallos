@@ -33,7 +33,7 @@ class EventExternal extends ValueObject<EventExternalProps> {
     return mapResult(
       parseProps(
         eventExternalPropsSchema,
-        { entries: input.payload },
+        input.payload,
         createInvalidEventError,
       ),
       (props) => new EventExternal(props),
@@ -42,7 +42,7 @@ class EventExternal extends ValueObject<EventExternalProps> {
 
   static restore(input: RestoreEventExternalInput): EventExternal {
     return new EventExternal(
-      parsePropsOrThrow(eventExternalPropsSchema, { entries: input.payload }),
+      parsePropsOrThrow(eventExternalPropsSchema, input.payload),
     );
   }
 }
