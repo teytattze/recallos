@@ -2,10 +2,8 @@ import type { JsonObject } from "type-fest";
 
 import {
   EntityMetadata,
-  type Result,
   Tenant,
   TenantAwareAggregateRoot,
-  okResult,
   parseProps,
   parsePropsOrThrow,
 } from "@repo/server-kernel";
@@ -50,41 +48,26 @@ type RestoreEventInput = {
 };
 
 class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
-  static create(input: CreateEventInput): Result<Event> {
-    const graphId = GraphId.restore({
-      payload: input.payload.graphId,
-    });
-    const externalResult = EventExternal.create({
-      payload: input.payload.external,
-    });
-
-    if (!externalResult.ok) {
-      return externalResult;
-    }
-
-    const parsePropsResult = parseProps(
-      eventPropsSchema,
-      {
-        external: externalResult.value,
-        graphId,
-        raw: input.payload.raw,
-      },
-      createInvalidEventError,
-    );
-
-    if (!parsePropsResult.ok) {
-      return parsePropsResult;
-    }
-    const eventProps = parsePropsResult.value;
-
-    return okResult(
-      new Event(EventId.create(), input.tenant, input.metadata, eventProps),
+  static create(input: CreateEventInput): Event {
+    return new Event(
+      EventId.create(),
+      input.tenant,
+      input.metadata,
+      parseProps(
+        eventPropsSchema,
+        {
+          external: EventExternal.create({ payload: input.payload.external }),
+          graphId: GraphId.restore({ payload: input.payload.graphId }),
+          raw: input.payload.raw,
+        },
+        createInvalidEventError,
+      ),
     );
   }
 
   static restore(input: RestoreEventInput): Event {
     return new Event(
-      EventId.restore(input.payload.id),
+      EventId.restore({ payload: input.payload.id }),
       input.tenant,
       input.metadata,
       parsePropsOrThrow(eventPropsSchema, {

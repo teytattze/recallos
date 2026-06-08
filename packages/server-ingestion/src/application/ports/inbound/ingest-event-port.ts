@@ -1,4 +1,4 @@
-import type { Result, Tenant } from "@repo/server-kernel";
+import type { Tenant } from "@repo/server-kernel";
 import type { JsonObject } from "type-fest";
 
 type IngestEventPortInput = {
@@ -9,7 +9,7 @@ type IngestEventPortInput = {
     raw: JsonObject;
   };
 };
-type IngestEventPortOutput = Promise<Result<{ id: string }>>;
+type IngestEventPortOutput = Promise<{ id: string }>;
 
 interface IngestEventPort {
   execute(input: IngestEventPortInput): IngestEventPortOutput;

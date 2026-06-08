@@ -61,11 +61,9 @@ test("IngestEventUseCase.execute: given valid input, it should insert the event 
   const result = await useCase.execute(validInput);
 
   // THEN
-  expect(result.ok).toBe(true);
-  if (!result.ok) return;
   expect(uow.ran).toBe(1);
   expect(uow.events.inserted.length).toBe(1);
-  expect(result.value.id).toBe(uow.events.inserted[0]!.id.value);
+  expect(result.id).toBe(uow.events.inserted[0]!.id.value);
   expect(uow.events.inserted[0]!.metadata.createdAt).toEqual(createdAt);
   expect(uow.events.inserted[0]!.tenant).toBe(tenant);
   expect(String(uow.events.inserted[0]!.external.toJSON().id)).toBe(
@@ -78,27 +76,30 @@ test("IngestEventUseCase.execute: given valid input, it should insert the event 
   expect(uow.events.inserted[0]!.raw).toEqual(raw);
 });
 
-test("IngestEventUseCase.execute: given an invalid event, it should return an InvalidEvent error without inserting", async () => {
+test("IngestEventUseCase.execute: given an invalid event, it should throw an InvalidEvent error without inserting", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
   const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
+  let error: unknown;
 
   // WHEN
-  const result = await useCase.execute({
-    ...validInput,
-    payload: {
-      ...validInput.payload,
-      external: {
-        id: "jira-123",
-        provider: "github",
-      } as unknown as EventExternalPropsIn,
-    },
-  });
+  try {
+    await useCase.execute({
+      ...validInput,
+      payload: {
+        ...validInput.payload,
+        external: {
+          id: "jira-123",
+          provider: "github",
+        } as unknown as EventExternalPropsIn,
+      },
+    });
+  } catch (caught) {
+    error = caught;
+  }
 
   // THEN
-  expect(result.ok).toBe(false);
-  if (result.ok) return;
-  expect(result.error.kind).toBe("InvalidEvent");
+  expect(error).toMatchObject({ kind: "InvalidEvent" });
   expect(uow.ran).toBe(0);
   expect(uow.events.inserted.length).toBe(0);
 });

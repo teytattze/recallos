@@ -17,7 +17,7 @@ test("EventId.restore: given an existing value, it should wrap that value", () =
   const value = "0190000000007000800090000a00000b";
 
   // WHEN
-  const id = EventId.restore(value);
+  const id = EventId.restore({ payload: value });
 
   // THEN
   expect(id.value).toBe(value);
@@ -28,5 +28,9 @@ test("EventId.equals: given the same value, it should be equal", () => {
   const value = "0190000000007000800090000a00000b";
 
   // WHEN / THEN
-  expect(EventId.restore(value).equals(EventId.restore(value))).toBe(true);
+  expect(
+    EventId.restore({ payload: value }).equals(
+      EventId.restore({ payload: value }),
+    ),
+  ).toBe(true);
 });

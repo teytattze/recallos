@@ -1,4 +1,4 @@
-import { EntityMetadata, okResult, type Clock } from "@repo/server-kernel";
+import { EntityMetadata, type Clock } from "@repo/server-kernel";
 
 import type {
   IngestEventPortInput,
@@ -16,16 +16,11 @@ class IngestEventUseCase implements IngestEventPort {
   ) {}
 
   async execute(input: IngestEventPortInput): IngestEventPortOutput {
-    const eventResult = Event.create({
+    const event = Event.create({
       tenant: input.tenant,
       metadata: EntityMetadata.create(this.clock.now()),
       payload: input.payload,
     });
-
-    if (!eventResult.ok) {
-      return eventResult;
-    }
-    const event = eventResult.value;
 
     // TODO: Check events size and handle differently
 
@@ -33,7 +28,7 @@ class IngestEventUseCase implements IngestEventPort {
       await eventRepository.insert(event);
     });
 
-    return okResult({ id: event.id.toString() });
+    return { id: event.id.toString() };
   }
 }
 

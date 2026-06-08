@@ -1,10 +1,4 @@
-import {
-  mapResult,
-  parseProps,
-  parsePropsOrThrow,
-  ValueObject,
-  type Result,
-} from "@repo/server-kernel";
+import { parseProps, parsePropsOrThrow, ValueObject } from "@repo/server-kernel";
 import { z } from "zod";
 
 import { createInvalidEventError } from "../errors/invalid-event-error";
@@ -25,18 +19,13 @@ type RestoreEventExternalInput = {
 };
 
 class EventExternal extends ValueObject<EventExternalProps> {
-  private constructor(props: EventExternalProps) {
-    super(props);
-  }
-
-  static create(input: CreateEventExternalInput): Result<EventExternal> {
-    return mapResult(
+  static create(input: CreateEventExternalInput): EventExternal {
+    return new EventExternal(
       parseProps(
         eventExternalPropsSchema,
         input.payload,
         createInvalidEventError,
       ),
-      (props) => new EventExternal(props),
     );
   }
 

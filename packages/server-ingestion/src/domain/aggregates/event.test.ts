@@ -39,19 +39,15 @@ const validInput = {
 
 test("Event.create: given valid input, it should return an Event with metadata and ownership", () => {
   // GIVEN / WHEN
-  const result = Event.create(validInput);
+  const event = Event.create(validInput);
 
   // THEN
-  expect(result.ok).toBe(true);
-  if (!result.ok) return;
-  expect(result.value.metadata.createdAt).toEqual(createdAt);
-  expect(result.value.tenant).toBe(tenant);
-  expect(String(result.value.external.toJSON().id)).toBe(external.id);
-  expect(String(result.value.external.toJSON().provider)).toBe(
-    external.provider,
-  );
-  expect(result.value.graphId.value).toBe(graphId);
-  expect(result.value.raw).toEqual(raw);
+  expect(event.metadata.createdAt).toEqual(createdAt);
+  expect(event.tenant).toBe(tenant);
+  expect(String(event.external.toJSON().id)).toBe(external.id);
+  expect(String(event.external.toJSON().provider)).toBe(external.provider);
+  expect(event.graphId.value).toBe(graphId);
+  expect(event.raw).toEqual(raw);
 });
 
 test("Event.create: given a fresh event, it should mint a distinct id each time", () => {
@@ -60,9 +56,15 @@ test("Event.create: given a fresh event, it should mint a distinct id each time"
   const b = Event.create(validInput);
 
   // THEN
-  expect(a.ok && b.ok && a.value.id.value).not.toBe(
-    b.ok ? b.value.id.value : "",
-  );
+  expect(a.id.value).not.toBe(b.id.value);
+});
+
+test("Event.estimatedSizeInBytes: given an event, it should return a positive size", () => {
+  // GIVEN
+  const event = Event.create(validInput);
+
+  // WHEN / THEN
+  expect(event.estimatedSizeInBytes()).toBeGreaterThan(0);
 });
 
 test.each([
@@ -81,18 +83,23 @@ test.each([
     } as unknown as EventPayload,
   },
 ])(
-  "Event.create: given $label, it should return an InvalidEvent error",
+  "Event.create: given $label, it should throw an InvalidEvent error",
   ({ payload }) => {
-    // GIVEN / WHEN
-    const result = Event.create({
-      ...validInput,
-      payload,
-    });
+    // GIVEN
+    let error: unknown;
+
+    // WHEN
+    try {
+      Event.create({
+        ...validInput,
+        payload,
+      });
+    } catch (caught) {
+      error = caught;
+    }
 
     // THEN
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.error.kind).toBe("InvalidEvent");
+    expect(error).toMatchObject({ kind: "InvalidEvent" });
   },
 );
 
