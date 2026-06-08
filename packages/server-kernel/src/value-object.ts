@@ -12,6 +12,10 @@ abstract class ValueObject<T extends Record<string, unknown>> {
     if (other === this) return true;
     return isEqual(this._props, other._props);
   }
+
+  toJSON(): T {
+    return this._props;
+  }
 }
 
 export { ValueObject };

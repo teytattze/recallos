@@ -1,9 +1,10 @@
+import type { JsonObject } from "type-fest";
+
 import {
   EntityMetadata,
   type Result,
   Tenant,
   TenantAwareAggregateRoot,
-  errResult,
   okResult,
   parseProps,
   parsePropsOrThrow,
@@ -11,76 +12,53 @@ import {
 import { z } from "zod";
 
 import { createInvalidEventError } from "../errors/invalid-event-error";
-import { EventBody } from "../value-objects/event-body";
+import {
+  EventExternal,
+  type EventExternalPropsIn,
+} from "../value-objects/event-external";
 import { EventId } from "../value-objects/event-id";
 import { GraphId } from "../value-objects/graph-id";
-import { Tags } from "../value-objects/tags";
 
 const eventPropsSchema = z.object({
-  occurredAt: z.date(),
-
-  tags: z.custom<Tags>((v) => v instanceof Tags),
-  body: z.custom<EventBody>((v) => v instanceof EventBody),
-
+  external: z.custom<EventExternal>((v) => v instanceof EventExternal),
   graphId: z.custom<GraphId>((v) => v instanceof GraphId),
+  raw: z.custom<JsonObject>((data) => z.json().parse(data)).brand<"EventRaw">(),
 });
-type EventProps = z.infer<typeof eventPropsSchema>;
+
+type EventProps = z.output<typeof eventPropsSchema>;
 
 type CreateEventInput = {
   tenant: Tenant;
   metadata: EntityMetadata;
   payload: {
-    occurredAt: Date;
-    tags: Record<string, string>;
-    body: Record<string, unknown>;
+    external: EventExternalPropsIn;
     graphId: string;
+    raw: JsonObject;
   };
 };
-
 type RestoreEventInput = {
   tenant: Tenant;
   metadata: EntityMetadata;
   payload: {
     id: string;
-    occurredAt: Date;
-    tags: Record<string, string>;
-    body: Record<string, unknown>;
+    external: EventExternalPropsIn;
     graphId: string;
+    raw: JsonObject;
   };
 };
 
 class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
-  private constructor(
-    id: EventId,
-    tenant: Tenant,
-    metadata: EntityMetadata,
-    props: EventProps,
-  ) {
-    super(id, tenant, metadata, props);
-  }
-
   static create(input: CreateEventInput): Result<Event> {
-    const createTagsResult = Tags.create({ payload: input.payload.tags });
-
-    if (!createTagsResult.ok) {
-      return createTagsResult;
-    }
-    const createBodyResult = EventBody.create({ payload: input.payload.body });
-
-    if (!createBodyResult.ok) {
-      return createBodyResult;
-    }
-
     const graphId = GraphId.restore({
       payload: input.payload.graphId,
     });
+
     const parsePropsResult = parseProps(
       eventPropsSchema,
       {
-        occurredAt: input.payload.occurredAt,
-        tags: createTagsResult.value,
-        body: createBodyResult.value,
+        external: EventExternal.restore({ payload: input.payload.external }),
         graphId,
+        raw: input.payload.raw,
       },
       createInvalidEventError,
     );
@@ -90,11 +68,6 @@ class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
     }
     const eventProps = parsePropsResult.value;
 
-    if (eventProps.occurredAt.getTime() > input.metadata.createdAt.getTime()) {
-      return errResult(
-        createInvalidEventError("occurredAt cannot be in the future"),
-      );
-    }
     return okResult(
       new Event(EventId.create(), input.tenant, input.metadata, eventProps),
     );
@@ -106,28 +79,25 @@ class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
       input.tenant,
       input.metadata,
       parsePropsOrThrow(eventPropsSchema, {
-        occurredAt: input.payload.occurredAt,
-        tags: Tags.restore({ payload: input.payload.tags }),
-        body: EventBody.restore({ payload: input.payload.body }),
+        external: EventExternal.restore({ payload: input.payload.external }),
         graphId: GraphId.restore({ payload: input.payload.graphId }),
+        raw: input.payload.raw,
       }),
     );
   }
 
-  get occurredAt(): Date {
-    return this._props.occurredAt;
+  estimatedSizeInBytes(): number {
+    return new TextEncoder("utf-8").encode(JSON.stringify(this)).length;
   }
 
-  get tags(): Tags {
-    return this._props.tags;
+  get external(): EventExternal {
+    return this._props.external;
   }
-
-  get body(): EventBody {
-    return this._props.body;
-  }
-
   get graphId(): GraphId {
     return this._props.graphId;
+  }
+  get raw(): JsonObject {
+    return this._props.raw;
   }
 }
 

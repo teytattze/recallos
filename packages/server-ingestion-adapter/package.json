@@ -1,19 +1,13 @@
 {
-  "name": "@repo/server-ingestion-infra",
+  "name": "@repo/server-ingestion-adapter",
   "private": true,
   "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
-  },
   "scripts": {
     "lint": "oxlint",
     "test": "bun test --randomize --pass-with-no-tests"
   },
-  "dependencies": {
-    "@repo/server-ingestion": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@repo/server-kernel": "workspace:*",
     "@repo/typescript-config": "workspace:*"
   }
 }

@@ -1,9 +1,7 @@
-import type { EventLogRepositoryPort } from "./event-log-repository-port.ts";
-import type { EventPublisherPort } from "./event-publisher-port.ts";
+import type { EventRepositoryPort } from "./event-repository-port.ts";
 
 interface UnitOfWorkPortContext {
-  events: EventLogRepositoryPort;
-  publisher: EventPublisherPort;
+  eventRepository: EventRepositoryPort;
 }
 
 interface UnitOfWorkPort {
