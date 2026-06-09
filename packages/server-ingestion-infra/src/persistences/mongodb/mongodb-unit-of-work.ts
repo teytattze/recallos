@@ -17,6 +17,7 @@ class MongodbUnitOfWork implements UnitOfWorkPort {
   ): Promise<T> {
     const session = this.client.startSession();
     try {
+      session.startTransaction();
       const ret = await work({
         eventRepository: new MongodbEventRepository(
           this.client,
