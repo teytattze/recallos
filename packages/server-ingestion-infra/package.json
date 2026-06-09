@@ -10,7 +10,8 @@
     "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
-    "@repo/server-ingestion": "workspace:*"
+    "@repo/server-ingestion": "workspace:*",
+    "mongodb": "catalog:"
   },
   "devDependencies": {
     "@repo/server-kernel": "workspace:*",

@@ -1,1 +1,1 @@
-console.log("Hello");
+export * from "./persistences/mongodb/mongodb-unit-of-work";

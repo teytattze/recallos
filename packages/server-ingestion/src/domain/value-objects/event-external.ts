@@ -1,4 +1,8 @@
-import { parseProps, parsePropsOrThrow, ValueObject } from "@repo/server-kernel";
+import {
+  parseProps,
+  parsePropsOrThrow,
+  ValueObject,
+} from "@repo/server-kernel";
 import { z } from "zod";
 
 import { createInvalidEventError } from "../errors/invalid-event-error";
@@ -33,6 +37,13 @@ class EventExternal extends ValueObject<EventExternalProps> {
     return new EventExternal(
       parsePropsOrThrow(eventExternalPropsSchema, input.payload),
     );
+  }
+
+  get id(): EventExternalProps["id"] {
+    return this._props.id;
+  }
+  get provider(): EventExternalProps["provider"] {
+    return this._props.provider;
   }
 }
 
