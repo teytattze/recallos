@@ -14,19 +14,12 @@ type ErrorBuilder = (
 
 export function parseProps<S extends z.ZodType>(
   schema: S,
-  input: unknown,
+  input: z.input<S>,
   error: ErrorBuilder = InvariantViolation,
-): z.infer<S> {
+): z.output<S> {
   const parsed = schema.safeParse(input);
   if (parsed.success) return parsed.data;
   throw error(z.prettifyError(parsed.error), {
     issues: parsed.error.issues,
   });
-}
-
-export function parsePropsOrThrow<S extends z.ZodType>(
-  schema: S,
-  input: unknown,
-): z.infer<S> {
-  return parseProps(schema, input);
 }

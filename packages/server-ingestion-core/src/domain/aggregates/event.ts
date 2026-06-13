@@ -5,7 +5,6 @@ import {
   Tenant,
   TenantAwareAggregateRoot,
   parseProps,
-  parsePropsOrThrow,
 } from "@repo/server-kernel";
 import { z } from "zod";
 
@@ -70,7 +69,7 @@ class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
       EventId.restore({ payload: input.payload.id }),
       input.tenant,
       input.metadata,
-      parsePropsOrThrow(eventPropsSchema, {
+      parseProps(eventPropsSchema, {
         external: EventExternal.restore({ payload: input.payload.external }),
         graphId: GraphId.restore({ payload: input.payload.graphId }),
         raw: input.payload.raw,

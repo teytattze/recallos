@@ -2,7 +2,7 @@ import { test, expect } from "bun:test";
 import { z } from "zod";
 
 import { defineError } from "./domain-error.ts";
-import { parseProps, parsePropsOrThrow } from "./schema.ts";
+import { parseProps } from "./schema.ts";
 
 const schema = z.object({ value: z.string().trim().min(1) });
 
@@ -45,15 +45,15 @@ test("parseProps: given a custom error builder, it should throw an error with th
   );
 });
 
-test("parsePropsOrThrow: given valid input, it should return the typed value", () => {
+test("parseProps: given valid input, it should return the typed value", () => {
   // GIVEN / WHEN
-  const value = parsePropsOrThrow(schema, { value: "  hi  " });
+  const value = parseProps(schema, { value: "  hi  " });
 
   // THEN
   expect(value).toEqual({ value: "hi" });
 });
 
-test("parsePropsOrThrow: given invalid input, it should throw", () => {
+test("parseProps: given invalid input, it should throw", () => {
   // GIVEN / WHEN / THEN
-  expect(() => parsePropsOrThrow(schema, { value: "" })).toThrow();
+  expect(() => parseProps(schema, { value: "" })).toThrow();
 });

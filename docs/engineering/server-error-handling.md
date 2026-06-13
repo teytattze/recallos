@@ -78,7 +78,6 @@ Worker adapters map the same distinction to acknowledge, retry, or dead-letter b
 - `DomainError` carries `kind`, `category`, `message`, and optional `details`.
 - `defineError(kind, category)` creates typed error factories for `domain/errors/*-error.ts`.
 - `parseProps` wraps `zod.safeParse`, returns parsed props on success, and throws a `DomainError` on failure.
-- `parsePropsOrThrow` is a compatibility alias for throwing schema validation.
 
 ## Conventions
 
@@ -86,7 +85,7 @@ Worker adapters map the same distinction to acknowledge, retry, or dead-letter b
 - Domain `restore(input)` factories validate trusted persisted data with the same throwing validation helpers.
 - Name error factories `create<ErrorName>Error` and error types `<ErrorName>Error`.
 - Application use cases do not catch domain errors unless they can add meaningful business behavior.
-- zod errors never escape the pure core; wrap them with `parseProps` or `parsePropsOrThrow`.
+- zod errors never escape the pure core; wrap them with `parseProps`.
 - Do not use `category: "unexpected"` for real infrastructure faults; throw the technical error.
 
 ## Anti-Patterns

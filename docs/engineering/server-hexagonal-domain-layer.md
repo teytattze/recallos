@@ -29,16 +29,14 @@
 - Use one building block per file.
 - Define one `zod` schema per aggregate, entity, value object, and event.
 - Derive props with `z.infer`.
-- Validate with kernel helpers, not raw `schema.parse`:
-  - `parseProps`: returns `Result` for expected invariant failures.
-  - `parsePropsOrThrow`: throws for impossible states.
-- Run cross-field checks after `parseProps`; return `Result.err(<contextError>(...))`.
+- Validate with `parseProps`, not raw `schema.parse`.
+- Run cross-field checks after `parseProps`; throw a context-specific `DomainError` for invariant failures.
 - Use private constructors that receive already-parsed props.
-- Use `create(input)` for untrusted input; validate with `parseProps` and return `Result`.
+- Use `create(input)` for untrusted input; validate with `parseProps`.
 - Aggregate `create` and `restore` input is `{ tenant, metadata, payload }`.
 - Value object `create` and `restore` inputs are object-shaped; use `{ payload }` for single-value objects.
-- Use `restore(input)` for persisted/trusted data; validate with `parsePropsOrThrow`.
-- Identity/always-valid value objects skip the `Result` factory and validate construction with `parsePropsOrThrow`.
+- Use `restore(input)` for persisted/trusted data; validate with `parseProps`.
+- Identity/always-valid value objects validate construction with `parseProps`.
 - Define context-specific errors with `defineError` in `domain/errors/*-error.ts`.
 - Name error factories `create<ErrorName>Error` and error types `<ErrorName>Error`.
 - Define domain events with `defineEvent` in `domain/events/*-event.ts`.

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { parsePropsOrThrow } from "./schema.ts";
+import { parseProps } from "./schema.ts";
 import { ValueObject } from "./value-object.ts";
 
 const tenantTypes = ["user", "organization"] as const;
@@ -14,13 +14,13 @@ type TenantType = TenantPropsSchema["type"];
 
 class Tenant extends ValueObject<TenantPropsSchema> {
   static create(type: TenantType, id: string): Tenant {
-    return new Tenant(parsePropsOrThrow(tenantPropsSchema, { type, id }));
+    return new Tenant(parseProps(tenantPropsSchema, { type, id }));
   }
 
   static fromString(tenant: string): Tenant {
     const splitted = tenant.split(":");
     return new Tenant(
-      parsePropsOrThrow(tenantPropsSchema, {
+      parseProps(tenantPropsSchema, {
         type: splitted[0],
         id: splitted[1],
       }),
