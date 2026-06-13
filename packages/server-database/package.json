@@ -19,6 +19,7 @@
     "@prisma/client": "catalog:",
     "@repo/server-platform": "workspace:*",
     "dotenv": "catalog:",
+    "mongodb": "catalog:",
     "pg": "catalog:"
   },
   "devDependencies": {

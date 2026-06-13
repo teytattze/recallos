@@ -17,6 +17,9 @@
     "apps/server-api-service": {
       "name": "@repo/server-api-service",
       "dependencies": {
+        "@repo/server-ingestion-core": "workspace:*",
+        "@repo/server-ingestion-inbound-adapter": "workspace:*",
+        "@repo/server-ingestion-outbound-adapter": "workspace:*",
         "@repo/server-platform": "workspace:*",
         "hono": "catalog:",
       },
@@ -94,6 +97,7 @@
         "@prisma/client": "catalog:",
         "@repo/server-platform": "workspace:*",
         "dotenv": "catalog:",
+        "mongodb": "catalog:",
         "pg": "catalog:",
       },
       "devDependencies": {
@@ -115,7 +119,10 @@
     "packages/server-ingestion-inbound-adapter": {
       "name": "@repo/server-ingestion-inbound-adapter",
       "dependencies": {
+        "@repo/server-ingestion-core": "workspace:*",
+        "@repo/server-kernel": "workspace:*",
         "hono": "catalog:",
+        "zod": "catalog:",
       },
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",

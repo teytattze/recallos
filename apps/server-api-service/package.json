@@ -9,6 +9,9 @@
     "test": "bun test --randomize"
   },
   "dependencies": {
+    "@repo/server-ingestion-core": "workspace:*",
+    "@repo/server-ingestion-inbound-adapter": "workspace:*",
+    "@repo/server-ingestion-outbound-adapter": "workspace:*",
     "@repo/server-platform": "workspace:*",
     "hono": "catalog:"
   },

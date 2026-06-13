@@ -7,7 +7,10 @@
     "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
-    "hono": "catalog:"
+    "@repo/server-ingestion-core": "workspace:*",
+    "@repo/server-kernel": "workspace:*",
+    "hono": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*"
