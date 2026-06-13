@@ -10,6 +10,10 @@ on:
 env:
   BUN_VERSION: "1.3.14"
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build_artifact:
     name: Build ${{ matrix.app }} artifact
@@ -59,11 +63,10 @@ jobs:
           include-hidden-files: true
           retention-days: 1
 
-  build_image:
-    name: Build ${{ matrix.app }} image
+  publish_image:
+    name: Publish ${{ matrix.app }} image
     runs-on: ubuntu-latest
     needs: build_artifact
-    if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
     strategy:
       matrix:
         include:
@@ -81,113 +84,27 @@ jobs:
         id: extract-version
         uses: ./.github/actions/extract-version
 
+      - name: Resolve registry owner
+        id: registry
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
       - name: Download build artifact
         uses: actions/download-artifact@v8
         with:
           name: ${{ matrix.app }}-build
           path: apps/${{ matrix.app }}/${{ matrix.build_dir }}
 
-      - name: Build Docker image
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
         run: |
           docker build \
             -f dockers/Dockerfile.${{ matrix.app }} \
-            -t ${{ vars.AWS_ECR_REPOSITORY }}/${{ matrix.app }}:${{ steps.extract-version.outputs.version }} \
+            -t ghcr.io/${{ steps.registry.outputs.owner }}/${{ matrix.app }}:${{ steps.extract-version.outputs.version }} \
             apps/${{ matrix.app }}
-
-      - name: Save Docker image
-        run: |
-          mkdir -p docker-images
-          docker save ${{ vars.AWS_ECR_REPOSITORY }}/${{ matrix.app }}:${{ steps.extract-version.outputs.version }} \
-            -o docker-images/${{ matrix.app }}.tar
-
-      - name: Upload Docker image artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.app }}-docker-image
-          path: docker-images/${{ matrix.app }}.tar
-          retention-days: 1
-
-  deploy_ecr:
-    name: Deploy ECR repository with CDK
-    runs-on: ubuntu-latest
-    needs: build_artifact
-    if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Cache node_modules
-        uses: actions/cache@v5
-        with:
-          path: |
-            node_modules
-            infrastructure/node_modules
-          key: ${{ runner.os }}-bun-infrastructure-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-infrastructure-
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Deploy RecallosEcrStack
-        working-directory: infrastructure
-        run: |
-          bunx cdk deploy RecallosEcrStack \
-            --require-approval never \
-            -c account=${{ vars.AWS_ACCOUNT_ID }} \
-            -c region=${{ vars.AWS_REGION }} \
-            -c ecrRepositoryName=${{ vars.AWS_ECR_REPOSITORY }}
-
-  upload_image:
-    name: Upload ${{ matrix.app }} image
-    runs-on: ubuntu-latest
-    needs: [build_image, deploy_ecr]
-    if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
-    strategy:
-      matrix:
-        app:
-          [server-api-service, server-ingestion-worker, server-knowledge-worker]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Extract version
-        id: extract-version
-        uses: ./.github/actions/extract-version
-
-      - name: Download Docker image artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: ${{ matrix.app }}-docker-image
-          path: docker-images
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Load, tag, and push image to Amazon ECR
-        run: |
-          docker load -i docker-images/${{ matrix.app }}.tar
-          docker tag \
-            ${{ vars.AWS_ECR_REPOSITORY }}/${{ matrix.app }}:${{ steps.extract-version.outputs.version }} \
-            ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.AWS_ECR_REPOSITORY }}:${{ matrix.app }}.${{ steps.extract-version.outputs.version }}
-          docker push ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.AWS_ECR_REPOSITORY }}:${{ matrix.app }}.${{ steps.extract-version.outputs.version }}
+          docker push ghcr.io/${{ steps.registry.outputs.owner }}/${{ matrix.app }}:${{ steps.extract-version.outputs.version }}

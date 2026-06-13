@@ -16,7 +16,7 @@ RecallOS is org-wide shared memory: ingest information from many sources, relate
 
 ### CI/CD
 
-- `@.github/`: GitHub Actions. `workflows/ci.yml` runs on every branch/tag: unit test → build artifact → (on `main`/tags) build & push Docker image to ECR. `actions/extract-version/` is a composite action for image tagging.
+- `@.github/`: GitHub Actions. `workflows/ci.yml` runs on every branch/tag: unit test → build artifact → (on `main`/tags) build & push Docker images to GHCR. `actions/extract-version/` is a composite action for image tagging.
 - `@dockers/`: per-app Dockerfiles (`Dockerfile.service`).
 
 ### Apps

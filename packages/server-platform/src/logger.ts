@@ -9,7 +9,7 @@ type CreateLoggerInput = {
 };
 
 function createLogger(input: CreateLoggerInput): Logger {
-  if (input.config.APP_ENV === "prod") {
+  if (input.config.APP_ENV === "production") {
     return pino({ level: "info" });
   }
   return pino({
