@@ -80,23 +80,19 @@ test("IngestEventUseCase.execute: given an invalid event, it should throw an Inv
   // GIVEN
   const uow = new FakeUnitOfWork();
   const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
-  let error: unknown;
+  const input = {
+    ...validInput,
+    payload: {
+      ...validInput.payload,
+      external: {
+        id: "jira-123",
+        provider: "github",
+      } as unknown as EventExternalPropsIn,
+    },
+  };
 
   // WHEN
-  try {
-    await useCase.execute({
-      ...validInput,
-      payload: {
-        ...validInput.payload,
-        external: {
-          id: "jira-123",
-          provider: "github",
-        } as unknown as EventExternalPropsIn,
-      },
-    });
-  } catch (caught) {
-    error = caught;
-  }
+  const error = await useCase.execute(input).catch((caught: unknown) => caught);
 
   // THEN
   expect(error).toMatchObject({ kind: "InvalidEvent" });

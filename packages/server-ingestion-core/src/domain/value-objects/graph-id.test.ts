@@ -21,7 +21,9 @@ test("GraphId.equals: given the same value, it should be equal", () => {
   ).toBe(true);
 });
 
-test("GraphId.restore: given an empty value, it should throw", () => {
+test("GraphId.restore: given an empty value, it should throw an InvariantViolation error", () => {
   // GIVEN / WHEN / THEN
-  expect(() => GraphId.restore({ payload: "" })).toThrow();
+  expect(() => GraphId.restore({ payload: "" })).toThrow(
+    expect.objectContaining({ kind: "InvariantViolation" }),
+  );
 });

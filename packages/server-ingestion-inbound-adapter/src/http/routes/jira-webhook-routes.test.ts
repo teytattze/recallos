@@ -17,7 +17,7 @@ class FakeIngestEventUseCase implements IngestEventPort {
   }
 }
 
-test("POST /events: given a valid Jira webhook, it should ingest the raw body and return 201", async () => {
+test("createJiraWebhookRoutes: given a valid Jira webhook POST, it should ingest the raw body and return 201", async () => {
   // GIVEN
   const ingestEventUseCase = new FakeIngestEventUseCase();
   const routes = createJiraWebhookRoutes({
@@ -44,6 +44,7 @@ test("POST /events: given a valid Jira webhook, it should ingest the raw body an
   expect(res.status).toBe(201);
   expect(await res.text()).toBe("");
   expect(ingestEventUseCase.executeCalls).toHaveLength(1);
+
   const call = ingestEventUseCase.executeCalls[0]!;
   expect(call.tenant.toString()).toBe("organization:org1");
   expect(call.payload).toEqual({

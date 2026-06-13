@@ -38,8 +38,11 @@ const validInput = {
 };
 
 test("Event.create: given valid input, it should return an Event with metadata and ownership", () => {
-  // GIVEN / WHEN
-  const event = Event.create(validInput);
+  // GIVEN
+  const input = validInput;
+
+  // WHEN
+  const event = Event.create(input);
 
   // THEN
   expect(event.metadata.createdAt).toEqual(createdAt);
@@ -51,9 +54,12 @@ test("Event.create: given valid input, it should return an Event with metadata a
 });
 
 test("Event.create: given a fresh event, it should mint a distinct id each time", () => {
-  // GIVEN / WHEN
-  const a = Event.create(validInput);
-  const b = Event.create(validInput);
+  // GIVEN
+  const input = validInput;
+
+  // WHEN
+  const a = Event.create(input);
+  const b = Event.create(input);
 
   // THEN
   expect(a.id.value).not.toBe(b.id.value);
@@ -63,8 +69,11 @@ test("Event.estimatedSizeInBytes: given an event, it should return a positive si
   // GIVEN
   const event = Event.create(validInput);
 
-  // WHEN / THEN
-  expect(event.estimatedSizeInBytes()).toBeGreaterThan(0);
+  // WHEN
+  const size = event.estimatedSizeInBytes();
+
+  // THEN
+  expect(size).toBeGreaterThan(0);
 });
 
 test.each([
@@ -86,20 +95,18 @@ test.each([
   "Event.create: given $label, it should throw an InvalidEvent error",
   ({ payload }) => {
     // GIVEN
-    let error: unknown;
+    const input = {
+      ...validInput,
+      payload,
+    };
 
     // WHEN
-    try {
-      Event.create({
-        ...validInput,
-        payload,
-      });
-    } catch (caught) {
-      error = caught;
-    }
+    const createEvent = () => Event.create(input);
 
     // THEN
-    expect(error).toMatchObject({ kind: "InvalidEvent" });
+    expect(createEvent).toThrow(
+      expect.objectContaining({ kind: "InvalidEvent" }),
+    );
   },
 );
 
@@ -115,8 +122,11 @@ const storedInput = {
 };
 
 test("Event.restore: given a stored row, it should preserve persisted identity and ownership", () => {
-  // GIVEN / WHEN
-  const event = Event.restore(storedInput);
+  // GIVEN
+  const input = storedInput;
+
+  // WHEN
+  const event = Event.restore(input);
 
   // THEN
   expect(event.id.value).toBe(storedInput.payload.id);
@@ -129,7 +139,7 @@ test("Event.restore: given a stored row, it should preserve persisted identity a
   expect(event.raw).toEqual(raw);
 });
 
-test("Event.restore: given an unsupported external provider, it should throw", () => {
+test("Event.restore: given an unsupported external provider, it should throw an InvariantViolation error", () => {
   // GIVEN / WHEN / THEN
   expect(() =>
     Event.restore({
@@ -142,5 +152,5 @@ test("Event.restore: given an unsupported external provider, it should throw", (
         } as unknown as EventExternalPropsIn,
       },
     }),
-  ).toThrow();
+  ).toThrow(expect.objectContaining({ kind: "InvariantViolation" }));
 });

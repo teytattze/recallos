@@ -124,14 +124,11 @@ test("MongodbUnitOfWork.transaction: given failing work, it should abort, end th
     "recallos",
   );
   const thrown = new Error("boom");
-  let error: unknown;
 
   // WHEN
-  try {
-    await uow.transaction(() => Promise.reject(thrown));
-  } catch (caught) {
-    error = caught;
-  }
+  const error = await uow
+    .transaction(() => Promise.reject(thrown))
+    .catch((caught: unknown) => caught);
 
   // THEN
   expect(error).toBe(thrown);

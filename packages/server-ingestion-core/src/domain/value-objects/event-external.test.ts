@@ -10,8 +10,11 @@ const external = {
 } satisfies EventExternalPropsIn;
 
 test("EventExternal.create: given a Jira external reference, it should expose its props", () => {
-  // GIVEN / WHEN
-  const value = EventExternal.create({ payload: external });
+  // GIVEN
+  const payload = external;
+
+  // WHEN
+  const value = EventExternal.create({ payload });
 
   // THEN
   expect(String(value.toJSON().id)).toBe(external.id);
@@ -19,8 +22,11 @@ test("EventExternal.create: given a Jira external reference, it should expose it
 });
 
 test("EventExternal.restore: given a Jira external reference, it should expose its props", () => {
-  // GIVEN / WHEN
-  const value = EventExternal.restore({ payload: external });
+  // GIVEN
+  const payload = external;
+
+  // WHEN
+  const value = EventExternal.restore({ payload });
 
   // THEN
   expect(String(value.toJSON().id)).toBe(external.id);
@@ -39,7 +45,7 @@ test("EventExternal.create: given an unsupported provider, it should throw an In
   ).toThrow(expect.objectContaining({ kind: "InvalidEvent" }));
 });
 
-test("EventExternal.restore: given an unsupported provider, it should throw", () => {
+test("EventExternal.restore: given an unsupported provider, it should throw an InvariantViolation error", () => {
   // GIVEN / WHEN / THEN
   expect(() =>
     EventExternal.restore({
@@ -48,7 +54,7 @@ test("EventExternal.restore: given an unsupported provider, it should throw", ()
         provider: "github",
       } as unknown as EventExternalPropsIn,
     }),
-  ).toThrow();
+  ).toThrow(expect.objectContaining({ kind: "InvariantViolation" }));
 });
 
 test("EventExternal.equals: given the same payload, it should be equal", () => {

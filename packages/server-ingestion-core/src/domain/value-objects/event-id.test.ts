@@ -3,7 +3,7 @@ import { test, expect } from "bun:test";
 import { EventId } from "./event-id.ts";
 
 test("EventId.create: given two calls, it should produce distinct non-empty ids", () => {
-  // GIVEN / WHEN
+  // WHEN
   const a = EventId.create();
   const b = EventId.create();
 
