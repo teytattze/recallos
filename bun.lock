@@ -102,8 +102,8 @@
         "prisma": "catalog:",
       },
     },
-    "packages/server-ingestion": {
-      "name": "@repo/server-ingestion",
+    "packages/server-ingestion-core": {
+      "name": "@repo/server-ingestion-core",
       "dependencies": {
         "@repo/server-kernel": "workspace:*",
         "zod": "catalog:",
@@ -112,10 +112,19 @@
         "@repo/typescript-config": "workspace:*",
       },
     },
-    "packages/server-ingestion-infra": {
-      "name": "@repo/server-ingestion-infra",
+    "packages/server-ingestion-inbound-adapter": {
+      "name": "@repo/server-ingestion-inbound-adapter",
       "dependencies": {
-        "@repo/server-ingestion": "workspace:*",
+        "hono": "catalog:",
+      },
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+      },
+    },
+    "packages/server-ingestion-outbound-adapter": {
+      "name": "@repo/server-ingestion-outbound-adapter",
+      "dependencies": {
+        "@repo/server-ingestion-core": "workspace:*",
         "mongodb": "catalog:",
       },
       "devDependencies": {
@@ -128,8 +137,8 @@
       "dependencies": {
         "@aws-sdk/client-sqs": "catalog:",
         "@repo/server-database": "workspace:*",
-        "@repo/server-ingestion": "workspace:*",
-        "@repo/server-ingestion-infra": "workspace:*",
+        "@repo/server-ingestion-core": "workspace:*",
+        "@repo/server-ingestion-outbound-adapter": "workspace:*",
         "@repo/server-kernel": "workspace:*",
         "@repo/server-platform": "workspace:*",
       },
@@ -718,9 +727,11 @@
 
     "@repo/server-database": ["@repo/server-database@workspace:packages/server-database"],
 
-    "@repo/server-ingestion": ["@repo/server-ingestion@workspace:packages/server-ingestion"],
+    "@repo/server-ingestion-core": ["@repo/server-ingestion-core@workspace:packages/server-ingestion-core"],
 
-    "@repo/server-ingestion-infra": ["@repo/server-ingestion-infra@workspace:packages/server-ingestion-infra"],
+    "@repo/server-ingestion-inbound-adapter": ["@repo/server-ingestion-inbound-adapter@workspace:packages/server-ingestion-inbound-adapter"],
+
+    "@repo/server-ingestion-outbound-adapter": ["@repo/server-ingestion-outbound-adapter@workspace:packages/server-ingestion-outbound-adapter"],
 
     "@repo/server-integration-testing": ["@repo/server-integration-testing@workspace:packages/server-integration-testing"],
 

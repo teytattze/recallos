@@ -1,5 +1,5 @@
 {
-  "name": "@repo/server-ingestion",
+  "name": "@repo/server-ingestion-core",
   "private": true,
   "type": "module",
   "exports": {

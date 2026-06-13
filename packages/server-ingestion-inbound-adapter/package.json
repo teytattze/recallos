@@ -1,20 +1,15 @@
 {
-  "name": "@repo/server-ingestion-outbound-adapter",
+  "name": "@repo/server-ingestion-inbound-adapter",
   "private": true,
   "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
-  },
   "scripts": {
     "lint": "oxlint",
     "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
-    "@repo/server-ingestion-core": "workspace:*",
-    "mongodb": "catalog:"
+    "hono": "catalog:"
   },
   "devDependencies": {
-    "@repo/server-kernel": "workspace:*",
     "@repo/typescript-config": "workspace:*"
   }
 }
