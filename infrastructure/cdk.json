@@ -1,7 +1,0 @@
-{
-  "app": "bun bin/recallos.ts",
-  "watch": {
-    "include": ["**"],
-    "exclude": ["node_modules", "cdk.out"]
-  }
-}

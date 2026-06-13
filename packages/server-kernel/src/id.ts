@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { parsePropsOrThrow } from "./schema.ts";
+import { parseProps } from "./schema.ts";
 import { ValueObject } from "./value-object.ts";
 
 const idPropsSchema = z.object({ value: z.string().min(1) });
@@ -8,7 +8,7 @@ type IdProps = z.infer<typeof idPropsSchema>;
 
 abstract class Id extends ValueObject<IdProps> {
   protected constructor(value: string) {
-    super(parsePropsOrThrow(idPropsSchema, { value }));
+    super(parseProps(idPropsSchema, { value }));
   }
 
   protected static newValue(): string {

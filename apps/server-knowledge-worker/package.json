@@ -6,7 +6,7 @@
     "build": "bun build src/index.ts --outdir ./dist --target bun",
     "dev": "bun --watch src/index.ts",
     "lint": "oxlint",
-    "test": "bun test --randomize"
+    "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
     "@repo/server-platform": "workspace:*",

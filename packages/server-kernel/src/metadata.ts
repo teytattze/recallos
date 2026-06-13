@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { parsePropsOrThrow } from "./schema.ts";
+import { parseProps } from "./schema.ts";
 import { ValueObject } from "./value-object.ts";
 
 const entityMetadataPropsSchema = z.object({
@@ -11,7 +11,7 @@ type EntityMetadataProps = z.infer<typeof entityMetadataPropsSchema>;
 
 class EntityMetadata extends ValueObject<EntityMetadataProps> {
   private constructor(props: EntityMetadataProps) {
-    super(parsePropsOrThrow(entityMetadataPropsSchema, props));
+    super(parseProps(entityMetadataPropsSchema, props));
   }
 
   static create(now: Date): EntityMetadata {

@@ -7,9 +7,10 @@
   },
   "scripts": {
     "lint": "oxlint",
-    "test": "bun test --randomize"
+    "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
+    "hono": "catalog:",
     "pino": "catalog:",
     "pino-pretty": "catalog:",
     "zod": "catalog:"

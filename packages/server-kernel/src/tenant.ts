@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { parsePropsOrThrow } from "./schema.ts";
+import { parseProps } from "./schema.ts";
 import { ValueObject } from "./value-object.ts";
 
 const tenantTypes = ["user", "organization"] as const;
@@ -13,12 +13,22 @@ type TenantPropsSchema = z.infer<typeof tenantPropsSchema>;
 type TenantType = TenantPropsSchema["type"];
 
 class Tenant extends ValueObject<TenantPropsSchema> {
-  private constructor(type: TenantType, id: string) {
-    super(parsePropsOrThrow(tenantPropsSchema, { type, id }));
+  static create(type: TenantType, id: string): Tenant {
+    return new Tenant(parseProps(tenantPropsSchema, { type, id }));
   }
 
-  static create(type: TenantType, id: string): Tenant {
-    return new Tenant(type, id);
+  static fromString(tenant: string): Tenant {
+    const splitted = tenant.split(":");
+    return new Tenant(
+      parseProps(tenantPropsSchema, {
+        type: splitted[0],
+        id: splitted[1],
+      }),
+    );
+  }
+
+  override toString(): string {
+    return `${this.type}:${this.id}`;
   }
 
   get type(): TenantType {
