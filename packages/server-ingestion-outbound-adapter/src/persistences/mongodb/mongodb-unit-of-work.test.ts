@@ -1,6 +1,6 @@
 import type { Collection, MongoClient } from "mongodb";
 
-import { Event } from "@repo/server-ingestion";
+import { Event } from "@repo/server-ingestion-core";
 import { EntityMetadata, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 

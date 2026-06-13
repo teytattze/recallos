@@ -9,11 +9,14 @@
     "test": "bun test --randomize"
   },
   "dependencies": {
+    "@repo/server-database": "workspace:*",
     "@repo/server-ingestion-core": "workspace:*",
     "@repo/server-ingestion-inbound-adapter": "workspace:*",
     "@repo/server-ingestion-outbound-adapter": "workspace:*",
+    "@repo/server-kernel": "workspace:*",
     "@repo/server-platform": "workspace:*",
-    "hono": "catalog:"
+    "hono": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*"

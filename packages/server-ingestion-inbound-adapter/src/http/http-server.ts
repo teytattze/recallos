@@ -1,12 +1,12 @@
 import { Hono } from "hono";
 
-type CreateHonoAppInput = {
+type CreateIngestionHttpAppInput = {
   deps: {
     jiraWebhookRoutes: Hono;
   };
 };
 
-const createHonoApp = (input: CreateHonoAppInput) => {
+const createIngestionHttpApp = (input: CreateIngestionHttpAppInput) => {
   const app = new Hono();
 
   app.route("/api/v1/external-providers/jira", input.deps.jiraWebhookRoutes);
@@ -14,4 +14,4 @@ const createHonoApp = (input: CreateHonoAppInput) => {
   return app;
 };
 
-export { createHonoApp };
+export { createIngestionHttpApp };

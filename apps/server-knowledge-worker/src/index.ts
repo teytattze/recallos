@@ -1,12 +1,12 @@
-import { loadConfig } from "@repo/server-platform";
 import { Hono } from "hono";
 
-const config = loadConfig();
+import { commonHttpApp, commonHttpConfig } from "./common";
+
 const app = new Hono();
 
-app.get("/api/v1/health", (c) => c.json({ message: "ok" }));
+app.route("", commonHttpApp);
 
 export default {
-  port: config.PORT,
+  port: commonHttpConfig.PORT,
   fetch: app.fetch,
 };

@@ -17,11 +17,14 @@
     "apps/server-api-service": {
       "name": "@repo/server-api-service",
       "dependencies": {
+        "@repo/server-database": "workspace:*",
         "@repo/server-ingestion-core": "workspace:*",
         "@repo/server-ingestion-inbound-adapter": "workspace:*",
         "@repo/server-ingestion-outbound-adapter": "workspace:*",
+        "@repo/server-kernel": "workspace:*",
         "@repo/server-platform": "workspace:*",
         "hono": "catalog:",
+        "zod": "catalog:",
       },
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
@@ -122,6 +125,7 @@
         "@repo/server-ingestion-core": "workspace:*",
         "@repo/server-kernel": "workspace:*",
         "hono": "catalog:",
+        "type-fest": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -133,6 +137,7 @@
       "dependencies": {
         "@repo/server-ingestion-core": "workspace:*",
         "mongodb": "catalog:",
+        "zod": "catalog:",
       },
       "devDependencies": {
         "@repo/server-kernel": "workspace:*",
@@ -184,6 +189,7 @@
     "packages/server-platform": {
       "name": "@repo/server-platform",
       "dependencies": {
+        "hono": "catalog:",
         "pino": "catalog:",
         "pino-pretty": "catalog:",
         "zod": "catalog:",

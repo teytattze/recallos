@@ -1,4 +1,4 @@
-import type { Event, EventRepositoryPort } from "@repo/server-ingestion";
+import type { Event, EventRepositoryPort } from "@repo/server-ingestion-core";
 import type { Collection, ClientSession, MongoClient } from "mongodb";
 
 import type { MongodbEventModel } from "./mongodb-event-model";

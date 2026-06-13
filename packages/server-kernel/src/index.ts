@@ -1,4 +1,3 @@
-export * from "./result.ts";
 export * from "./domain-error.ts";
 export * from "./schema.ts";
 export * from "./value-object.ts";

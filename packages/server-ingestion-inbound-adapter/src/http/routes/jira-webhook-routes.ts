@@ -1,4 +1,4 @@
-import type { IngestEventUseCase } from "@repo/server-ingestion-core";
+import type { IngestEventPort } from "@repo/server-ingestion-core";
 
 import { Tenant } from "@repo/server-kernel";
 import { Hono, type Context } from "hono";
@@ -10,15 +10,15 @@ import {
 
 type JiraWebhookRoutesInput = {
   deps: {
-    ingestEventUseCase: IngestEventUseCase;
+    ingestEventUseCase: IngestEventPort;
   };
 };
 
-const makeJiraWebhookRoutes = (input: JiraWebhookRoutesInput) => {
+const createJiraWebhookRoutes = (input: JiraWebhookRoutesInput) => {
   const jiraWebhookRoutes = new Hono();
 
   jiraWebhookRoutes.post("/events", async (c: Context) => {
-    const body = jiraWebhookEventRequestBody.parse(c.req.json());
+    const body = jiraWebhookEventRequestBody.parse(await c.req.json());
     const queryParams = jiraWebhookEventQueryParams.parse({
       graphId: c.req.query("graphId"),
       tenant: c.req.query("tenant"),
@@ -33,10 +33,10 @@ const makeJiraWebhookRoutes = (input: JiraWebhookRoutesInput) => {
       },
     });
 
-    return c.status(201);
+    return c.body(null, 201);
   });
 
   return jiraWebhookRoutes;
 };
 
-export { makeJiraWebhookRoutes };
+export { createJiraWebhookRoutes };

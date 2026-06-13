@@ -1,6 +1,6 @@
 import { pino, type Logger as PinoLogger } from "pino";
 
-import type { Config } from "./config.ts";
+import type { Config } from "./common-http-config.tstp-config.ts";
 
 type Logger = PinoLogger;
 

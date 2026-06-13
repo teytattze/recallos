@@ -2,6 +2,9 @@
   "name": "@repo/server-ingestion-inbound-adapter",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "lint": "oxlint",
     "test": "bun test --randomize --pass-with-no-tests"
@@ -10,6 +13,7 @@
     "@repo/server-ingestion-core": "workspace:*",
     "@repo/server-kernel": "workspace:*",
     "hono": "catalog:",
+    "type-fest": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

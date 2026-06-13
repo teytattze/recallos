@@ -1,7 +1,7 @@
 import type {
   UnitOfWorkPort,
   UnitOfWorkPortContext,
-} from "@repo/server-ingestion";
+} from "@repo/server-ingestion-core";
 import type { MongoClient } from "mongodb";
 
 import { MongodbEventRepository } from "./mongodb-event-repository";
