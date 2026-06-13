@@ -1,16 +1,19 @@
 import { pino, type Logger as PinoLogger } from "pino";
 
-import type { Config } from "./common-http-config.tstp-config.ts";
+import type { AppMetadataConfig } from "./app-metadata-config";
 
 type Logger = PinoLogger;
 
-function createLogger(config: Pick<Config, "NODE_ENV" | "LOG_LEVEL">): Logger {
-  if (config.NODE_ENV === "production") {
-    return pino({ level: config.LOG_LEVEL });
-  }
+type CreateLoggerInput = {
+  config: AppMetadataConfig;
+};
 
+function createLogger(input: CreateLoggerInput): Logger {
+  if (input.config.APP_ENV === "prod") {
+    return pino({ level: "info" });
+  }
   return pino({
-    level: config.LOG_LEVEL,
+    level: "info",
     transport: {
       target: "pino-pretty",
       options: { colorize: true },

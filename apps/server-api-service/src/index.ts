@@ -9,6 +9,6 @@ app.route("", commonHttpApp);
 app.route("", ingestionHttpApp);
 
 export default {
-  port: commonHttpConfig.PORT,
+  port: commonHttpConfig.HTTP_PORT,
   fetch: app.fetch,
 };

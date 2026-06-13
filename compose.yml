@@ -1,58 +1,46 @@
-# Local AWS + Postgres stack for RecallOS.
+# Local data + queue stack for RecallOS.
 #
-# floci emulates the AWS surface (S3, SQS, CloudWatch Logs, EventBridge, Scheduler)
-# on a single endpoint at http://localhost:4566. Use credentials test/test.
-# Postgres runs as a dedicated pgvector container so HNSW / pgvector work locally
-# (the consolidated-Aurora store relies on pgvector — see decision-records/server).
-#
-#   AWS_ENDPOINT_URL=http://localhost:4566
-#   AWS_ACCESS_KEY_ID=test  AWS_SECRET_ACCESS_KEY=test  AWS_REGION=us-east-1
-#   DATABASE_URL=postgres://recallos:recallos@localhost:5432/recallos
+#   INGESTION_MONGODB_URL=mongodb://localhost:27017/?replicaSet=rs0
+#   INGESTION_MONGODB_NAME=recallos
+#   QUEUE_REDIS_URL=redis://localhost:6379
 
 services:
-  floci:
-    image: floci/floci:latest
+  mongo:
+    image: mongo:8
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     ports:
-      - "4566:4566"
-    environment:
-      # Persist emulated state across restarts (state lives in the floci-data volume).
-      FLOCI_STORAGE_MODE: hybrid
-      # Network that container-backed services (Lambda/RDS/etc.) are attached to;
-      # must match this compose project's network name (set below).
-      FLOCI_SERVICES_DOCKER_NETWORK: recallos
+      - "27017:27017"
     volumes:
-      # Lets floci run real engine containers for container-backed services.
-      - /var/run/docker.sock:/var/run/docker.sock
-      - floci-data:/app/data
+      - mongo-data:/data/db
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:4566/_floci/health"]
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "mongodb://localhost:27017/admin",
+          "--eval",
+          "try { rs.status().ok } catch (error) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }).ok }",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 20s
+      start_period: 10s
 
-  postgres:
-    image: pgvector/pgvector:pg17
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: recallos
-      POSTGRES_PASSWORD: recallos
-      POSTGRES_DB: recallos
+      - "6379:6379"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - redis-data:/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U recallos -d recallos"]
-      interval: 5s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
       timeout: 5s
       retries: 10
-
-networks:
-  # Fix the network name so FLOCI_SERVICES_DOCKER_NETWORK is deterministic
-  # regardless of the compose project name.
-  default:
-    name: recallos
+      start_period: 5s
 
 volumes:
-  floci-data:
-  postgres-data:
+  mongo-data:
+  redis-data:

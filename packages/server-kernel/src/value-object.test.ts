@@ -14,11 +14,7 @@ class TestVO extends ValueObject<TestProps> {
 }
 
 test.each([
-  [
-    "the same instance",
-    TestVO.of("x", [], new Date(0)),
-    (vo: TestVO) => vo,
-  ],
+  ["the same instance", TestVO.of("x", [], new Date(0)), (vo: TestVO) => vo],
   [
     "structurally equal props",
     TestVO.of("x", ["t1", "t2"], new Date("2026-01-01T00:00:00Z")),

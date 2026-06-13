@@ -7,6 +7,6 @@ const app = new Hono();
 app.route("", commonHttpApp);
 
 export default {
-  port: commonHttpConfig.PORT,
+  port: commonHttpConfig.HTTP_PORT,
   fetch: app.fetch,
 };
