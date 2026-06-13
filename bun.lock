@@ -157,8 +157,8 @@
         "@repo/typescript-config": "workspace:*",
       },
     },
-    "packages/server-knowledge": {
-      "name": "@repo/server-knowledge",
+    "packages/server-knowledge-core": {
+      "name": "@repo/server-knowledge-core",
       "dependencies": {
         "@repo/server-kernel": "workspace:*",
         "es-toolkit": "catalog:",
@@ -168,8 +168,8 @@
         "@repo/typescript-config": "workspace:*",
       },
     },
-    "packages/server-knowledge-infra": {
-      "name": "@repo/server-knowledge-infra",
+    "packages/server-knowledge-outbound-adapter": {
+      "name": "@repo/server-knowledge-outbound-adapter",
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
       },
@@ -737,9 +737,9 @@
 
     "@repo/server-kernel": ["@repo/server-kernel@workspace:packages/server-kernel"],
 
-    "@repo/server-knowledge": ["@repo/server-knowledge@workspace:packages/server-knowledge"],
+    "@repo/server-knowledge-core": ["@repo/server-knowledge-core@workspace:packages/server-knowledge-core"],
 
-    "@repo/server-knowledge-infra": ["@repo/server-knowledge-infra@workspace:packages/server-knowledge-infra"],
+    "@repo/server-knowledge-outbound-adapter": ["@repo/server-knowledge-outbound-adapter@workspace:packages/server-knowledge-outbound-adapter"],
 
     "@repo/server-knowledge-worker": ["@repo/server-knowledge-worker@workspace:apps/server-knowledge-worker"],
 

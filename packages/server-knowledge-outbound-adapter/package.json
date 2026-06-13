@@ -1,5 +1,5 @@
 {
-  "name": "@repo/server-knowledge-infra",
+  "name": "@repo/server-knowledge-outbound-adapter",
   "private": true,
   "type": "module",
   "scripts": {
