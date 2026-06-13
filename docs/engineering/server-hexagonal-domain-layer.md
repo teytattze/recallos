@@ -7,6 +7,7 @@
 
 ## Pattern
 
+- Lives in `packages/server-<context>-core/src/domain/`.
 - Owns entities, value objects, aggregates, domain events, domain services, errors, and invariants.
 - Declares ports when it needs outside-world capabilities.
 - Accepts time as input, e.g. `createdAt: Date`; never calls `Date.now()`.

@@ -7,6 +7,7 @@
 
 ## Pattern
 
+- Lives in `packages/server-<context>-core/src/application/`.
 - Owns use cases, transaction boundaries, and port interfaces.
 - Depends on port interfaces, never concrete implementations.
 - Inject ports such as `MemoryItemRepository`, never concrete adapters.
@@ -15,7 +16,7 @@
 ## Boundaries
 
 - Depends only on own `domain/`, `@repo/server-kernel`, `zod`, `es-toolkit`, and `date-fns`.
-- No concrete DBs, HTTP, framework code, or adapter wiring.
+- No concrete DBs, HTTP, framework code, platform imports, or adapter wiring.
 - Ports define contracts only; they do not implement behavior.
 
 ## Conventions

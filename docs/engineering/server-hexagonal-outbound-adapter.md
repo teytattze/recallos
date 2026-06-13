@@ -6,13 +6,14 @@
 
 ## Pattern
 
+- Lives in `packages/server-<context>-outbound-adapter`.
 - Owns persistence and gateway adapters.
 - Implements ports for Postgres, pgvector, graph storage, and external APIs.
 - Talks to other adapters only through the application layer.
 
 ## Boundaries
 
-- Depends on `@repo/server-<context>`, `@repo/server-platform`, and drivers such as `pg` or SDK clients.
+- Depends on `@repo/server-<context>-core`, `@repo/server-platform`, and drivers such as `pg` or SDK clients.
 - No business logic.
 
 ## Conventions
