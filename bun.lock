@@ -112,12 +112,6 @@
         "@repo/typescript-config": "workspace:*",
       },
     },
-    "packages/server-ingestion-adapter": {
-      "name": "@repo/server-ingestion-adapter",
-      "devDependencies": {
-        "@repo/typescript-config": "workspace:*",
-      },
-    },
     "packages/server-ingestion-infra": {
       "name": "@repo/server-ingestion-infra",
       "dependencies": {
@@ -725,8 +719,6 @@
     "@repo/server-database": ["@repo/server-database@workspace:packages/server-database"],
 
     "@repo/server-ingestion": ["@repo/server-ingestion@workspace:packages/server-ingestion"],
-
-    "@repo/server-ingestion-adapter": ["@repo/server-ingestion-adapter@workspace:packages/server-ingestion-adapter"],
 
     "@repo/server-ingestion-infra": ["@repo/server-ingestion-infra@workspace:packages/server-ingestion-infra"],
 
