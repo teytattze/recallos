@@ -7,7 +7,7 @@
   },
   "scripts": {
     "lint": "oxlint",
-    "test": "bun test --randomize"
+    "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
     "@repo/server-platform": "workspace:*",

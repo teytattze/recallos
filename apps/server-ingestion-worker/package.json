@@ -1,19 +1,16 @@
 {
-  "name": "@repo/server-platform",
+  "name": "@repo/server-ingestion-worker",
   "private": true,
   "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
-  },
   "scripts": {
+    "build": "bun build src/index.ts --outdir ./dist --target bun",
+    "dev": "bun --watch src/index.ts",
     "lint": "oxlint",
     "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
-    "hono": "catalog:",
-    "pino": "catalog:",
-    "pino-pretty": "catalog:",
-    "zod": "catalog:"
+    "@repo/server-platform": "workspace:*",
+    "hono": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*"

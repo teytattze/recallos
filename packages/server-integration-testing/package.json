@@ -7,12 +7,12 @@
     "test": "bun test --timeout 60000"
   },
   "dependencies": {
-    "@aws-sdk/client-sqs": "catalog:",
     "@repo/server-database": "workspace:*",
     "@repo/server-ingestion-core": "workspace:*",
     "@repo/server-ingestion-outbound-adapter": "workspace:*",
     "@repo/server-kernel": "workspace:*",
-    "@repo/server-platform": "workspace:*"
+    "@repo/server-platform": "workspace:*",
+    "mongodb": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
