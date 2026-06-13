@@ -19,7 +19,7 @@ const mongodbClient = createMongodbClient({
 });
 const unitOfWork = new MongodbUnitOfWork(
   mongodbClient,
-  mongodbConfig.INGESTION_MONGODB_NAME,
+  mongodbConfig.INGESTION_MONGODB_DATABAES_NAME,
 );
 
 // CORE
