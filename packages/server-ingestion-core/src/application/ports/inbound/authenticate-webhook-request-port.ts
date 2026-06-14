@@ -7,9 +7,7 @@ type AuthenticateWebhookRequestPortInput = {
     incomingBody: string;
   };
 };
-type AuthenticateWebhookRequestPortOutput = Promise<{
-  isAuthenticated: boolean;
-}>;
+type AuthenticateWebhookRequestPortOutput = Promise<void>;
 
 interface AuthenticateWebhookRequestPort {
   execute(

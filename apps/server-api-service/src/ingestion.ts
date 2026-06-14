@@ -1,6 +1,7 @@
 import { createMongodbClient } from "@repo/server-database";
 import {
   AuthenticateWebhookRequestUseCase,
+  GetWebhookSubscriptionUseCase,
   IngestEventUseCase,
 } from "@repo/server-ingestion-core";
 import {
@@ -41,11 +42,15 @@ const ingestEventUseCase = new IngestEventUseCase(
   createDefaultClock(),
   unitOfWork,
 );
+const getWebhookSubscriptionUseCase = new GetWebhookSubscriptionUseCase(
+  webhookSubscriptionRepository,
+);
 
 // INBOUND
 const jiraWebhookRoutes = createJiraWebhookRoutes({
   deps: {
     authenticateWebhookRequest: authenticateWebhookRequestUseCase,
+    getWebhookSubscription: getWebhookSubscriptionUseCase,
     ingestEvent: ingestEventUseCase,
   },
 });

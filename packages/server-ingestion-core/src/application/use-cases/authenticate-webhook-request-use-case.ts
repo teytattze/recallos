@@ -41,13 +41,17 @@ class AuthenticateWebhookRequestUseCase implements AuthenticateWebhookRequestPor
       secret: webhookSubscription.secret,
       payload: input.payload.incomingBody,
     });
+    const isValid = timingSafeEqual(
+      Buffer.from(expectedSignature),
+      Buffer.from(input.payload.incomingSignature),
+    );
 
-    return {
-      isAuthenticated: timingSafeEqual(
-        Buffer.from(expectedSignature),
-        Buffer.from(input.payload.incomingSignature),
-      ),
-    };
+    if (isValid) {
+      return;
+    }
+    throw createInvalidWebhookAuthenticationError(
+      "Webhook authentication failed",
+    );
   }
 }
 

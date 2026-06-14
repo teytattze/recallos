@@ -75,7 +75,7 @@ test("GetWebhookSubscriptionUseCase.execute: given an existing subscription, it 
   const useCase = new GetWebhookSubscriptionUseCase(repository);
 
   // WHEN
-  const result = await useCase.execute({ id, tenant });
+  const result = await useCase.execute({ tenant, payload: { id } });
 
   // THEN
   expect(repository.findByIdInputs.length).toBe(1);
@@ -110,7 +110,7 @@ test("GetWebhookSubscriptionUseCase.execute: given a missing subscription, it sh
 
   // WHEN
   const error = await useCase
-    .execute({ id, tenant })
+    .execute({ tenant, payload: { id } })
     .catch((caught: unknown) => caught);
 
   // THEN

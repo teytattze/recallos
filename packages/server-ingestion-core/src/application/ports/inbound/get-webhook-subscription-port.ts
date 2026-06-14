@@ -1,6 +1,8 @@
 type GetWebhookSubscriptionPortInput = {
-  id: string;
   tenant: string;
+  payload: {
+    id: string;
+  };
 };
 
 type GetWebhookSubscriptionPortOutput = Promise<{

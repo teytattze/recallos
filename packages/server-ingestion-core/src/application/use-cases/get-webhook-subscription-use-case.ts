@@ -18,7 +18,7 @@ class GetWebhookSubscriptionUseCase implements GetWebhookSubscriptionPort {
   async execute(
     input: GetWebhookSubscriptionPortInput,
   ): GetWebhookSubscriptionPortOutput {
-    const id = WebhookSubscriptionId.restore({ payload: input.id });
+    const id = WebhookSubscriptionId.restore({ payload: input.payload.id });
     const tenant = Tenant.fromString(input.tenant);
 
     const webhookSubscription =
@@ -31,7 +31,7 @@ class GetWebhookSubscriptionUseCase implements GetWebhookSubscriptionPort {
       throw createWebhookSubscriptionNotFoundError(
         "Webhook subscription not found",
         {
-          id: input.id,
+          id: input.payload.id,
           tenant: input.tenant,
         },
       );

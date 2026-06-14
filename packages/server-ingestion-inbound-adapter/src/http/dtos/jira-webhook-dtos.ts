@@ -8,7 +8,7 @@ const jiraWebhookEventRequestBody = z.custom<JsonObject>(
 
 const jiraWebhookEventQueryParams = z.object({
   tenant: z.string(),
-  graphId: z.string(),
+  subscriptionId: z.string(),
 });
 
 export { jiraWebhookEventRequestBody, jiraWebhookEventQueryParams };
