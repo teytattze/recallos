@@ -26,7 +26,9 @@ class TestTenantAwareAgg extends TenantAwareAggregateRoot<TestId> {
   }
 }
 
-const fixedMeta = EntityMetadata.create(new Date("2026-01-01T00:00:00Z"));
+const fixedMeta = EntityMetadata.create({
+  payload: { now: new Date("2026-01-01T00:00:00Z") },
+});
 
 test("TenantAwareAggregateRoot: given a constructed aggregate, it should expose tenant and metadata", () => {
   // GIVEN

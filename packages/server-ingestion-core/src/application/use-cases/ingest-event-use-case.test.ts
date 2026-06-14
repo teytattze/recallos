@@ -1,6 +1,6 @@
 import type { JsonObject } from "type-fest";
 
-import { createFixedClock, Tenant } from "@repo/server-kernel";
+import { createFixedClock } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
 import type { Event } from "../../domain/aggregates/event.ts";
@@ -33,7 +33,7 @@ class FakeUnitOfWork implements UnitOfWorkPort {
 }
 
 const createdAt = new Date("2026-01-02T00:00:00Z");
-const tenant = Tenant.create("organization", "org1");
+const tenant = "organization:org1";
 const graphId = "01952d3f-0000-7000-8000-000000000100";
 const external = {
   id: "jira-123",
@@ -55,7 +55,7 @@ const validInput = {
 test("IngestEventUseCase.execute: given valid input, it should insert the event in one transaction", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
+  const useCase = new IngestEventUseCase(createFixedClock(createdAt), uow);
 
   // WHEN
   const result = await useCase.execute(validInput);
@@ -65,7 +65,7 @@ test("IngestEventUseCase.execute: given valid input, it should insert the event 
   expect(uow.events.inserted.length).toBe(1);
   expect(result.id).toBe(uow.events.inserted[0]!.id.value);
   expect(uow.events.inserted[0]!.metadata.createdAt).toEqual(createdAt);
-  expect(uow.events.inserted[0]!.tenant).toBe(tenant);
+  expect(uow.events.inserted[0]!.tenant.toString()).toBe(tenant);
   expect(String(uow.events.inserted[0]!.external.toJSON().id)).toBe(
     external.id,
   );
@@ -79,7 +79,7 @@ test("IngestEventUseCase.execute: given valid input, it should insert the event 
 test("IngestEventUseCase.execute: given an invalid event, it should throw an InvalidEvent error without inserting", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
+  const useCase = new IngestEventUseCase(createFixedClock(createdAt), uow);
   const input = {
     ...validInput,
     payload: {

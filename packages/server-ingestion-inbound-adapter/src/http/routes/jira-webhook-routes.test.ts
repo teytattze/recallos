@@ -21,7 +21,7 @@ test("createJiraWebhookRoutes: given a valid Jira webhook POST, it should ingest
   // GIVEN
   const ingestEventUseCase = new FakeIngestEventUseCase();
   const routes = createJiraWebhookRoutes({
-    deps: { ingestEventUseCase },
+    deps: { ingestEvent: ingestEventUseCase },
   });
   const body = {
     issue: {

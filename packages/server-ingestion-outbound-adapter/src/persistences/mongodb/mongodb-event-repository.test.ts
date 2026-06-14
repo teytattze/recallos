@@ -1,7 +1,6 @@
 import type { Collection, ClientSession, MongoClient } from "mongodb";
 
 import { Event } from "@repo/server-ingestion-core";
-import { EntityMetadata, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
 import type { MongodbEventModel } from "./mongodb-event-model";
@@ -49,7 +48,7 @@ class FakeMongoClient {
 const eventId = "01952d3f-0000-7000-8000-000000000000";
 const createdAt = new Date("2026-01-02T00:00:00Z");
 const updatedAt = new Date("2026-01-03T00:00:00Z");
-const tenant = Tenant.create("organization", "org1");
+const tenant = "organization:org1";
 const external = {
   id: "jira-123",
   provider: "jira",
@@ -70,7 +69,7 @@ test("MongodbEventRepository.insert: given an event, it should insert the MongoD
   );
   const event = Event.restore({
     tenant,
-    metadata: EntityMetadata.restore(createdAt, updatedAt),
+    metadata: { createdAt, updatedAt },
     payload: {
       id: eventId,
       external,

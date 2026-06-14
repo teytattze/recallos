@@ -1,7 +1,6 @@
 import type { Collection, MongoClient } from "mongodb";
 
 import { Event } from "@repo/server-ingestion-core";
-import { EntityMetadata, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
 import type { MongodbEventModel } from "./mongodb-event-model";
@@ -72,11 +71,11 @@ class FakeMongoClient {
 }
 
 const event = Event.restore({
-  tenant: Tenant.create("organization", "org1"),
-  metadata: EntityMetadata.restore(
-    new Date("2026-01-02T00:00:00Z"),
-    new Date("2026-01-03T00:00:00Z"),
-  ),
+  tenant: "organization:org1",
+  metadata: {
+    createdAt: new Date("2026-01-02T00:00:00Z"),
+    updatedAt: new Date("2026-01-03T00:00:00Z"),
+  },
   payload: {
     id: "01952d3f-0000-7000-8000-000000000000",
     external: {

@@ -30,7 +30,7 @@ const ingestEventUseCase = new IngestEventUseCase(
 
 // INBOUND
 const jiraWebhookRoutes = createJiraWebhookRoutes({
-  deps: { ingestEventUseCase },
+  deps: { ingestEvent: ingestEventUseCase },
 });
 const ingestionHttpApp = createIngestionHttpApp({
   deps: { jiraWebhookRoutes },

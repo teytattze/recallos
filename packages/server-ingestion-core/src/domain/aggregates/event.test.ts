@@ -1,6 +1,5 @@
 import type { JsonObject } from "type-fest";
 
-import { EntityMetadata, Tenant } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
 import type { EventExternalPropsIn } from "../value-objects/event-external.ts";
@@ -9,8 +8,8 @@ import { Event } from "./event.ts";
 
 const createdAt = new Date("2026-01-02T00:00:00Z");
 const updatedAt = new Date("2026-01-03T00:00:00Z");
-const tenant = Tenant.create("organization", "org1");
-const metadata = EntityMetadata.create(createdAt);
+const tenant = "organization:org1";
+const metadata = { now: createdAt };
 const graphId = "01952d3f-0000-7000-8000-000000000100";
 const external = {
   id: "jira-123",
@@ -46,7 +45,7 @@ test("Event.create: given valid input, it should return an Event with metadata a
 
   // THEN
   expect(event.metadata.createdAt).toEqual(createdAt);
-  expect(event.tenant).toBe(tenant);
+  expect(event.tenant.toString()).toBe(tenant);
   expect(String(event.external.toJSON().id)).toBe(external.id);
   expect(String(event.external.toJSON().provider)).toBe(external.provider);
   expect(event.graphId.value).toBe(graphId);
@@ -112,7 +111,7 @@ test.each([
 
 const storedInput = {
   tenant,
-  metadata: EntityMetadata.restore(createdAt, updatedAt),
+  metadata: { createdAt, updatedAt },
   payload: {
     id: "01952d3f-0000-7000-8000-000000000000",
     external,
@@ -132,7 +131,7 @@ test("Event.restore: given a stored row, it should preserve persisted identity a
   expect(event.id.value).toBe(storedInput.payload.id);
   expect(event.metadata.createdAt).toEqual(storedInput.metadata.createdAt);
   expect(event.metadata.updatedAt).toEqual(storedInput.metadata.updatedAt);
-  expect(event.tenant.equals(tenant)).toBe(true);
+  expect(event.tenant.toString()).toBe(tenant);
   expect(String(event.external.toJSON().id)).toBe(external.id);
   expect(String(event.external.toJSON().provider)).toBe(external.provider);
   expect(event.graphId.value).toBe(graphId);

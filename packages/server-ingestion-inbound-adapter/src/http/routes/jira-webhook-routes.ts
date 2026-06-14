@@ -1,6 +1,5 @@
 import type { IngestEventPort } from "@repo/server-ingestion-core";
 
-import { Tenant } from "@repo/server-kernel";
 import { Hono, type Context } from "hono";
 
 import {
@@ -10,7 +9,7 @@ import {
 
 type JiraWebhookRoutesInput = {
   deps: {
-    ingestEventUseCase: IngestEventPort;
+    ingestEvent: IngestEventPort;
   };
 };
 
@@ -24,8 +23,8 @@ const createJiraWebhookRoutes = (input: JiraWebhookRoutesInput) => {
       tenant: c.req.query("tenant"),
     });
 
-    await input.deps.ingestEventUseCase.execute({
-      tenant: Tenant.fromString(queryParams.tenant),
+    await input.deps.ingestEvent.execute({
+      tenant: queryParams.tenant,
       payload: {
         external: { id: "", provider: "jira" },
         graphId: queryParams.graphId,

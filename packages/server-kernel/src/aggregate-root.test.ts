@@ -30,7 +30,9 @@ class TestAgg extends AggregateRoot<TestId, { n: number }> {
   }
 }
 
-const fixedMeta = EntityMetadata.create(new Date("2026-01-01T00:00:00Z"));
+const fixedMeta = EntityMetadata.create({
+  payload: { now: new Date("2026-01-01T00:00:00Z") },
+});
 
 test("AggregateRoot.metadata: given a constructed aggregate, it should return the injected metadata", () => {
   // GIVEN
@@ -44,7 +46,11 @@ test("AggregateRoot.touch: given a later instant, it should advance updatedAt an
   // GIVEN
   const created = new Date("2026-01-01T00:00:00Z");
   const later = new Date("2026-03-01T00:00:00Z");
-  const agg = TestAgg.of(TestId.from("a1"), EntityMetadata.create(created), 1);
+  const agg = TestAgg.of(
+    TestId.from("a1"),
+    EntityMetadata.create({ payload: { now: created } }),
+    1,
+  );
 
   // WHEN
   agg.bump(later);
