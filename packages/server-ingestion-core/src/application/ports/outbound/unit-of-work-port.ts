@@ -1,7 +1,9 @@
 import type { EventRepositoryPort } from "./event-repository-port.ts";
+import type { WebhookSubscriptionRepositoryPort } from "./webhook-subscription-repository-port.ts";
 
 interface UnitOfWorkPortContext {
   eventRepository: EventRepositoryPort;
+  webhookSubscriptionRepository: WebhookSubscriptionRepositoryPort;
 }
 
 interface UnitOfWorkPort {

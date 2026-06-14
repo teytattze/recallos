@@ -9,7 +9,8 @@ const tenantPropsSchema = z.object({
   type: z.enum(tenantTypes),
   id: z.string().min(1, "Tenant id must be a non-empty string"),
 });
-type TenantPropsSchema = z.infer<typeof tenantPropsSchema>;
+
+type TenantPropsSchema = z.output<typeof tenantPropsSchema>;
 type TenantType = TenantPropsSchema["type"];
 
 class Tenant extends ValueObject<TenantPropsSchema> {

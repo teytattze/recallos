@@ -1,3 +1,5 @@
+import type { PartialDeep } from "type-fest";
+
 import { z } from "zod";
 
 import { type DomainError, defineError } from "./domain-error.ts";
@@ -14,7 +16,7 @@ type ErrorBuilder = (
 
 export function parseProps<S extends z.ZodType>(
   schema: S,
-  input: z.input<S>,
+  input: unknown,
   error: ErrorBuilder = InvariantViolation,
 ): z.output<S> {
   const parsed = schema.safeParse(input);
