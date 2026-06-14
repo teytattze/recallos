@@ -152,45 +152,37 @@ test("AuthenticateWebhookRequestUseCase.execute: given a missing subscription, i
   expect(signatureGenerator.generateInputs.length).toBe(0);
 });
 
-test.each([
-  {
-    label: "a same-length invalid signature",
-    incomingSignature: "Expected-signature",
-  },
-])(
-  "AuthenticateWebhookRequestUseCase.execute: given $label, it should throw an invalid authentication error",
-  async ({ incomingSignature }) => {
-    // GIVEN
-    const repository = new FakeWebhookSubscriptionRepository(
-      createWebhookSubscription(),
-    );
-    const signatureGenerator = new FakeWebhookSignatureGenerator(
-      expectedSignature,
-    );
-    const useCase = new AuthenticateWebhookRequestUseCase(
-      repository,
-      signatureGenerator,
-    );
+test("AuthenticateWebhookRequestUseCase.execute: given a same-length invalid signature, it should throw an invalid authentication error", async () => {
+  // GIVEN
+  const repository = new FakeWebhookSubscriptionRepository(
+    createWebhookSubscription(),
+  );
+  const signatureGenerator = new FakeWebhookSignatureGenerator(
+    expectedSignature,
+  );
+  const useCase = new AuthenticateWebhookRequestUseCase(
+    repository,
+    signatureGenerator,
+  );
 
-    // WHEN
-    const error = await useCase
-      .execute({
-        tenant,
-        payload: {
-          id,
-          provider: "jira",
-          incomingSignature,
-          incomingBody,
-        },
-      })
-      .catch((caught: unknown) => caught);
+  // WHEN
+  const error = await useCase
+    .execute({
+      tenant,
+      payload: {
+        id,
+        provider: "jira",
+        incomingSignature: "Expected-signature",
+        incomingBody,
+      },
+    })
+    .catch((caught: unknown) => caught);
 
-    // THEN
-    expect(error).toMatchObject({
-      kind: "InvalidWebhookAuthentication",
-      category: "forbidden",
-    });
-    expect(error).not.toBeInstanceOf(RangeError);
-    expect(signatureGenerator.generateInputs.length).toBe(1);
-  },
-);
+  // THEN
+  expect(error).toMatchObject({
+    kind: "InvalidWebhookAuthentication",
+    category: "forbidden",
+  });
+  expect(error).not.toBeInstanceOf(RangeError);
+  expect(signatureGenerator.generateInputs.length).toBe(1);
+});
