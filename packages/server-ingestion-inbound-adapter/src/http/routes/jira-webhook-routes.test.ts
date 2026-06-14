@@ -1,4 +1,7 @@
 import type {
+  AuthenticateWebhookRequestPort,
+  AuthenticateWebhookRequestPortInput,
+  AuthenticateWebhookRequestPortOutput,
   IngestEventPort,
   IngestEventPortInput,
   IngestEventPortOutput,
@@ -17,11 +20,29 @@ class FakeIngestEventUseCase implements IngestEventPort {
   }
 }
 
+class FakeAuthenticateWebhookRequestUseCase
+  implements AuthenticateWebhookRequestPort
+{
+  readonly executeCalls: AuthenticateWebhookRequestPortInput[] = [];
+
+  execute(
+    input: AuthenticateWebhookRequestPortInput,
+  ): AuthenticateWebhookRequestPortOutput {
+    this.executeCalls.push(input);
+    return Promise.resolve({ isAuthenticated: true });
+  }
+}
+
 test("createJiraWebhookRoutes: given a valid Jira webhook POST, it should ingest the raw body and return 201", async () => {
   // GIVEN
+  const authenticateWebhookRequestUseCase =
+    new FakeAuthenticateWebhookRequestUseCase();
   const ingestEventUseCase = new FakeIngestEventUseCase();
   const routes = createJiraWebhookRoutes({
-    deps: { ingestEvent: ingestEventUseCase },
+    deps: {
+      authenticateWebhookRequest: authenticateWebhookRequestUseCase,
+      ingestEvent: ingestEventUseCase,
+    },
   });
   const body = {
     issue: {

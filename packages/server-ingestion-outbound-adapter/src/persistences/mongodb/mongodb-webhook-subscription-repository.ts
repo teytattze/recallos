@@ -1,4 +1,4 @@
-import type { Collection, MongoClient } from "mongodb";
+import type { Collection, ClientSession, MongoClient } from "mongodb";
 
 import {
   WebhookSubscription,
@@ -17,6 +17,7 @@ class MongodbWebhookSubscriptionRepository implements WebhookSubscriptionReposit
   constructor(
     private readonly client: MongoClient,
     private readonly databaseName: string,
+    private readonly session?: ClientSession,
   ) {}
 
   async findById(
@@ -35,6 +36,16 @@ class MongodbWebhookSubscriptionRepository implements WebhookSubscriptionReposit
           payload: {
             id: model._id,
             provider: model.provider,
+            context: {
+              metadata: {
+                createdAt: model.context.createdAt,
+                updatedAt: model.context.updatedAt,
+              },
+              payload: {
+                id: model.context._id,
+                graphId: model.context.graphId,
+              },
+            },
             secret: {
               metadata: {
                 createdAt: model.createdAt,
@@ -60,6 +71,13 @@ class MongodbWebhookSubscriptionRepository implements WebhookSubscriptionReposit
       tenant: input.data.tenant.toString(),
 
       provider: input.data.provider,
+      context: {
+        _id: input.data.context.id.toString(),
+        createdAt: input.data.context.metadata.createdAt,
+        updatedAt: input.data.context.metadata.updatedAt,
+
+        graphId: input.data.context.graphId.toString(),
+      },
       secret: {
         _id: input.data.secret.id.toString(),
         createdAt: input.data.secret.metadata.createdAt,
@@ -70,7 +88,9 @@ class MongodbWebhookSubscriptionRepository implements WebhookSubscriptionReposit
       },
     } as const satisfies MongodbWebhookSubscriptionModel;
 
-    await this.collection.insertOne(model);
+    await this.collection.insertOne(model, {
+      session: this.session,
+    });
   }
 
   private get collection(): Collection<MongodbWebhookSubscriptionModel> {
@@ -80,4 +100,7 @@ class MongodbWebhookSubscriptionRepository implements WebhookSubscriptionReposit
   }
 }
 
-export { MongodbWebhookSubscriptionRepository as MongodbWebhookEndpointRepository };
+export {
+  MongodbWebhookSubscriptionRepository,
+  MongodbWebhookSubscriptionRepository as MongodbWebhookEndpointRepository,
+};

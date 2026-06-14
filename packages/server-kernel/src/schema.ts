@@ -1,5 +1,3 @@
-import type { PartialDeep } from "type-fest";
-
 import { z } from "zod";
 
 import { type DomainError, defineError } from "./domain-error.ts";

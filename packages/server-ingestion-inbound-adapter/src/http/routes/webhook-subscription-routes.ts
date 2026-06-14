@@ -32,6 +32,7 @@ const createWebhookSubscriptionRoutes = (
         tenant: queryParams.tenant,
         payload: {
           provider: "jira",
+          context: { graphId: body.context.graphId },
           secret: { algorithm: body.secret.algorithm },
         },
       });

@@ -1,4 +1,7 @@
-import type { IngestEventPort } from "@repo/server-ingestion-core";
+import type {
+  AuthenticateWebhookRequestPort,
+  IngestEventPort,
+} from "@repo/server-ingestion-core";
 
 import { Hono, type Context } from "hono";
 
@@ -9,6 +12,7 @@ import {
 
 type JiraWebhookRoutesInput = {
   deps: {
+    authenticateWebhookRequest: AuthenticateWebhookRequestPort;
     ingestEvent: IngestEventPort;
   };
 };

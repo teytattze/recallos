@@ -43,6 +43,12 @@ class GetWebhookSubscriptionUseCase implements GetWebhookSubscriptionPort {
       createdAt: webhookSubscription.metadata.createdAt,
       updatedAt: webhookSubscription.metadata.updatedAt,
       provider: webhookSubscription.provider,
+      context: {
+        id: webhookSubscription.context.id.toString(),
+        createdAt: webhookSubscription.context.metadata.createdAt,
+        updatedAt: webhookSubscription.context.metadata.updatedAt,
+        graphId: webhookSubscription.context.graphId.toString(),
+      },
       secret: {
         id: webhookSubscription.secret.id.toString(),
         createdAt: webhookSubscription.secret.metadata.createdAt,

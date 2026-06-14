@@ -9,6 +9,12 @@ type GetWebhookSubscriptionPortOutput = Promise<{
   createdAt: Date;
   updatedAt: Date;
   provider: "jira";
+  context: {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    graphId: string;
+  };
   secret: {
     id: string;
     createdAt: Date;

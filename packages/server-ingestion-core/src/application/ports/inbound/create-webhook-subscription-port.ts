@@ -2,6 +2,7 @@ type CreateWebhookSubscriptionPortInput = {
   tenant: string;
   payload: {
     provider: "jira";
+    context: { graphId: string };
     secret: { algorithm: "hmac_sha256" };
   };
 };

@@ -1,6 +1,5 @@
 import { expect, test } from "bun:test";
 
-import { WebhookSubscription } from "../../domain/aggregates/webhook-subscription.ts";
 import type {
   WebhookSubscriptionRepositoryPort,
   WebhookSubscriptionRepositoryPortFindByIdInput,
@@ -9,11 +8,10 @@ import type {
   WebhookSubscriptionRepositoryPortInsertOutput,
 } from "../ports/outbound/webhook-subscription-repository-port.ts";
 
+import { WebhookSubscription } from "../../domain/aggregates/webhook-subscription.ts";
 import { GetWebhookSubscriptionUseCase } from "./get-webhook-subscription-use-case.ts";
 
-class FakeWebhookSubscriptionRepository
-  implements WebhookSubscriptionRepositoryPort
-{
+class FakeWebhookSubscriptionRepository implements WebhookSubscriptionRepositoryPort {
   readonly findByIdInputs: WebhookSubscriptionRepositoryPortFindByIdInput[] =
     [];
 
@@ -40,6 +38,10 @@ const updatedAt = new Date("2026-01-03T00:00:00Z");
 const secretId = "webhook-secret-1";
 const secretCreatedAt = new Date("2026-01-04T00:00:00Z");
 const secretUpdatedAt = new Date("2026-01-05T00:00:00Z");
+const graphId = "graph-1";
+const contextId = "webhook-subscription-context-1";
+const contextCreatedAt = new Date("2026-01-06T00:00:00Z");
+const contextUpdatedAt = new Date("2026-01-07T00:00:00Z");
 
 test("GetWebhookSubscriptionUseCase.execute: given an existing subscription, it should return a plain object without the secret value", async () => {
   // GIVEN
@@ -49,6 +51,13 @@ test("GetWebhookSubscriptionUseCase.execute: given an existing subscription, it 
     payload: {
       id,
       provider: "jira",
+      context: {
+        metadata: {
+          createdAt: contextCreatedAt,
+          updatedAt: contextUpdatedAt,
+        },
+        payload: { id: contextId, graphId },
+      },
       secret: {
         metadata: {
           createdAt: secretCreatedAt,
@@ -78,6 +87,12 @@ test("GetWebhookSubscriptionUseCase.execute: given an existing subscription, it 
     createdAt,
     updatedAt,
     provider: "jira",
+    context: {
+      id: contextId,
+      createdAt: contextCreatedAt,
+      updatedAt: contextUpdatedAt,
+      graphId,
+    },
     secret: {
       id: secretId,
       createdAt: secretCreatedAt,

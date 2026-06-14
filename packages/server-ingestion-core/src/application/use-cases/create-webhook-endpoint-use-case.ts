@@ -27,6 +27,9 @@ class CreateWebhookSubscriptionUseCase implements CreateWebhookSubscriptionPort 
       metadata: { now },
       payload: {
         provider: input.payload.provider,
+        context: {
+          graphId: input.payload.context.graphId,
+        },
         secret: {
           algorithm: input.payload.secret.algorithm,
           generate: () => this.webhookSecretGenerator.generate(),

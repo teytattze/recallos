@@ -10,6 +10,13 @@ import type {
   UnitOfWorkPortContext,
   UnitOfWorkPort,
 } from "../ports/outbound/unit-of-work-port.ts";
+import type {
+  WebhookSubscriptionRepositoryPort,
+  WebhookSubscriptionRepositoryPortFindByIdInput,
+  WebhookSubscriptionRepositoryPortFindByIdOutput,
+  WebhookSubscriptionRepositoryPortInsertInput,
+  WebhookSubscriptionRepositoryPortInsertOutput,
+} from "../ports/outbound/webhook-subscription-repository-port.ts";
 
 import { IngestEventUseCase } from "./ingest-event-use-case.ts";
 
@@ -22,13 +29,33 @@ class FakeEventRepository implements EventRepositoryPort {
   }
 }
 
+class FakeWebhookSubscriptionRepository
+  implements WebhookSubscriptionRepositoryPort
+{
+  findById(
+    _input: WebhookSubscriptionRepositoryPortFindByIdInput,
+  ): WebhookSubscriptionRepositoryPortFindByIdOutput {
+    return Promise.resolve(null);
+  }
+
+  insert(
+    _input: WebhookSubscriptionRepositoryPortInsertInput,
+  ): WebhookSubscriptionRepositoryPortInsertOutput {
+    throw new Error("Unexpected webhook subscription insert");
+  }
+}
+
 class FakeUnitOfWork implements UnitOfWorkPort {
   readonly events = new FakeEventRepository();
+  readonly webhookSubscriptions = new FakeWebhookSubscriptionRepository();
   ran = 0;
 
   transaction<T>(work: (ctx: UnitOfWorkPortContext) => Promise<T>): Promise<T> {
     this.ran += 1;
-    return work({ eventRepository: this.events });
+    return work({
+      eventRepository: this.events,
+      webhookSubscriptionRepository: this.webhookSubscriptions,
+    });
   }
 }
 

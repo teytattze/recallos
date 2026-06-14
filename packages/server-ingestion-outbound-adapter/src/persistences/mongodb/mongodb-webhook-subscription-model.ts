@@ -5,6 +5,13 @@ type MongodbWebhookSubscriptionModel = {
   tenant: string;
 
   provider: "jira";
+  context: {
+    _id: string;
+    createdAt: Date;
+    updatedAt: Date;
+
+    graphId: string;
+  };
   secret: {
     _id: string;
     createdAt: Date;
