@@ -11,7 +11,7 @@ import {
 
 import type { MongodbWebhookSubscriptionModel } from "./mongodb-webhook-subscription-model.ts";
 
-const COLLECTION_NAME = "webhookEndpoints" as const;
+const COLLECTION_NAME = "webhook-subscriptions" as const;
 
 class MongodbWebhookSubscriptionRepository implements WebhookSubscriptionRepositoryPort {
   constructor(

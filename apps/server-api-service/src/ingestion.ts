@@ -8,7 +8,7 @@ import {
   getMongodbConfig,
   MongodbUnitOfWork,
 } from "@repo/server-ingestion-outbound-adapter";
-import { createFixedClock } from "@repo/server-kernel";
+import { createDefaultClock } from "@repo/server-kernel";
 
 // CONFIG
 const mongodbConfig = getMongodbConfig();
@@ -24,8 +24,8 @@ const unitOfWork = new MongodbUnitOfWork(
 
 // CORE
 const ingestEventUseCase = new IngestEventUseCase(
+  createDefaultClock(),
   unitOfWork,
-  createFixedClock(new Date()),
 );
 
 // INBOUND
