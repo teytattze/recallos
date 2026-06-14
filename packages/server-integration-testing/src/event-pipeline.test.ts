@@ -1,9 +1,8 @@
 import { IngestEventUseCase } from "@repo/server-ingestion-core";
 import { MongodbUnitOfWork } from "@repo/server-ingestion-outbound-adapter";
 import { createFixedClock } from "@repo/server-kernel";
+import type { Document } from "mongodb";
 import { beforeEach, expect, test } from "bun:test";
-
-import type { MongodbEventModel } from "../../server-ingestion-outbound-adapter/src/persistences/mongodb/mongodb-event-model.ts";
 
 import { harness } from "./harness/index.ts";
 
@@ -29,7 +28,7 @@ beforeEach(async () => {
   await mongoClient.db(databaseName).collection("events").deleteMany({});
 });
 
-test("IngestEventUseCase over MongodbUnitOfWork: given a valid event, it should persist an event document in one transaction", async () => {
+test("IngestEventUseCase over MongodbUnitOfWork: given a valid event, it should persist an event document", async () => {
   // GIVEN
   const { mongoClient, databaseName } = harness();
   const useCase = new IngestEventUseCase(
@@ -43,7 +42,7 @@ test("IngestEventUseCase over MongodbUnitOfWork: given a valid event, it should 
   // THEN
   const event = await mongoClient
     .db(databaseName)
-    .collection<MongodbEventModel>("events")
+    .collection<Document>("events")
     .findOne({ _id: result.id });
   expect(event).toMatchObject({
     _id: result.id,

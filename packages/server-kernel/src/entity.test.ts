@@ -75,3 +75,12 @@ test.each([
   // GIVEN / WHEN / THEN
   expect(a.equals(b)).toBe(false);
 });
+
+test("Entity.toJSON: given an entity, it should return the id and props", () => {
+  // GIVEN
+  const id = TestId.from("e1");
+  const entity = TestEntity.of(id, "first");
+
+  // WHEN / THEN
+  expect(entity.toJSON()).toEqual({ id, name: "first" });
+});

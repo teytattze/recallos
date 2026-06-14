@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
 
-import { createFixedClock } from "./clock.ts";
+import { createDefaultClock, createFixedClock } from "./clock.ts";
 
 test("createFixedClock.now: given a fixed instant, it should return that instant on every call", () => {
   // GIVEN
@@ -34,4 +34,16 @@ test("createFixedClock.now: given the input date mutated after construction, it 
 
   // THEN
   expect(clock.now()).toEqual(new Date("2026-01-01T00:00:00Z"));
+});
+
+test("createDefaultClock.now: given a mutated returned date, it should not affect later calls", () => {
+  // GIVEN
+  const clock = createDefaultClock();
+
+  // WHEN
+  const first = clock.now();
+  first.setFullYear(2000);
+
+  // THEN
+  expect(clock.now().getFullYear()).not.toBe(2000);
 });

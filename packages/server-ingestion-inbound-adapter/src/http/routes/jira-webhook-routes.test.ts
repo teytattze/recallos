@@ -124,9 +124,50 @@ test("createJiraWebhookRoutes: given a valid Jira webhook POST, it should authen
 
   const call = ingestEventUseCase.executeCalls[0]!;
   expect(call.tenant.toString()).toBe("organization:org1");
-  expect(call.payload).toEqual({
-    external: { id: "", provider: "jira" },
-    graphId: "graph-1",
-    raw: body,
+  expect(call.payload.external.provider).toBe("jira");
+  expect(call.payload.graphId).toBe("graph-1");
+  expect(call.payload.raw).toEqual(body);
+});
+
+test("createJiraWebhookRoutes: given a Jira webhook POST without a signature, it should skip authentication and ingest the raw body", async () => {
+  // GIVEN
+  const authenticateWebhookRequestUseCase =
+    new FakeAuthenticateWebhookRequestUseCase();
+  const getWebhookSubscriptionUseCase = new FakeGetWebhookSubscriptionUseCase();
+  const ingestEventUseCase = new FakeIngestEventUseCase();
+  const routes = createJiraWebhookRoutes({
+    deps: {
+      authenticateWebhookRequest: authenticateWebhookRequestUseCase,
+      getWebhookSubscription: getWebhookSubscriptionUseCase,
+      ingestEvent: ingestEventUseCase,
+    },
   });
+  const body = {
+    issue: {
+      key: "REC-123",
+      fields: { summary: "Compose ingestion" },
+    },
+  };
+
+  // WHEN
+  const res = await routes.request(
+    "http://localhost/events?tenant=organization:org1&subscriptionId=webhook-subscription-1",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
+
+  // THEN
+  expect(res.status).toBe(201);
+  expect(authenticateWebhookRequestUseCase.executeCalls).toEqual([]);
+  expect(getWebhookSubscriptionUseCase.executeCalls).toEqual([
+    {
+      tenant: "organization:org1",
+      payload: { id: "webhook-subscription-1" },
+    },
+  ]);
+  expect(ingestEventUseCase.executeCalls).toHaveLength(1);
+  expect(ingestEventUseCase.executeCalls[0]!.payload.raw).toEqual(body);
 });

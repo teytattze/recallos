@@ -34,3 +34,25 @@ test("Tenant.create: given an empty id, it should throw", () => {
   // GIVEN / WHEN / THEN
   expect(() => Tenant.create("user", "")).toThrow();
 });
+
+test("Tenant.fromString: given a serialized tenant, it should restore that tenant", () => {
+  // GIVEN / WHEN
+  const tenant = Tenant.fromString("user:u1");
+
+  // THEN
+  expect(tenant.type).toBe("user");
+  expect(tenant.id).toBe("u1");
+});
+
+test("Tenant.toString: given a tenant, it should return the serialized tenant", () => {
+  // GIVEN
+  const tenant = Tenant.create("organization", "org1");
+
+  // WHEN / THEN
+  expect(tenant.toString()).toBe("organization:org1");
+});
+
+test("Tenant.fromString: given a tenant without an id, it should throw", () => {
+  // GIVEN / WHEN / THEN
+  expect(() => Tenant.fromString("user")).toThrow();
+});

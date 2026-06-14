@@ -148,7 +148,7 @@ test("MongodbWebhookSubscriptionRepository.insert: given a subscription, it shou
   ]);
 });
 
-test("MongodbWebhookSubscriptionRepository.findById: given a stored subscription, it should restore the context", async () => {
+test("MongodbWebhookSubscriptionRepository.findById: given a stored subscription, it should restore the aggregate", async () => {
   // GIVEN
   const client = new FakeMongoClient(storedModel);
   const repository = new MongodbWebhookSubscriptionRepository(
@@ -190,5 +190,16 @@ test("MongodbWebhookSubscriptionRepository.findById: given a stored subscription
 
   // THEN
   expect(client.collection.findOneCalls).toEqual([{ _id: id, tenant }]);
+  expect(subscription?.id.toString()).toBe(id);
+  expect(subscription?.tenant.toString()).toBe(tenant);
+  expect(subscription?.metadata.createdAt).toEqual(createdAt);
+  expect(subscription?.metadata.updatedAt).toEqual(updatedAt);
+  expect(subscription?.provider).toBe("jira");
+  expect(subscription?.context.id.toString()).toBe(contextId);
+  expect(subscription?.context.metadata.createdAt).toEqual(contextCreatedAt);
+  expect(subscription?.context.metadata.updatedAt).toEqual(contextUpdatedAt);
   expect(subscription?.context.graphId.toString()).toBe(graphId);
+  expect(subscription?.secret.id.toString()).toBe(secretId);
+  expect(subscription?.secret.algorithm).toBe("hmac_sha256");
+  expect(subscription?.secret.value).toBe(storedSecretValue);
 });
