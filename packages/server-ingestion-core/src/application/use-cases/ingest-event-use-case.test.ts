@@ -1,39 +1,72 @@
 import type { JsonObject } from "type-fest";
 
-import { createFixedClock, Tenant } from "@repo/server-kernel";
+import { createFixedClock } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
 import type { Event } from "../../domain/aggregates/event.ts";
 import type { EventExternalPropsIn } from "../../domain/value-objects/event-external.ts";
-import type { EventRepositoryPort } from "../ports/outbound/event-repository-port.ts";
+import type {
+  EventRepositoryPort,
+  EventRepositoryPortInsertInput,
+  EventRepositoryPortInsertOutput,
+} from "../ports/outbound/event-repository-port.ts";
 import type {
   UnitOfWorkPortContext,
   UnitOfWorkPort,
 } from "../ports/outbound/unit-of-work-port.ts";
+import type {
+  WebhookSubscriptionRepositoryPort,
+  WebhookSubscriptionRepositoryPortFindByIdInput,
+  WebhookSubscriptionRepositoryPortFindByIdOutput,
+  WebhookSubscriptionRepositoryPortInsertInput,
+  WebhookSubscriptionRepositoryPortInsertOutput,
+} from "../ports/outbound/webhook-subscription-repository-port.ts";
 
 import { IngestEventUseCase } from "./ingest-event-use-case.ts";
 
 class FakeEventRepository implements EventRepositoryPort {
   readonly inserted: Event[] = [];
 
-  insert(event: Event): Promise<void> {
-    this.inserted.push(event);
+  insert(
+    input: EventRepositoryPortInsertInput,
+  ): EventRepositoryPortInsertOutput {
+    this.inserted.push(input.data);
     return Promise.resolve();
+  }
+}
+
+class FakeWebhookSubscriptionRepository
+  implements WebhookSubscriptionRepositoryPort
+{
+  findById(
+    _input: WebhookSubscriptionRepositoryPortFindByIdInput,
+  ): WebhookSubscriptionRepositoryPortFindByIdOutput {
+    return Promise.resolve(null);
+  }
+
+  insert(
+    _input: WebhookSubscriptionRepositoryPortInsertInput,
+  ): WebhookSubscriptionRepositoryPortInsertOutput {
+    throw new Error("Unexpected webhook subscription insert");
   }
 }
 
 class FakeUnitOfWork implements UnitOfWorkPort {
   readonly events = new FakeEventRepository();
+  readonly webhookSubscriptions = new FakeWebhookSubscriptionRepository();
   ran = 0;
 
   transaction<T>(work: (ctx: UnitOfWorkPortContext) => Promise<T>): Promise<T> {
     this.ran += 1;
-    return work({ eventRepository: this.events });
+    return work({
+      eventRepository: this.events,
+      webhookSubscriptionRepository: this.webhookSubscriptions,
+    });
   }
 }
 
 const createdAt = new Date("2026-01-02T00:00:00Z");
-const tenant = Tenant.create("organization", "org1");
+const tenant = "organization:org1";
 const graphId = "01952d3f-0000-7000-8000-000000000100";
 const external = {
   id: "jira-123",
@@ -55,7 +88,7 @@ const validInput = {
 test("IngestEventUseCase.execute: given valid input, it should insert the event in one transaction", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
+  const useCase = new IngestEventUseCase(createFixedClock(createdAt), uow);
 
   // WHEN
   const result = await useCase.execute(validInput);
@@ -65,7 +98,7 @@ test("IngestEventUseCase.execute: given valid input, it should insert the event 
   expect(uow.events.inserted.length).toBe(1);
   expect(result.id).toBe(uow.events.inserted[0]!.id.value);
   expect(uow.events.inserted[0]!.metadata.createdAt).toEqual(createdAt);
-  expect(uow.events.inserted[0]!.tenant).toBe(tenant);
+  expect(uow.events.inserted[0]!.tenant.toString()).toBe(tenant);
   expect(String(uow.events.inserted[0]!.external.toJSON().id)).toBe(
     external.id,
   );
@@ -79,7 +112,7 @@ test("IngestEventUseCase.execute: given valid input, it should insert the event 
 test("IngestEventUseCase.execute: given an invalid event, it should throw an InvalidEvent error without inserting", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
-  const useCase = new IngestEventUseCase(uow, createFixedClock(createdAt));
+  const useCase = new IngestEventUseCase(createFixedClock(createdAt), uow);
   const input = {
     ...validInput,
     payload: {

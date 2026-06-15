@@ -46,3 +46,16 @@ test.each([
   // GIVEN / WHEN / THEN
   expect(a.equals(b)).toBe(false);
 });
+
+test("ValueObject.toJSON: given a value object, it should return its props", () => {
+  // GIVEN
+  const props = {
+    a: "x",
+    tags: ["t1"],
+    at: new Date("2026-01-01T00:00:00Z"),
+  };
+  const vo = TestVO.of(props.a, props.tags, props.at);
+
+  // WHEN / THEN
+  expect(vo.toJSON()).toEqual(props);
+});

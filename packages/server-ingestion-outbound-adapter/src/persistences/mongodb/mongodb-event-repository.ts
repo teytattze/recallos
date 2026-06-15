@@ -1,4 +1,8 @@
-import type { Event, EventRepositoryPort } from "@repo/server-ingestion-core";
+import type {
+  EventRepositoryPort,
+  EventRepositoryPortInsertInput,
+  EventRepositoryPortInsertOutput,
+} from "@repo/server-ingestion-core";
 import type { Collection, ClientSession, MongoClient } from "mongodb";
 
 import type { MongodbEventModel } from "./mongodb-event-model";
@@ -12,7 +16,10 @@ class MongodbEventRepository implements EventRepositoryPort {
     private readonly session?: ClientSession,
   ) {}
 
-  async insert(event: Event): Promise<void> {
+  async insert(
+    input: EventRepositoryPortInsertInput,
+  ): EventRepositoryPortInsertOutput {
+    const event = input.data;
     const model: MongodbEventModel = {
       _id: event.id.toString(),
       createdAt: event.metadata.createdAt,

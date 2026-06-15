@@ -5,6 +5,7 @@ import type {
 import type { MongoClient } from "mongodb";
 
 import { MongodbEventRepository } from "./mongodb-event-repository";
+import { MongodbWebhookSubscriptionRepository } from "./mongodb-webhook-subscription-repository";
 
 class MongodbUnitOfWork implements UnitOfWorkPort {
   constructor(
@@ -20,6 +21,11 @@ class MongodbUnitOfWork implements UnitOfWorkPort {
       session.startTransaction();
       const ret = await work({
         eventRepository: new MongodbEventRepository(
+          this.client,
+          this.databaseName,
+          session,
+        ),
+        webhookSubscriptionRepository: new MongodbWebhookSubscriptionRepository(
           this.client,
           this.databaseName,
           session,

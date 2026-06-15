@@ -1,4 +1,4 @@
-import { EntityMetadata, type Clock } from "@repo/server-kernel";
+import { type Clock } from "@repo/server-kernel";
 
 import type {
   IngestEventPortInput,
@@ -11,21 +11,23 @@ import { Event } from "../../domain/aggregates/event.ts";
 
 class IngestEventUseCase implements IngestEventPort {
   constructor(
-    private readonly uow: UnitOfWorkPort,
     private readonly clock: Clock,
+    private readonly unitOfWork: UnitOfWorkPort,
   ) {}
 
   async execute(input: IngestEventPortInput): IngestEventPortOutput {
+    const now = this.clock.now();
+
     const event = Event.create({
       tenant: input.tenant,
-      metadata: EntityMetadata.create(this.clock.now()),
+      metadata: { now },
       payload: input.payload,
     });
 
     // TODO: Check events size and handle differently
 
-    await this.uow.transaction(async ({ eventRepository }) => {
-      await eventRepository.insert(event);
+    await this.unitOfWork.transaction(async ({ eventRepository }) => {
+      await eventRepository.insert({ data: event });
     });
 
     return { id: event.id.toString() };

@@ -1,29 +1,29 @@
 import type { Collection, MongoClient } from "mongodb";
 
-import { Event } from "@repo/server-ingestion-core";
-import { EntityMetadata, Tenant } from "@repo/server-kernel";
+import { Event, WebhookSubscription } from "@repo/server-ingestion-core";
 import { test, expect } from "bun:test";
 
 import type { MongodbEventModel } from "./mongodb-event-model";
+import type { MongodbWebhookSubscriptionModel } from "./mongodb-webhook-subscription-model";
 
 import { MongodbUnitOfWork } from "./mongodb-unit-of-work";
 
-type InsertOneOptions = Parameters<
+type EventInsertOneOptions = Parameters<
   Collection<MongodbEventModel>["insertOne"]
 >[1];
-type InsertOneSession = NonNullable<InsertOneOptions>["session"];
-type InsertCall = {
-  model: MongodbEventModel;
-  options: InsertOneOptions;
+type WebhookSubscriptionInsertOneOptions = Parameters<
+  Collection<MongodbWebhookSubscriptionModel>["insertOne"]
+>[1];
+type InsertOneSession = NonNullable<EventInsertOneOptions>["session"];
+type InsertCall<TModel, TOptions> = {
+  model: TModel;
+  options: TOptions;
 };
 
-class FakeCollection {
-  readonly insertOneCalls: InsertCall[] = [];
+class FakeCollection<TModel, TOptions> {
+  readonly insertOneCalls: InsertCall<TModel, TOptions>[] = [];
 
-  insertOne(
-    model: MongodbEventModel,
-    options: InsertOneOptions,
-  ): Promise<void> {
+  insertOne(model: TModel, options: TOptions): Promise<void> {
     this.insertOneCalls.push({ model, options });
     return Promise.resolve();
   }
@@ -53,7 +53,14 @@ class FakeClientSession {
 }
 
 class FakeMongoClient {
-  readonly collection = new FakeCollection();
+  readonly eventCollection = new FakeCollection<
+    MongodbEventModel,
+    EventInsertOneOptions
+  >();
+  readonly webhookSubscriptionCollection = new FakeCollection<
+    MongodbWebhookSubscriptionModel,
+    WebhookSubscriptionInsertOneOptions
+  >();
   readonly session = new FakeClientSession();
   startedSessions = 0;
 
@@ -63,20 +70,33 @@ class FakeMongoClient {
   }
 
   db(): {
-    collection: (collectionName: string) => FakeCollection;
+    collection: (
+      collectionName: string,
+    ) =>
+      | FakeCollection<MongodbEventModel, EventInsertOneOptions>
+      | FakeCollection<
+          MongodbWebhookSubscriptionModel,
+          WebhookSubscriptionInsertOneOptions
+        >;
   } {
     return {
-      collection: () => this.collection,
+      collection: (collectionName) => {
+        if (collectionName === "events") return this.eventCollection;
+        if (collectionName === "webhook-subscriptions") {
+          return this.webhookSubscriptionCollection;
+        }
+        throw new Error(`Unexpected collection: ${collectionName}`);
+      },
     };
   }
 }
 
 const event = Event.restore({
-  tenant: Tenant.create("organization", "org1"),
-  metadata: EntityMetadata.restore(
-    new Date("2026-01-02T00:00:00Z"),
-    new Date("2026-01-03T00:00:00Z"),
-  ),
+  tenant: "organization:org1",
+  metadata: {
+    createdAt: new Date("2026-01-02T00:00:00Z"),
+    updatedAt: new Date("2026-01-03T00:00:00Z"),
+  },
   payload: {
     id: "01952d3f-0000-7000-8000-000000000000",
     external: {
@@ -86,6 +106,39 @@ const event = Event.restore({
     graphId: "01952d3f-0000-7000-8000-000000000100",
     raw: {
       issue: { key: "REC-123", summary: "hello" },
+    },
+  },
+});
+
+const webhookSubscription = WebhookSubscription.restore({
+  tenant: "organization:org1",
+  metadata: {
+    createdAt: new Date("2026-01-04T00:00:00Z"),
+    updatedAt: new Date("2026-01-05T00:00:00Z"),
+  },
+  payload: {
+    id: "webhook-subscription-1",
+    provider: "jira",
+    context: {
+      metadata: {
+        createdAt: new Date("2026-01-06T00:00:00Z"),
+        updatedAt: new Date("2026-01-07T00:00:00Z"),
+      },
+      payload: {
+        id: "webhook-subscription-context-1",
+        graphId: "01952d3f-0000-7000-8000-000000000100",
+      },
+    },
+    secret: {
+      metadata: {
+        createdAt: new Date("2026-01-08T00:00:00Z"),
+        updatedAt: new Date("2026-01-09T00:00:00Z"),
+      },
+      payload: {
+        id: "webhook-secret-1",
+        algorithm: "hmac_sha256",
+        value: "stored-secret-value",
+      },
     },
   },
 });
@@ -100,10 +153,13 @@ test("MongodbUnitOfWork.transaction: given successful work, it should commit and
   const session = client.session as unknown as InsertOneSession;
 
   // WHEN
-  const result = await uow.transaction(async ({ eventRepository }) => {
-    await eventRepository.insert(event);
-    return "ok";
-  });
+  const result = await uow.transaction(
+    async ({ eventRepository, webhookSubscriptionRepository }) => {
+      await eventRepository.insert({ data: event });
+      await webhookSubscriptionRepository.insert({ data: webhookSubscription });
+      return "ok";
+    },
+  );
 
   // THEN
   expect(result).toBe("ok");
@@ -113,7 +169,12 @@ test("MongodbUnitOfWork.transaction: given successful work, it should commit and
     "commitTransaction",
     "endSession",
   ]);
-  expect(client.collection.insertOneCalls[0]!.options?.session).toBe(session);
+  expect(client.eventCollection.insertOneCalls[0]!.options?.session).toBe(
+    session,
+  );
+  expect(
+    client.webhookSubscriptionCollection.insertOneCalls[0]!.options?.session,
+  ).toBe(session);
 });
 
 test("MongodbUnitOfWork.transaction: given failing work, it should abort, end the MongoDB session, and rethrow", async () => {
@@ -138,5 +199,6 @@ test("MongodbUnitOfWork.transaction: given failing work, it should abort, end th
     "abortTransaction",
     "endSession",
   ]);
-  expect(client.collection.insertOneCalls.length).toBe(0);
+  expect(client.eventCollection.insertOneCalls.length).toBe(0);
+  expect(client.webhookSubscriptionCollection.insertOneCalls.length).toBe(0);
 });

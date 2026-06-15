@@ -1,5 +1,9 @@
 import { createMongodbClient } from "@repo/server-database";
-import { IngestEventUseCase } from "@repo/server-ingestion-core";
+import {
+  AuthenticateWebhookRequestUseCase,
+  GetWebhookSubscriptionUseCase,
+  IngestEventUseCase,
+} from "@repo/server-ingestion-core";
 import {
   createIngestionHttpApp,
   createJiraWebhookRoutes,
@@ -7,8 +11,10 @@ import {
 import {
   getMongodbConfig,
   MongodbUnitOfWork,
+  MongodbWebhookSubscriptionRepository,
+  NodeWebhookSignatureGenerator,
 } from "@repo/server-ingestion-outbound-adapter";
-import { createFixedClock } from "@repo/server-kernel";
+import { createDefaultClock } from "@repo/server-kernel";
 
 // CONFIG
 const mongodbConfig = getMongodbConfig();
@@ -21,16 +27,32 @@ const unitOfWork = new MongodbUnitOfWork(
   mongodbClient,
   mongodbConfig.INGESTION_MONGODB_DATABAES_NAME,
 );
+const webhookSubscriptionRepository = new MongodbWebhookSubscriptionRepository(
+  mongodbClient,
+  mongodbConfig.INGESTION_MONGODB_DATABAES_NAME,
+);
+const webhookSignatureGenerator = new NodeWebhookSignatureGenerator();
 
 // CORE
+const authenticateWebhookRequestUseCase = new AuthenticateWebhookRequestUseCase(
+  webhookSubscriptionRepository,
+  webhookSignatureGenerator,
+);
 const ingestEventUseCase = new IngestEventUseCase(
+  createDefaultClock(),
   unitOfWork,
-  createFixedClock(new Date()),
+);
+const getWebhookSubscriptionUseCase = new GetWebhookSubscriptionUseCase(
+  webhookSubscriptionRepository,
 );
 
 // INBOUND
 const jiraWebhookRoutes = createJiraWebhookRoutes({
-  deps: { ingestEventUseCase },
+  deps: {
+    authenticateWebhookRequest: authenticateWebhookRequestUseCase,
+    getWebhookSubscription: getWebhookSubscriptionUseCase,
+    ingestEvent: ingestEventUseCase,
+  },
 });
 const ingestionHttpApp = createIngestionHttpApp({
   deps: { jiraWebhookRoutes },

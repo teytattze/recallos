@@ -1,6 +1,9 @@
-import type { IngestEventPort } from "@repo/server-ingestion-core";
+import type {
+  AuthenticateWebhookRequestPort,
+  GetWebhookSubscriptionPort,
+  IngestEventPort,
+} from "@repo/server-ingestion-core";
 
-import { Tenant } from "@repo/server-kernel";
 import { Hono, type Context } from "hono";
 
 import {
@@ -10,7 +13,9 @@ import {
 
 type JiraWebhookRoutesInput = {
   deps: {
-    ingestEventUseCase: IngestEventPort;
+    authenticateWebhookRequest: AuthenticateWebhookRequestPort;
+    ingestEvent: IngestEventPort;
+    getWebhookSubscription: GetWebhookSubscriptionPort;
   };
 };
 
@@ -20,15 +25,35 @@ const createJiraWebhookRoutes = (input: JiraWebhookRoutesInput) => {
   jiraWebhookRoutes.post("/events", async (c: Context) => {
     const body = jiraWebhookEventRequestBody.parse(await c.req.json());
     const queryParams = jiraWebhookEventQueryParams.parse({
-      graphId: c.req.query("graphId"),
+      subscriptionId: c.req.query("subscriptionId"),
       tenant: c.req.query("tenant"),
     });
+    const signature = c.req.header("X-Hub-Signature")?.replace("sha256=", "");
 
-    await input.deps.ingestEventUseCase.execute({
-      tenant: Tenant.fromString(queryParams.tenant),
+    if (signature !== undefined) {
+      await input.deps.authenticateWebhookRequest.execute({
+        tenant: queryParams.tenant,
+        payload: {
+          id: queryParams.subscriptionId,
+          provider: "jira",
+          incomingSignature: signature,
+          incomingBody: JSON.stringify(body),
+        },
+      });
+    }
+
+    const webhookSubscription = await input.deps.getWebhookSubscription.execute(
+      {
+        tenant: queryParams.tenant,
+        payload: { id: queryParams.subscriptionId },
+      },
+    );
+
+    await input.deps.ingestEvent.execute({
+      tenant: queryParams.tenant,
       payload: {
         external: { id: "", provider: "jira" },
-        graphId: queryParams.graphId,
+        graphId: webhookSubscription.context.graphId,
         raw: body,
       },
     });

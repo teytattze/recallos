@@ -18,6 +18,9 @@
 - Depends only on own `domain/`, `@repo/server-kernel`, `zod`, `es-toolkit`, and `date-fns`.
 - No concrete DBs, HTTP, framework code, platform imports, or adapter wiring.
 - Ports define contracts only; they do not implement behavior.
+- Inbound ports use application-owned input/output DTOs and do not expose domain objects.
+- Outbound ports may expose domain objects and should use named operation input/output wrappers.
+- Use cases map inbound DTOs to domain before calling outbound ports.
 
 ## Conventions
 
@@ -26,6 +29,6 @@
 - Outbound ports: `application/ports/outbound/<capability>-port.ts`.
 - Use kebab-case filenames with a `-port.ts` suffix.
 - Name inbound port contracts `<UseCase>PortInput`, `<UseCase>PortOutput`, and `<UseCase>Port`.
-- Use cases implement the inbound port and expose `execute(input): Promise<Result<Output>>`.
+- Use cases implement the inbound port and return successful outputs directly.
 - Unit-of-work ports name their transaction context `UnitOfWorkPortContext`.
 - Use file-local declarations plus final `export type { ... }` blocks for port types.

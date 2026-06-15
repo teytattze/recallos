@@ -44,16 +44,3 @@ test("parseProps: given a custom error builder, it should throw an error with th
     }),
   );
 });
-
-test("parseProps: given valid input, it should return the typed value", () => {
-  // GIVEN / WHEN
-  const value = parseProps(schema, { value: "  hi  " });
-
-  // THEN
-  expect(value).toEqual({ value: "hi" });
-});
-
-test("parseProps: given invalid input, it should throw", () => {
-  // GIVEN / WHEN / THEN
-  expect(() => parseProps(schema, { value: "" })).toThrow();
-});

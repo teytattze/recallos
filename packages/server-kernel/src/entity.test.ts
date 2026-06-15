@@ -2,6 +2,7 @@ import { test, expect } from "bun:test";
 
 import { Entity } from "./entity.ts";
 import { Id } from "./id.ts";
+import { EntityMetadata } from "./metadata.ts";
 
 class TestId extends Id {
   static from(value: string): TestId {
@@ -11,7 +12,13 @@ class TestId extends Id {
 
 class TestEntity extends Entity<TestId, { name: string }> {
   static of(id: TestId, name: string): TestEntity {
-    return new TestEntity(id, { name });
+    return new TestEntity(
+      id,
+      EntityMetadata.create({
+        payload: { now: new Date("2026-01-01T00:00:00Z") },
+      }),
+      { name },
+    );
   }
   get name(): string {
     return this._props.name;
@@ -67,4 +74,13 @@ test.each([
 ])("Entity.equals: given %s, it should return false", (_label, a, b) => {
   // GIVEN / WHEN / THEN
   expect(a.equals(b)).toBe(false);
+});
+
+test("Entity.toJSON: given an entity, it should return the id and props", () => {
+  // GIVEN
+  const id = TestId.from("e1");
+  const entity = TestEntity.of(id, "first");
+
+  // WHEN / THEN
+  expect(entity.toJSON()).toEqual({ id, name: "first" });
 });

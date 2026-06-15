@@ -7,19 +7,34 @@ const entityMetadataPropsSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
 });
+
+type EntityMetadataPropsIn = z.input<typeof entityMetadataPropsSchema>;
 type EntityMetadataProps = z.infer<typeof entityMetadataPropsSchema>;
+
+type CreateEntityMetadataInput = {
+  payload: { now: Date };
+};
+type RestoreEntityMetadataInput = {
+  payload: EntityMetadataPropsIn;
+};
 
 class EntityMetadata extends ValueObject<EntityMetadataProps> {
   private constructor(props: EntityMetadataProps) {
     super(parseProps(entityMetadataPropsSchema, props));
   }
 
-  static create(now: Date): EntityMetadata {
-    return new EntityMetadata({ createdAt: now, updatedAt: now });
+  static create(input: CreateEntityMetadataInput): EntityMetadata {
+    return new EntityMetadata({
+      createdAt: input.payload.now,
+      updatedAt: input.payload.now,
+    });
   }
 
-  static restore(createdAt: Date, updatedAt: Date): EntityMetadata {
-    return new EntityMetadata({ createdAt, updatedAt });
+  static restore(input: RestoreEntityMetadataInput): EntityMetadata {
+    return new EntityMetadata({
+      createdAt: input.payload.createdAt,
+      updatedAt: input.payload.updatedAt,
+    });
   }
 
   touch(now: Date): EntityMetadata {
@@ -32,7 +47,6 @@ class EntityMetadata extends ValueObject<EntityMetadataProps> {
   get createdAt(): Date {
     return this._props.createdAt;
   }
-
   get updatedAt(): Date {
     return this._props.updatedAt;
   }

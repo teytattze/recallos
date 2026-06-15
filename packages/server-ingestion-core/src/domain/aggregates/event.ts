@@ -27,8 +27,8 @@ const eventPropsSchema = z.object({
 type EventProps = z.output<typeof eventPropsSchema>;
 
 type CreateEventInput = {
-  tenant: Tenant;
-  metadata: EntityMetadata;
+  tenant: string;
+  metadata: { now: Date };
   payload: {
     external: EventExternalPropsIn;
     graphId: string;
@@ -36,8 +36,8 @@ type CreateEventInput = {
   };
 };
 type RestoreEventInput = {
-  tenant: Tenant;
-  metadata: EntityMetadata;
+  tenant: string;
+  metadata: { createdAt: Date; updatedAt: Date };
   payload: {
     id: string;
     external: EventExternalPropsIn;
@@ -50,8 +50,8 @@ class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
   static create(input: CreateEventInput): Event {
     return new Event(
       EventId.create(),
-      input.tenant,
-      input.metadata,
+      Tenant.fromString(input.tenant),
+      EntityMetadata.create({ payload: input.metadata }),
       parseProps(
         eventPropsSchema,
         {
@@ -67,8 +67,8 @@ class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
   static restore(input: RestoreEventInput): Event {
     return new Event(
       EventId.restore({ payload: input.payload.id }),
-      input.tenant,
-      input.metadata,
+      Tenant.fromString(input.tenant),
+      EntityMetadata.restore({ payload: input.metadata }),
       parseProps(eventPropsSchema, {
         external: EventExternal.restore({ payload: input.payload.external }),
         graphId: GraphId.restore({ payload: input.payload.graphId }),

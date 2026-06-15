@@ -14,7 +14,7 @@ type ErrorBuilder = (
 
 export function parseProps<S extends z.ZodType>(
   schema: S,
-  input: z.input<S>,
+  input: unknown,
   error: ErrorBuilder = InvariantViolation,
 ): z.output<S> {
   const parsed = schema.safeParse(input);
