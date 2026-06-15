@@ -5,7 +5,11 @@ import { test, expect } from "bun:test";
 
 import type { Event } from "../../domain/aggregates/event.ts";
 import type { EventExternalPropsIn } from "../../domain/value-objects/event-external.ts";
-import type { EventRepositoryPort } from "../ports/outbound/event-repository-port.ts";
+import type {
+  EventRepositoryPort,
+  EventRepositoryPortInsertInput,
+  EventRepositoryPortInsertOutput,
+} from "../ports/outbound/event-repository-port.ts";
 import type {
   UnitOfWorkPortContext,
   UnitOfWorkPort,
@@ -23,8 +27,10 @@ import { IngestEventUseCase } from "./ingest-event-use-case.ts";
 class FakeEventRepository implements EventRepositoryPort {
   readonly inserted: Event[] = [];
 
-  insert(event: Event): Promise<void> {
-    this.inserted.push(event);
+  insert(
+    input: EventRepositoryPortInsertInput,
+  ): EventRepositoryPortInsertOutput {
+    this.inserted.push(input.data);
     return Promise.resolve();
   }
 }

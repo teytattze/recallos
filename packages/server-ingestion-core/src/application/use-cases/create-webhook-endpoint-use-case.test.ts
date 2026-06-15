@@ -1,9 +1,12 @@
 import { createFixedClock } from "@repo/server-kernel";
 import { expect, test } from "bun:test";
 
-import type { Event } from "../../domain/aggregates/event.ts";
 import type { WebhookSubscription } from "../../domain/aggregates/webhook-subscription.ts";
-import type { EventRepositoryPort } from "../ports/outbound/event-repository-port.ts";
+import type {
+  EventRepositoryPort,
+  EventRepositoryPortInsertInput,
+  EventRepositoryPortInsertOutput,
+} from "../ports/outbound/event-repository-port.ts";
 import type {
   UnitOfWorkPort,
   UnitOfWorkPortContext,
@@ -20,7 +23,9 @@ import type {
 import { CreateWebhookSubscriptionUseCase } from "./create-webhook-endpoint-use-case.ts";
 
 class FakeEventRepository implements EventRepositoryPort {
-  insert(_event: Event): Promise<void> {
+  insert(
+    _input: EventRepositoryPortInsertInput,
+  ): EventRepositoryPortInsertOutput {
     throw new Error("Unexpected event insert");
   }
 }

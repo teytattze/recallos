@@ -79,7 +79,7 @@ test("MongodbEventRepository.insert: given an event, it should insert the MongoD
   });
 
   // WHEN
-  await repository.insert(event);
+  await repository.insert({ data: event });
 
   // THEN
   expect(client.databaseName).toBe("recallos");

@@ -155,7 +155,7 @@ test("MongodbUnitOfWork.transaction: given successful work, it should commit and
   // WHEN
   const result = await uow.transaction(
     async ({ eventRepository, webhookSubscriptionRepository }) => {
-      await eventRepository.insert(event);
+      await eventRepository.insert({ data: event });
       await webhookSubscriptionRepository.insert({ data: webhookSubscription });
       return "ok";
     },

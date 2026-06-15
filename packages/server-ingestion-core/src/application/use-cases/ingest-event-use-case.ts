@@ -27,7 +27,7 @@ class IngestEventUseCase implements IngestEventPort {
     // TODO: Check events size and handle differently
 
     await this.unitOfWork.transaction(async ({ eventRepository }) => {
-      await eventRepository.insert(event);
+      await eventRepository.insert({ data: event });
     });
 
     return { id: event.id.toString() };

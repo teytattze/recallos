@@ -1,7 +1,16 @@
 import type { Event } from "../../../domain/aggregates/event.ts";
 
+type EventRepositoryPortInsertInput = {
+  data: Event;
+};
+type EventRepositoryPortInsertOutput = Promise<void>;
+
 interface EventRepositoryPort {
-  insert(event: Event): Promise<void>;
+  insert(input: EventRepositoryPortInsertInput): EventRepositoryPortInsertOutput;
 }
 
-export type { EventRepositoryPort };
+export type {
+  EventRepositoryPort,
+  EventRepositoryPortInsertInput,
+  EventRepositoryPortInsertOutput,
+};
