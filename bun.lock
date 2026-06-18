@@ -14,8 +14,8 @@
         "typescript": "catalog:",
       },
     },
-    "apps/server-api-service": {
-      "name": "@repo/server-api-service",
+    "apps/server-api": {
+      "name": "@repo/server-api",
       "dependencies": {
         "@repo/server-database": "workspace:*",
         "@repo/server-ingestion-core": "workspace:*",
@@ -30,18 +30,8 @@
         "@repo/typescript-config": "workspace:*",
       },
     },
-    "apps/server-ingestion-worker": {
-      "name": "@repo/server-ingestion-worker",
-      "dependencies": {
-        "@repo/server-platform": "workspace:*",
-        "hono": "catalog:",
-      },
-      "devDependencies": {
-        "@repo/typescript-config": "workspace:*",
-      },
-    },
-    "apps/server-knowledge-worker": {
-      "name": "@repo/server-knowledge-worker",
+    "apps/server-worker": {
+      "name": "@repo/server-worker",
       "dependencies": {
         "@repo/server-database": "workspace:*",
         "@repo/server-kernel": "workspace:*",
@@ -638,7 +628,7 @@
 
     "@protobufjs/utf8": ["@protobufjs/utf8@1.1.1", "", {}, "sha512-oOAWABowe8EAbMyWKM0tYDKi8Yaox52D+HWZhAIJqQXbqe0xI/GV7FhLWqlEKreMkfDjshR5FKgi3mnle0h6Eg=="],
 
-    "@repo/server-api-service": ["@repo/server-api-service@workspace:apps/server-api-service"],
+    "@repo/server-api": ["@repo/server-api@workspace:apps/server-api"],
 
     "@repo/server-database": ["@repo/server-database@workspace:packages/server-database"],
 
@@ -647,8 +637,6 @@
     "@repo/server-ingestion-inbound-adapter": ["@repo/server-ingestion-inbound-adapter@workspace:packages/server-ingestion-inbound-adapter"],
 
     "@repo/server-ingestion-outbound-adapter": ["@repo/server-ingestion-outbound-adapter@workspace:packages/server-ingestion-outbound-adapter"],
-
-    "@repo/server-ingestion-worker": ["@repo/server-ingestion-worker@workspace:apps/server-ingestion-worker"],
 
     "@repo/server-integration-testing": ["@repo/server-integration-testing@workspace:packages/server-integration-testing"],
 
@@ -660,9 +648,9 @@
 
     "@repo/server-knowledge-outbound-adapter": ["@repo/server-knowledge-outbound-adapter@workspace:packages/server-knowledge-outbound-adapter"],
 
-    "@repo/server-knowledge-worker": ["@repo/server-knowledge-worker@workspace:apps/server-knowledge-worker"],
-
     "@repo/server-platform": ["@repo/server-platform@workspace:packages/server-platform"],
+
+    "@repo/server-worker": ["@repo/server-worker@workspace:apps/server-worker"],
 
     "@repo/typescript-config": ["@repo/typescript-config@workspace:packages/typescript-config"],
 
