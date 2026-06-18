@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import { commonHttpApp, commonHttpConfig } from "./common";
+import { commonHttpApp, commonHttpConfig } from "./common.ts";
 import { mongodbChangeStream } from "./ingestion.ts";
 
 const app = new Hono();

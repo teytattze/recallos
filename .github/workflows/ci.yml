@@ -21,11 +21,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - app: server-api-service
+          - app: server-api
             build_dir: dist
-          - app: server-knowledge-worker
-            build_dir: dist
-          - app: server-ingestion-worker
+          - app: server-worker
             build_dir: dist
     steps:
       - name: Checkout repository
@@ -71,11 +69,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - app: server-api-service
+          - app: server-api
             build_dir: dist
-          - app: server-ingestion-worker
-            build_dir: dist
-          - app: server-knowledge-worker
+          - app: server-worker
             build_dir: dist
     steps:
       - name: Checkout repository
