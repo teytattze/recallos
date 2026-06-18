@@ -175,6 +175,7 @@
     "packages/server-knowledge-inbound-adapter": {
       "name": "@repo/server-knowledge-inbound-adapter",
       "dependencies": {
+        "mongodb": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -184,9 +185,12 @@
     "packages/server-knowledge-outbound-adapter": {
       "name": "@repo/server-knowledge-outbound-adapter",
       "dependencies": {
+        "@repo/server-knowledge-core": "workspace:*",
+        "mongodb": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {
+        "@repo/server-kernel": "workspace:*",
         "@repo/typescript-config": "workspace:*",
       },
     },

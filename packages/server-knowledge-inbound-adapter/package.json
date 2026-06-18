@@ -10,6 +10,7 @@
     "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
+    "mongodb": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
