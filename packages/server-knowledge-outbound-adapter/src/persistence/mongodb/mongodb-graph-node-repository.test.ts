@@ -1,30 +1,28 @@
-import type {
-  AnyBulkWriteOperation,
-  BulkWriteOptions,
-  ClientSession,
-  MongoClient,
-} from "mongodb";
+import type { ClientSession, Collection, MongoClient } from "mongodb";
 
 import { GraphNode } from "@repo/server-knowledge-core";
 import { expect, test } from "bun:test";
-import { MongoBulkWriteError } from "mongodb";
 
 import type { MongodbGraphNodeModel } from "./mongodb-model.ts";
 
 import { MongodbGraphNodeRepository } from "./mongodb-graph-node-repository.ts";
 
+type InsertOneOptions = Parameters<
+  Collection<MongodbGraphNodeModel>["insertOne"]
+>[1];
+
 class FakeCollection {
   readonly calls: {
-    operations: ReadonlyArray<AnyBulkWriteOperation<MongodbGraphNodeModel>>;
-    options: BulkWriteOptions;
+    model: MongodbGraphNodeModel;
+    options: InsertOneOptions;
   }[] = [];
   error?: Error;
 
-  bulkWrite(
-    operations: ReadonlyArray<AnyBulkWriteOperation<MongodbGraphNodeModel>>,
-    options: BulkWriteOptions,
+  insertOne(
+    model: MongodbGraphNodeModel,
+    options: InsertOneOptions,
   ): Promise<void> {
-    this.calls.push({ operations, options });
+    this.calls.push({ model, options });
     return this.error === undefined
       ? Promise.resolve()
       : Promise.reject(this.error);
@@ -43,20 +41,20 @@ const createdAt = new Date("2026-01-02T00:00:00Z");
 const updatedAt = new Date("2026-01-03T00:00:00Z");
 const graphId = "01952d3f-0000-7000-8000-000000000100";
 
-const restoreNode = (id: string, eventId: string): GraphNode =>
+const restoreNode = (): GraphNode =>
   GraphNode.restore({
     tenant: "organization:org1",
     metadata: { createdAt, updatedAt },
     payload: {
-      id,
+      id: "node-1",
       embedding: [0.1, 0.2],
-      eventId,
+      eventId: "event-1",
       graphId,
-      rawEvent: { issue: { key: eventId } },
+      rawEvent: { issue: { key: "event-1" } },
     },
   });
 
-test("MongodbGraphNodeRepository.insertMany: given graph nodes, it should bulk insert their models and return successes", async () => {
+test("MongodbGraphNodeRepository.insert: given a graph node, it should insert its model with the session", async () => {
   // GIVEN
   const client = new FakeMongoClient();
   const session = { id: "session-1" } as unknown as ClientSession;
@@ -65,83 +63,30 @@ test("MongodbGraphNodeRepository.insertMany: given graph nodes, it should bulk i
     "recallos",
     session,
   );
-  const nodes = [
-    restoreNode("node-1", "event-1"),
-    restoreNode("node-2", "event-2"),
-  ];
+  const node = restoreNode();
 
   // WHEN
-  const result = await repository.insertMany({ data: nodes });
+  await repository.insert({ data: node });
 
   // THEN
   expect(client.collection.calls).toEqual([
     {
-      operations: nodes.map((node, index) => ({
-        insertOne: {
-          document: {
-            _id: node.id.toString(),
-            createdAt,
-            updatedAt,
-            tenant: "organization:org1",
-            embedding: [0.1, 0.2],
-            eventId: `event-${index + 1}`,
-            graphId,
-            rawEvent: { issue: { key: `event-${index + 1}` } },
-          },
-        },
-      })),
-      options: { ordered: false, session },
+      model: {
+        _id: node.id.toString(),
+        createdAt,
+        updatedAt,
+        tenant: "organization:org1",
+        embedding: [0.1, 0.2],
+        eventId: "event-1",
+        graphId,
+        rawEvent: { issue: { key: "event-1" } },
+      },
+      options: { session },
     },
   ]);
-  expect(result).toEqual([
-    { id: nodes[0]!.id, status: "success" },
-    { id: nodes[1]!.id, status: "success" },
-  ]);
 });
 
-test("MongodbGraphNodeRepository.insertMany: given no graph nodes, it should return without writing", async () => {
-  // GIVEN
-  const client = new FakeMongoClient();
-  const repository = new MongodbGraphNodeRepository(
-    client as unknown as MongoClient,
-    "recallos",
-  );
-
-  // WHEN
-  const result = await repository.insertMany({ data: [] });
-
-  // THEN
-  expect(result).toEqual([]);
-  expect(client.collection.calls).toEqual([]);
-});
-
-test("MongodbGraphNodeRepository.insertMany: given an individual write failure, it should report that node as failed", async () => {
-  // GIVEN
-  const client = new FakeMongoClient();
-  client.collection.error = Object.assign(
-    Object.create(MongoBulkWriteError.prototype) as MongoBulkWriteError,
-    { writeErrors: [{ index: 1 }] },
-  );
-  const repository = new MongodbGraphNodeRepository(
-    client as unknown as MongoClient,
-    "recallos",
-  );
-  const nodes = [
-    restoreNode("node-1", "event-1"),
-    restoreNode("node-2", "event-2"),
-  ];
-
-  // WHEN
-  const result = await repository.insertMany({ data: nodes });
-
-  // THEN
-  expect(result).toEqual([
-    { id: nodes[0]!.id, status: "success" },
-    { id: nodes[1]!.id, status: "failed" },
-  ]);
-});
-
-test("MongodbGraphNodeRepository.insertMany: given a non-write error, it should rethrow it", async () => {
+test("MongodbGraphNodeRepository.insert: given an insert error, it should rethrow it", async () => {
   // GIVEN
   const client = new FakeMongoClient();
   const thrown = new Error("network unavailable");
@@ -153,7 +98,7 @@ test("MongodbGraphNodeRepository.insertMany: given a non-write error, it should 
 
   // WHEN
   const error = await repository
-    .insertMany({ data: [restoreNode("node-1", "event-1")] })
+    .insert({ data: restoreNode() })
     .catch((caught: unknown) => caught);
 
   // THEN

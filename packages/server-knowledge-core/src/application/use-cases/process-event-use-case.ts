@@ -1,10 +1,10 @@
 import { Tenant, type Clock } from "@repo/server-kernel";
 
 import type {
-  ProcessEventsPort,
-  ProcessEventsPortInput,
-  ProcessEventsPortOutput,
-} from "../ports/inbound/process-events-port.ts";
+  ProcessEventPort,
+  ProcessEventPortInput,
+  ProcessEventPortOutput,
+} from "../ports/inbound/process-event-port.ts";
 import type { EmbeddingGatewayPort } from "../ports/outbound/embedding-gateway-port.ts";
 import type { GraphNodeRepositoryPort } from "../ports/outbound/graph-node-repository-port.ts";
 import type { GraphRepositoryPort } from "../ports/outbound/graph-repository-port.ts";
@@ -13,7 +13,7 @@ import { GraphNode } from "../../domain/aggregates/graph-node.ts";
 import { createGraphNotFoundError } from "../../domain/errors/graph-not-found-error.ts";
 import { GraphId } from "../../domain/value-objects/graph-id.ts";
 
-class ProcessEventsUseCase implements ProcessEventsPort {
+class ProcessEventUseCase implements ProcessEventPort {
   constructor(
     private readonly clock: Clock,
     private readonly embeddingGateway: EmbeddingGatewayPort,
@@ -21,7 +21,7 @@ class ProcessEventsUseCase implements ProcessEventsPort {
     private readonly graphNodeRepository: GraphNodeRepositoryPort,
   ) {}
 
-  async execute(input: ProcessEventsPortInput): ProcessEventsPortOutput {
+  async execute(input: ProcessEventPortInput): ProcessEventPortOutput {
     const now = this.clock.now();
     const tenant = Tenant.fromString(input.tenant);
     const graphId = GraphId.restore({ payload: input.payload.graphId });
@@ -38,35 +38,25 @@ class ProcessEventsUseCase implements ProcessEventsPort {
       });
     }
 
-    // TODO: handle individual failure
-    const rawEventsEmbeddingResult = await this.embeddingGateway.embed({
+    const { embedding } = await this.embeddingGateway.embed({
       dimension: graph.embeddingMetadata.dimension,
       model: graph.embeddingMetadata.model,
-      texts: input.payload.events.map((event) => JSON.stringify(event.raw)),
+      text: JSON.stringify(input.payload.event.raw),
     });
 
-    const graphNodes = input.payload.events.map((event, i) => {
-      const rawEventEmbedding = rawEventsEmbeddingResult.embeddings[i];
-
-      // TODO: throw
-      if (rawEventEmbedding === undefined) {
-        throw new Error("");
-      }
-      return GraphNode.create({
-        tenant: input.tenant,
-        metadata: { now },
-        payload: {
-          embedding: rawEventEmbedding,
-          eventId: event.id,
-          graphId: input.payload.graphId,
-          rawEvent: event.raw,
-        },
-      });
+    const graphNode = GraphNode.create({
+      tenant: input.tenant,
+      metadata: { now },
+      payload: {
+        embedding,
+        eventId: input.payload.event.id,
+        graphId: input.payload.graphId,
+        rawEvent: input.payload.event.raw,
+      },
     });
 
-    // TODO: handle individual failure
-    await this.graphNodeRepository.insertMany({ data: graphNodes });
+    await this.graphNodeRepository.insert({ data: graphNode });
   }
 }
 
-export { ProcessEventsUseCase };
+export { ProcessEventUseCase };

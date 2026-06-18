@@ -1,4 +1,4 @@
-export * from "./application/ports/inbound/process-events-port.ts";
+export * from "./application/ports/inbound/process-event-port.ts";
 export * from "./application/ports/inbound/search-graph-port.ts";
 
 export * from "./application/ports/outbound/embedding-gateway-port.ts";
@@ -6,7 +6,7 @@ export * from "./application/ports/outbound/graph-node-repository-port.ts";
 export * from "./application/ports/outbound/graph-repository-port.ts";
 export * from "./application/ports/outbound/unit-of-work-port.ts";
 
-export * from "./application/use-cases/process-events-use-case.ts";
+export * from "./application/use-cases/process-event-use-case.ts";
 
 export * from "./domain/aggregates/graph-node.ts";
 export * from "./domain/aggregates/graph.ts";

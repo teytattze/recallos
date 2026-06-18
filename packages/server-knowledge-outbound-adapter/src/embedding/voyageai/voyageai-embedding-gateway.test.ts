@@ -8,15 +8,12 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
 });
 
-test("VoyageaiEmbeddingGateway.embed: given texts, it should request document embeddings and order them by index", async () => {
+test("VoyageaiEmbeddingGateway.embed: given text, it should request and return its document embedding", async () => {
   // GIVEN
   const fetchMock = mock(() =>
     Promise.resolve(
       Response.json({
-        data: [
-          { embedding: [3, 4], index: 1 },
-          { embedding: [1, 2], index: 0 },
-        ],
+        data: [{ embedding: [1, 2], index: 0 }],
       }),
     ),
   );
@@ -27,16 +24,11 @@ test("VoyageaiEmbeddingGateway.embed: given texts, it should request document em
   const result = await gateway.embed({
     dimension: "1024",
     model: "voyage-4-large",
-    texts: ["first", "second"],
+    text: "event",
   });
 
   // THEN
-  expect(result).toEqual({
-    embeddings: [
-      [1, 2],
-      [3, 4],
-    ],
-  });
+  expect(result).toEqual({ embedding: [1, 2] });
   expect(fetchMock).toHaveBeenCalledWith(
     "https://api.voyageai.com/v1/embeddings",
     {
@@ -46,7 +38,7 @@ test("VoyageaiEmbeddingGateway.embed: given texts, it should request document em
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        input: ["first", "second"],
+        input: "event",
         input_type: "document",
         model: "voyage-4-large",
         output_dimension: 1024,
@@ -67,7 +59,7 @@ test("VoyageaiEmbeddingGateway.embed: given an unsuccessful response, it should 
     gateway.embed({
       dimension: "1024",
       model: "voyage-4-large",
-      texts: ["event"],
+      text: "event",
     }),
   ).rejects.toThrow("Voyage AI embedding request failed with status 429");
 });

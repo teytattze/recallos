@@ -9,12 +9,12 @@ import { z } from "zod";
 const VOYAGEAI_EMBEDDINGS_URL = "https://api.voyageai.com/v1/embeddings";
 
 const voyageaiEmbeddingResponseSchema = z.object({
-  data: z.array(
+  data: z.tuple([
     z.object({
       embedding: z.array(z.number()),
       index: z.number().int().nonnegative(),
     }),
-  ),
+  ]),
 });
 
 class VoyageaiEmbeddingGateway implements EmbeddingGatewayPort {
@@ -30,7 +30,7 @@ class VoyageaiEmbeddingGateway implements EmbeddingGatewayPort {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        input: input.texts,
+        input: input.text,
         input_type: "document",
         model: input.model,
         output_dimension: Number(input.dimension),
@@ -44,11 +44,8 @@ class VoyageaiEmbeddingGateway implements EmbeddingGatewayPort {
     }
 
     const parsed = voyageaiEmbeddingResponseSchema.parse(await response.json());
-    const embeddings = parsed.data
-      .toSorted((left, right) => left.index - right.index)
-      .map((item) => item.embedding);
 
-    return { embeddings };
+    return { embedding: parsed.data[0].embedding };
   }
 }
 

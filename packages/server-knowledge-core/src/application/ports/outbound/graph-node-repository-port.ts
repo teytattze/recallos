@@ -1,24 +1,18 @@
 import type { GraphNode } from "../../../domain/aggregates/graph-node.ts";
-import type { GraphNodeId } from "../../../domain/value-objects/graph-node-id.ts";
 
-type GraphNodeRepositoryPortInsertManyInput = {
-  data: GraphNode[];
+type GraphNodeRepositoryPortInsertInput = {
+  data: GraphNode;
 };
-type GraphNodeRepositoryPortBulkInsertManyOutput = Promise<
-  {
-    id: GraphNodeId;
-    status: "success" | "failed";
-  }[]
->;
+type GraphNodeRepositoryPortInsertOutput = Promise<void>;
 
 interface GraphNodeRepositoryPort {
-  insertMany(
-    input: GraphNodeRepositoryPortInsertManyInput,
-  ): GraphNodeRepositoryPortBulkInsertManyOutput;
+  insert(
+    input: GraphNodeRepositoryPortInsertInput,
+  ): GraphNodeRepositoryPortInsertOutput;
 }
 
 export type {
   GraphNodeRepositoryPort,
-  GraphNodeRepositoryPortInsertManyInput,
-  GraphNodeRepositoryPortBulkInsertManyOutput,
+  GraphNodeRepositoryPortInsertInput,
+  GraphNodeRepositoryPortInsertOutput,
 };
