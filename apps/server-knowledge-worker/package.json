@@ -9,6 +9,11 @@
     "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
+    "@repo/server-database": "workspace:*",
+    "@repo/server-kernel": "workspace:*",
+    "@repo/server-knowledge-core": "workspace:*",
+    "@repo/server-knowledge-inbound-adapter": "workspace:*",
+    "@repo/server-knowledge-outbound-adapter": "workspace:*",
     "@repo/server-platform": "workspace:*",
     "hono": "catalog:"
   },

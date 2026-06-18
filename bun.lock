@@ -43,6 +43,11 @@
     "apps/server-knowledge-worker": {
       "name": "@repo/server-knowledge-worker",
       "dependencies": {
+        "@repo/server-database": "workspace:*",
+        "@repo/server-kernel": "workspace:*",
+        "@repo/server-knowledge-core": "workspace:*",
+        "@repo/server-knowledge-inbound-adapter": "workspace:*",
+        "@repo/server-knowledge-outbound-adapter": "workspace:*",
         "@repo/server-platform": "workspace:*",
         "hono": "catalog:",
       },
@@ -175,6 +180,7 @@
     "packages/server-knowledge-inbound-adapter": {
       "name": "@repo/server-knowledge-inbound-adapter",
       "dependencies": {
+        "@repo/server-knowledge-core": "workspace:*",
         "mongodb": "catalog:",
         "zod": "catalog:",
       },
@@ -232,6 +238,7 @@
     "@testing-library/react": "16.3.2",
     "@total-typescript/ts-reset": "0.6.1",
     "@types/bun": "1.3.14",
+    "@types/convict": "6.1.6",
     "@types/node": "20.19.41",
     "@types/react": "19.2.15",
     "@types/react-dom": "19.2.3",
@@ -240,6 +247,7 @@
     "better-auth": "1.6.11",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
+    "convict": "6.2.5",
     "date-fns": "4.3.0",
     "dotenv": "17.4.2",
     "es-toolkit": "1.46.1",
