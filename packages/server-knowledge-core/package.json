@@ -10,6 +10,7 @@
     "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
+    "@repo/server-kernel": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {
