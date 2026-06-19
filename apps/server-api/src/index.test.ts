@@ -26,7 +26,7 @@ const withServerApiEnv = async <T>(run: () => Promise<T>): Promise<T> => {
   }
 };
 
-test("server api service: given configured env, it should export the configured port", async () => {
+test("server api: given configured env, it should export the configured port", async () => {
   // GIVEN / WHEN
   const service = await withServerApiEnv(
     () => import(`./index.ts?port=${Date.now()}`) as Promise<ServiceModule>,
@@ -36,7 +36,7 @@ test("server api service: given configured env, it should export the configured 
   expect(service.default.port).toBe(3131);
 });
 
-test("server api service fetch: given a health request, it should route through the common app", async () => {
+test("server api fetch: given a health request, it should route through the common app", async () => {
   // GIVEN
   const service = await withServerApiEnv(
     () => import(`./index.ts?health=${Date.now()}`) as Promise<ServiceModule>,
