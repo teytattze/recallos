@@ -12,8 +12,7 @@
   "dependencies": {
     "hono": "catalog:",
     "pino": "catalog:",
-    "pino-pretty": "catalog:",
-    "zod": "catalog:"
+    "pino-pretty": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*"

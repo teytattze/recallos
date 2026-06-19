@@ -1,24 +1,22 @@
 import { pino, type Logger as PinoLogger } from "pino";
 
-import type { AppMetadataConfig } from "./app-metadata-config";
-
 type Logger = PinoLogger;
 
 type CreateLoggerInput = {
-  config: AppMetadataConfig;
+  pretty: boolean;
 };
 
 function createLogger(input: CreateLoggerInput): Logger {
-  if (input.config.APP_ENV === "production") {
-    return pino({ level: "info" });
+  if (input.pretty) {
+    return pino({
+      level: "info",
+      transport: {
+        target: "pino-pretty",
+        options: { colorize: true },
+      },
+    });
   }
-  return pino({
-    level: "info",
-    transport: {
-      target: "pino-pretty",
-      options: { colorize: true },
-    },
-  });
+  return pino({ level: "info" });
 }
 
 export { createLogger };

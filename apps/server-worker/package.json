@@ -15,9 +15,11 @@
     "@repo/server-knowledge-inbound-adapter": "workspace:*",
     "@repo/server-knowledge-outbound-adapter": "workspace:*",
     "@repo/server-platform": "workspace:*",
+    "convict": "catalog:",
     "hono": "catalog:"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*"
+    "@repo/typescript-config": "workspace:*",
+    "@types/convict": "catalog:"
   }
 }
