@@ -1,4 +1,0 @@
-# Integration tests boot real Docker containers once, before any test file, via a
-# preloaded harness that registers global beforeAll/afterAll lifecycle hooks.
-[test]
-preload = ["./src/setup.ts"]

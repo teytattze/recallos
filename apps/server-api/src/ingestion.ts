@@ -25,11 +25,11 @@ const mongodbClient = createMongodbClient({
 });
 const unitOfWork = new MongodbUnitOfWork(
   mongodbClient,
-  mongodbConfig.INGESTION_MONGODB_DATABAES_NAME,
+  mongodbConfig.INGESTION_MONGODB_DATABASE_NAME,
 );
 const webhookSubscriptionRepository = new MongodbWebhookSubscriptionRepository(
   mongodbClient,
-  mongodbConfig.INGESTION_MONGODB_DATABAES_NAME,
+  mongodbConfig.INGESTION_MONGODB_DATABASE_NAME,
 );
 const webhookSignatureGenerator = new NodeWebhookSignatureGenerator();
 
