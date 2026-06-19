@@ -53,7 +53,12 @@ describe("server API config", () => {
   test.each([
     [{ APP_ENV: "development" }, "Unsupported APP_ENV"],
     [{ HTTP_PORT: "invalid" }, "app.http.port"],
+    [{ HTTP_PORT: "65536" }, "app.http.port"],
     [{ INGESTION_MONGODB_URL: "" }, "ingestion.mongodb.url"],
+    [
+      { INGESTION_MONGODB_DATABASE_NAME: "   " },
+      "ingestion.mongodb.databaseName",
+    ],
   ])("rejects invalid environment input", (env, message) => {
     expect(() => createConfig({ env })).toThrow(message);
   });

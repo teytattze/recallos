@@ -4,42 +4,41 @@ import localProfile from "../config/local.json";
 import productionProfile from "../config/production.json";
 import stagingProfile from "../config/staging.json";
 
-type AppEnvironment = "local" | "staging" | "production";
+const appEnvironmentSchema = z.enum(["local", "staging", "production"]);
+const requiredStringSchema = z.string().trim().min(1);
+const portSchema = z.number().int().min(1).max(65_535);
 
-type ServerApiConfig = {
-  readonly app: {
-    readonly environment: AppEnvironment;
-    readonly version: string;
-    readonly http: {
-      readonly port: number;
-    };
-  };
-  readonly ingestion: {
-    readonly mongodb: {
-      readonly url: string;
-      readonly databaseName: string;
-    };
-  };
-};
-
-const requiredString = (value: unknown): asserts value is string => {
-  if (typeof value !== "string" || value.trim().length === 0) {
-    throw new Error("must be a non-empty string");
+    environment: appEnvironmentSchema,
+    version: requiredStringSchema,
+      port: portSchema,
+    }),
+  }),
+  ingestion: z.object({
+    mongodb: z.object({
+      url: requiredStringSchema,
+      databaseName: requiredStringSchema,
+type ServerApiConfig = ReadonlyDeep<z.infer<typeof serverApiConfigSchema>>;
+const convictConfigSchema: Schema<ServerApiConfig> = {
+      format: appEnvironmentSchema.options,
+      format: (value) =>
+        serverApiConfigSchema.shape.app.shape.version.parse(value),
+        format: (value) =>
+          serverApiConfigSchema.shape.app.shape.http.shape.port.parse(value),
+        format: (value) =>
+          serverApiConfigSchema.shape.ingestion.shape.mongodb.shape.url.parse(
+            value,
+          ),
+        format: (value) =>
+          serverApiConfigSchema.shape.ingestion.shape.mongodb.shape.databaseName.parse(
+            value,
+          ),
+  const config = convict(convictConfigSchema, {
+    env: options.env ?? process.env,
+  });
   }
-};
+  return serverApiConfigSchema.parse(config.getProperties());
 
-const positivePort = (value: unknown): asserts value is number => {
-  if (
-    typeof value !== "number" ||
-    !Number.isInteger(value) ||
-    value < 1 ||
-    value > 65_535
-  ) {
-    throw new Error("must be an integer between 1 and 65535");
-  }
-};
-
-const configSchema: Schema<ServerApiConfig> = {
+export { convictConfigSchema, createConfig, serverApiConfigSchema };
   app: {
     environment: {
       doc: "Application deployment environment",
