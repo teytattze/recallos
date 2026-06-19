@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 const mongodbConfigSchema = z.object({
-  KNOWLEDGE_VOYAGEAI_API_KEY: z.string(),
+  INGESTION_MONGODB_URL: z.string(),
+  INGESTION_MONGODB_DATABASE_NAME: z.string(),
 });
 
 const getMongodbConfig = () => mongodbConfigSchema.parse(process.env);

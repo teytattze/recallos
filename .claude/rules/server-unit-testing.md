@@ -1,7 +1,6 @@
 ---
 paths:
-  - "apps/service/**/*.test.ts"
-  - "apps/worker/**/*.test.ts"
+  - "apps/server-*/**/*.test.ts"
   - "packages/server-*/**/*.test.ts"
 ---
 

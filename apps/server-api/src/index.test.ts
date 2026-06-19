@@ -6,13 +6,13 @@ const withServerApiEnv = async <T>(run: () => Promise<T>): Promise<T> => {
   const previous = {
     HTTP_PORT: process.env.HTTP_PORT,
     INGESTION_MONGODB_URL: process.env.INGESTION_MONGODB_URL,
-    INGESTION_MONGODB_DATABAES_NAME:
-      process.env.INGESTION_MONGODB_DATABAES_NAME,
+    INGESTION_MONGODB_DATABASE_NAME:
+      process.env.INGESTION_MONGODB_DATABASE_NAME,
   };
   try {
     process.env.HTTP_PORT = "3131";
     process.env.INGESTION_MONGODB_URL = "mongodb://127.0.0.1:27017";
-    process.env.INGESTION_MONGODB_DATABAES_NAME = "recallos-test";
+    process.env.INGESTION_MONGODB_DATABASE_NAME = "recallos-test";
 
     return await run();
   } finally {
