@@ -1,0 +1,21 @@
+{
+  "name": "@repo/server-knowledge-outbound-adapter",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "oxlint",
+    "test": "bun test --randomize --pass-with-no-tests"
+  },
+  "dependencies": {
+    "@repo/server-knowledge-core": "workspace:*",
+    "mongodb": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/server-kernel": "workspace:*",
+    "@repo/typescript-config": "workspace:*"
+  }
+}

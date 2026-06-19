@@ -4,13 +4,13 @@ RecallOS is org-wide shared memory: ingest information from many sources, relate
 
 ## Commands
 
-- `bun run build`: build every workspace topologically (`turbo run build`; respects `^build`). Single workspace: `--filter ./apps/server-api-service`.
+- `bun run build`: build every workspace topologically (`turbo run build`; respects `^build`). Single workspace: `--filter ./apps/server-api`.
 - `bun run dev`: run watch/dev tasks (`turbo run dev`; cached off, persistent). Server apps use `bun --watch src/index.ts`.
 - `bun run fmt`: format the whole repo with `oxfmt` (runs at the root, not through Turbo).
 - `bun run lint`: lint every workspace (`turbo run lint`; each runs `oxlint`).
 - `bun run test`: run every workspace's tests (`turbo run test`; each runs `bun test --randomize`).
 
-**Note**: Append `--filter <path>` to run a Turbo command in a specific workspace. Eg. `bun run test --filter ./apps/server-api-service` or `bun run test --filter ./packages/server-kernel`.
+**Note**: Append `--filter <path>` to run a Turbo command in a specific workspace. Eg. `bun run test --filter ./apps/server-api` or `bun run test --filter ./packages/server-kernel`.
 
 ## Project structures
 
@@ -22,8 +22,8 @@ RecallOS is org-wide shared memory: ingest information from many sources, relate
 ### Apps
 
 - `@apps/`: deployable runtimes — composition roots only; they wire inbound adapters, outbound adapters, platform primitives, and core use cases, and never import each other.
-- `@apps/server-api-service/`: Hono HTTP API runtime. Currently a single `/api/v1/health` route. Built with `bun build … --target bun` to `dist/`.
-- `@apps/server-knowledge-worker/`: knowledge worker runtime. Built with `bun build … --target bun` to `dist/`.
+- `@apps/server-api/`: Hono HTTP API runtime. Built with `bun build … --target bun` to `dist/`.
+- `@apps/server-worker/`: ingestion and knowledge worker runtime. Built with `bun build … --target bun` to `dist/`.
 
 ### Documentations
 
