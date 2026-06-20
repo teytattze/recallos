@@ -1,16 +1,27 @@
 ---
 name: loop-server-feature
 description: >-
-  Orchestrate RecallOS server features through hexagonal, interface-first tasks,
-  parallel sub-agent implementation, and independent review. Use for non-trivial
-  server changes spanning core, adapters, platform, or composition roots.
+  Explicitly invoked multi-agent workflow for RecallOS server features using
+  hexagonal, interface-first tasks and independent review. Use only when the user
+  names this skill or explicitly requests sub-agents, delegation, or parallel
+  agents for a non-trivial server change. Do not auto-trigger from a matching
+  feature request alone.
 ---
 
 # Server Feature loop
 
 [RecallOS engineering patterns](../../../docs/engineering/README.md) are the source
-of truth. Every sub-agent must read the patterns for its scope. The main agent only
-orchestrates.
+of truth. Every sub-agent must read the patterns for its scope.
+
+## Authorization and agent roles
+
+- Explicit invocation of this skill authorizes its documented sub-agent workflow.
+- Do not run it merely because a request matches the subject matter.
+- The main agent scopes work, defines acceptance criteria, delegates implementation,
+  coordinates independent review, runs final checks, and reports. It does not
+  perform delegated implementation itself.
+- If sub-agents cannot be spawned, report the workflow as blocked instead of
+  silently completing it as a single agent.
 
 ## Overview
 

@@ -1,14 +1,26 @@
 ---
 name: loop-fix-unit-tests
 description: >-
-  Orchestrate sub-agents to diagnose and fix failing unit tests, then independently
-  review and verify the changes.
+  Explicitly invoked multi-agent workflow for diagnosing and fixing failing unit
+  tests with independent review. Use only when the user names this skill or
+  explicitly requests sub-agents, delegation, or parallel agents for test fixes.
+  Do not auto-trigger from a test-fixing request alone.
 ---
 
 # Fix Unit Tests loop
 
 [RecallOS server unit testing pattern](../../../docs/engineering/server-unit-testing.md)
-is the source of truth. Every sub-agent must read it. The main agent only orchestrates.
+is the source of truth. Every sub-agent must read it.
+
+## Authorization and agent roles
+
+- Explicit invocation of this skill authorizes its documented sub-agent workflow.
+- Do not run it merely because a request matches the subject matter.
+- The main agent runs top-level tests, partitions failures, delegates fixes,
+  coordinates independent review, verifies the full suite, and reports. It does
+  not perform delegated fixes itself.
+- If sub-agents cannot be spawned, report the workflow as blocked instead of
+  silently completing it as a single agent.
 
 ## Overview
 
