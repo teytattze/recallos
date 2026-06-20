@@ -17,16 +17,16 @@ orchestrates.
 ```mermaid
 flowchart TD
     start(["Start"])
-    explore["Spawn read-only agents by hexagonal layer"]
+    explore["Spawn read-only sub-agents by hexagonal layer"]
     contracts["Define acceptance criteria; implement interfaces first"]
-    contractReview["Spawn different agents to review contracts"]
+    contractReview["Spawn different sub-agents to review contracts"]
     contractApproved{"Contracts approved?"}
     domain["Domain and application"]
     inbound["Inbound adapters"]
     outbound["Outbound adapters by port"]
     platform["Platform only if required"]
     wiring["Composition-root wiring"]
-    review["Spawn different agents for layer and cross-layer review"]
+    review["Spawn different sub-agents for layer and cross-layer review"]
     approved{"All reviews pass?"}
     revise["Return findings to implementers"]
     verify["Run affected lint, test, and build tasks"]
@@ -44,7 +44,7 @@ flowchart TD
 ## Guardrails
 
 - Explorers do not edit. Partition implementation by required hexagonal layers and
-  give concurrent agents non-overlapping files.
+  give concurrent sub-agents non-overlapping files.
 - Approve domain types, DTOs, and ports before dependent implementations. Sequence
   domain before application when needed; run independent adapters in parallel.
 - Keep dependencies pointing inward and put behavior, translation, infrastructure,

@@ -1,4 +1,7 @@
-import convict, { type Schema } from "convict";
+import type { Schema } from "convict";
+
+import { createConfig } from "@repo/server-platform";
+import z from "zod";
 
 import localProfile from "../config/local.json";
 import productionProfile from "../config/production.json";
@@ -8,8 +11,11 @@ const appEnvironmentSchema = z.enum(["local", "staging", "production"]);
 const requiredStringSchema = z.string().trim().min(1);
 const portSchema = z.number().int().min(1).max(65_535);
 
+const serverApiConfigSchema = z.object({
+  app: z.object({
     environment: appEnvironmentSchema,
     version: requiredStringSchema,
+    http: z.object({
       port: portSchema,
     }),
   }),
@@ -17,45 +23,32 @@ const portSchema = z.number().int().min(1).max(65_535);
     mongodb: z.object({
       url: requiredStringSchema,
       databaseName: requiredStringSchema,
-type ServerApiConfig = ReadonlyDeep<z.infer<typeof serverApiConfigSchema>>;
-const convictConfigSchema: Schema<ServerApiConfig> = {
-      format: appEnvironmentSchema.options,
-      format: (value) =>
-        serverApiConfigSchema.shape.app.shape.version.parse(value),
-        format: (value) =>
-          serverApiConfigSchema.shape.app.shape.http.shape.port.parse(value),
-        format: (value) =>
-          serverApiConfigSchema.shape.ingestion.shape.mongodb.shape.url.parse(
-            value,
-          ),
-        format: (value) =>
-          serverApiConfigSchema.shape.ingestion.shape.mongodb.shape.databaseName.parse(
-            value,
-          ),
-  const config = convict(convictConfigSchema, {
-    env: options.env ?? process.env,
-  });
-  }
-  return serverApiConfigSchema.parse(config.getProperties());
+    }),
+  }),
+});
 
-export { convictConfigSchema, createConfig, serverApiConfigSchema };
+type ServerApiConfig = z.infer<typeof serverApiConfigSchema>;
+
+const convictConfigSchema: Schema<ServerApiConfig> = {
   app: {
     environment: {
       doc: "Application deployment environment",
-      format: ["local", "staging", "production"],
+      format: appEnvironmentSchema.options,
       default: "local",
       env: "APP_ENV",
     },
     version: {
       doc: "Application version",
-      format: String,
+      format: (value) =>
+        serverApiConfigSchema.shape.app.shape.version.parse(value),
       default: "0.0.0",
       env: "APP_VERSION",
     },
     http: {
       port: {
         doc: "HTTP port",
-        format: positivePort,
+        format: (value) =>
+          serverApiConfigSchema.shape.app.shape.http.shape.port.parse(value),
         default: 8000,
         env: "HTTP_PORT",
       },
@@ -65,13 +58,19 @@ export { convictConfigSchema, createConfig, serverApiConfigSchema };
     mongodb: {
       url: {
         doc: "Ingestion MongoDB connection URL",
-        format: requiredString,
+        format: (value) =>
+          serverApiConfigSchema.shape.ingestion.shape.mongodb.shape.url.parse(
+            value,
+          ),
         default: null,
         env: "INGESTION_MONGODB_URL",
       },
       databaseName: {
         doc: "Ingestion MongoDB database name",
-        format: requiredString,
+        format: (value) =>
+          serverApiConfigSchema.shape.ingestion.shape.mongodb.shape.databaseName.parse(
+            value,
+          ),
         default: null,
         env: "INGESTION_MONGODB_DATABASE_NAME",
       },
@@ -85,23 +84,11 @@ const profiles = {
   production: productionProfile,
 } as const;
 
-type CreateConfigOptions = {
-  readonly env?: NodeJS.ProcessEnv;
-};
+const config = createConfig({
+  schema: convictConfigSchema,
+  parser: serverApiConfigSchema,
+  profiles,
+});
 
-const createConfig = (options: CreateConfigOptions = {}): ServerApiConfig => {
-  const config = convict(configSchema, { env: options.env ?? process.env });
-  const environment = config.get("app.environment");
-
-  if (!Object.hasOwn(profiles, environment)) {
-    throw new Error(`Unsupported APP_ENV: ${String(environment)}`);
-  }
-
-  config.load(profiles[environment]);
-  config.validate({ allowed: "strict" });
-
-  return config.getProperties();
-};
-
-export { configSchema, createConfig };
+export { config, convictConfigSchema, profiles, serverApiConfigSchema };
 export type { ServerApiConfig };

@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 
 import { commonHttpApp } from "./common";
+import { config } from "./config.ts";
 import { ingestionHttpApp } from "./ingestion";
-import { config } from "./runtime-config.ts";
 
 const app = new Hono();
 

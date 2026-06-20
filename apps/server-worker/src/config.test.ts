@@ -1,16 +1,38 @@
+import { createConfig } from "@repo/server-platform";
 import { describe, expect, test } from "bun:test";
 import convict from "convict";
 
 import localProfile from "../config/local.json";
-import { convictConfigSchema, createConfig } from "./config.ts";
+
+type ConfigModule = typeof import("./config.ts");
 
 const localEnv = {
   KNOWLEDGE_VOYAGEAI_API_KEY: "voyage-test-key",
 };
 
+const previousApiKey = process.env.KNOWLEDGE_VOYAGEAI_API_KEY;
+process.env.KNOWLEDGE_VOYAGEAI_API_KEY = localEnv.KNOWLEDGE_VOYAGEAI_API_KEY;
+const configModulePath = "./config.ts?test-definitions";
+const { convictConfigSchema, profiles, serverWorkerConfigSchema } =
+  (await import(configModulePath)) as ConfigModule;
+
+if (previousApiKey === undefined) {
+  delete process.env.KNOWLEDGE_VOYAGEAI_API_KEY;
+} else {
+  process.env.KNOWLEDGE_VOYAGEAI_API_KEY = previousApiKey;
+}
+
+const createServerWorkerConfig = (env: NodeJS.ProcessEnv) =>
+  createConfig({
+    schema: convictConfigSchema,
+    parser: serverWorkerConfigSchema,
+    profiles,
+    env,
+  });
+
 describe("server worker config", () => {
   test("uses local MongoDB defaults and requires the Voyage AI key", () => {
-    const config = createConfig({ env: localEnv });
+    const config = createServerWorkerConfig(localEnv);
 
     expect(config).toEqual({
       app: {
@@ -33,22 +55,20 @@ describe("server worker config", () => {
       },
     });
 
-    expect(() => createConfig({ env: {} })).toThrow(
+    expect(() => createServerWorkerConfig({})).toThrow(
       "knowledge.voyageai.apiKey",
     );
   });
 
   test("environment variables override and coerce profile values", () => {
-    const config = createConfig({
-      env: {
-        ...localEnv,
-        APP_VERSION: "2.0.0",
-        HTTP_PORT: "4141",
-        INGESTION_MONGODB_URL: "mongodb://ingestion:27017",
-        INGESTION_MONGODB_DATABASE_NAME: "ingestion",
-        KNOWLEDGE_MONGODB_URL: "mongodb://knowledge:27017",
-        KNOWLEDGE_MONGODB_DATABASE_NAME: "knowledge",
-      },
+    const config = createServerWorkerConfig({
+      ...localEnv,
+      APP_VERSION: "2.0.0",
+      HTTP_PORT: "4141",
+      INGESTION_MONGODB_URL: "mongodb://ingestion:27017",
+      INGESTION_MONGODB_DATABASE_NAME: "ingestion",
+      KNOWLEDGE_MONGODB_URL: "mongodb://knowledge:27017",
+      KNOWLEDGE_MONGODB_DATABASE_NAME: "knowledge",
     });
 
     expect(config.app).toEqual({
@@ -64,9 +84,7 @@ describe("server worker config", () => {
     "%s requires deployment-specific context config",
     (environment) => {
       expect(() =>
-        createConfig({
-          env: { APP_ENV: environment, ...localEnv },
-        }),
+        createServerWorkerConfig({ APP_ENV: environment, ...localEnv }),
       ).toThrow();
     },
   );
@@ -81,7 +99,7 @@ describe("server worker config", () => {
       "knowledge.mongodb.databaseName",
     ],
   ])("rejects invalid environment input", (env, message) => {
-    expect(() => createConfig({ env })).toThrow(message);
+    expect(() => createServerWorkerConfig(env)).toThrow(message);
   });
 
   test("masks the Voyage AI key when Convict serializes config", () => {

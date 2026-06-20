@@ -15,7 +15,7 @@ import {
 } from "@repo/server-ingestion-outbound-adapter";
 import { createDefaultClock } from "@repo/server-kernel";
 
-import { config } from "./runtime-config.ts";
+import { config } from "./config.ts";
 
 // CONFIG
 const mongodbConfig = config.ingestion.mongodb;

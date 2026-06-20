@@ -26,6 +26,7 @@
         "convict": "catalog:",
         "hono": "catalog:",
         "type-fest": "catalog:",
+        "zod": "catalog:",
       },
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
@@ -183,12 +184,14 @@
     "packages/server-platform": {
       "name": "@repo/server-platform",
       "dependencies": {
+        "convict": "catalog:",
         "hono": "catalog:",
         "pino": "catalog:",
         "pino-pretty": "catalog:",
       },
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
+        "@types/convict": "catalog:",
       },
     },
     "packages/typescript-config": {

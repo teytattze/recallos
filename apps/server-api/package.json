@@ -16,8 +16,9 @@
     "@repo/server-kernel": "workspace:*",
     "@repo/server-platform": "workspace:*",
     "convict": "catalog:",
+    "hono": "catalog:",
     "type-fest": "catalog:",
-    "hono": "catalog:"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

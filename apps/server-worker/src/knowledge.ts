@@ -7,7 +7,7 @@ import {
   VoyageaiEmbeddingGateway,
 } from "@repo/server-knowledge-outbound-adapter";
 
-import { config } from "./runtime-config.ts";
+import { config } from "./config.ts";
 
 const mongodbConfig = config.knowledge.mongodb;
 

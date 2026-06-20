@@ -5,7 +5,7 @@ type ServiceModule = typeof import("./index.ts");
 const withServerApiEnv = async <T>(run: () => Promise<T>): Promise<T> => {
   const previous = {
     APP_ENV: process.env.APP_ENV,
-    HTTP_PORT: process.env.HTTP_PORT,
+    HTTP_PORT: process.env.APP_HTTP_PORT,
     INGESTION_MONGODB_URL: process.env.INGESTION_MONGODB_URL,
     INGESTION_MONGODB_DATABASE_NAME:
       process.env.INGESTION_MONGODB_DATABASE_NAME,

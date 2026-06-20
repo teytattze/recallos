@@ -16,10 +16,10 @@ source of truth. Every sub-agent must read them. The main agent only orchestrate
 flowchart TD
     start(["Start"])
     scope["Partition scope; default to the whole codebase"]
-    explore["Spawn agents to find comment issues"]
+    explore["Spawn sub-agents to find comment issues"]
     actionable{"Any issues?"}
-    edit["Spawn agents for non-overlapping comment-only edits"]
-    review["Spawn different agents to review policy and diffs"]
+    edit["Spawn sub-agents for non-overlapping comment-only edits"]
+    review["Spawn different sub-agents to review policy and diffs"]
     approved{"All reviews pass?"}
     revise["Return findings to editors"]
     report["Report changes and refactor opportunities"]

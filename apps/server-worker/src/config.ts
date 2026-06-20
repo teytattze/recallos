@@ -1,6 +1,7 @@
+import type { Schema } from "convict";
 import type { ReadonlyDeep } from "type-fest";
 
-import convict, { type Schema } from "convict";
+import { createConfig } from "@repo/server-platform";
 import z from "zod";
 
 import localProfile from "../config/local.json";
@@ -36,9 +37,7 @@ const serverWorkerConfigSchema = z.object({
   }),
 });
 
-type ServerWorkerConfig = ReadonlyDeep<
-  z.infer<typeof serverWorkerConfigSchema>
->;
+type ServerWorkerConfig = z.infer<typeof serverWorkerConfigSchema>;
 
 const convictConfigSchema: Schema<ServerWorkerConfig> = {
   app: {
@@ -129,27 +128,11 @@ const profiles = {
   production: productionProfile,
 } as const;
 
-type CreateConfigOptions = {
-  readonly env?: NodeJS.ProcessEnv;
-};
+const config = createConfig({
+  schema: convictConfigSchema,
+  parser: serverWorkerConfigSchema,
+  profiles,
+});
 
-const createConfig = (
-  options: CreateConfigOptions = {},
-): ServerWorkerConfig => {
-  const config = convict(convictConfigSchema, {
-    env: options.env ?? process.env,
-  });
-  const environment = config.get("app.environment");
-
-  if (!Object.hasOwn(profiles, environment)) {
-    throw new Error(`Unsupported APP_ENV: ${String(environment)}`);
-  }
-
-  config.load(profiles[environment]);
-  config.validate({ allowed: "strict" });
-
-  return serverWorkerConfigSchema.parse(config.getProperties());
-};
-
-export { convictConfigSchema, createConfig, serverWorkerConfigSchema };
+export { config, convictConfigSchema, profiles, serverWorkerConfigSchema };
 export type { ServerWorkerConfig };

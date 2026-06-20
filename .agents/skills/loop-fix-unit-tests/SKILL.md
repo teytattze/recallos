@@ -17,8 +17,8 @@ flowchart TD
     start(["Start"])
     run["Run `bun run test`; group failures into non-overlapping scopes"]
     failures{"Any failures?"}
-    fix["Spawn agents to diagnose and fix each scope"]
-    review["Spawn different agents to review changes and run scoped tests"]
+    fix["Spawn sub-agents to diagnose and fix each scope"]
+    review["Spawn different sub-agents to review changes and run scoped tests"]
     approved{"All reviews pass?"}
     revise["Return findings to fixers"]
     report["Report root causes, changes, and verification"]

@@ -10,11 +10,13 @@
     "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
+    "convict": "catalog:",
     "hono": "catalog:",
     "pino": "catalog:",
     "pino-pretty": "catalog:"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*"
+    "@repo/typescript-config": "workspace:*",
+    "@types/convict": "catalog:"
   }
 }
