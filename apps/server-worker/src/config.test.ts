@@ -38,7 +38,7 @@ describe("server worker config", () => {
       app: {
         environment: "local",
         version: "0.0.0",
-        http: { port: 8000 },
+        http: { port: 8001 },
       },
       ingestion: {
         mongodb: {
