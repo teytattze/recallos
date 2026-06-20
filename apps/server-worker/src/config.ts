@@ -1,71 +1,65 @@
+import type { ReadonlyDeep } from "type-fest";
+
 import convict, { type Schema } from "convict";
+import z from "zod";
 
 import localProfile from "../config/local.json";
 import productionProfile from "../config/production.json";
 import stagingProfile from "../config/staging.json";
 
-type AppEnvironment = "local" | "staging" | "production";
+const appEnvironmentSchema = z.enum(["local", "staging", "production"]);
+const requiredStringSchema = z.string().trim().min(1);
+const portSchema = z.number().int().min(1).max(65_535);
 
-type ServerWorkerConfig = {
-  readonly app: {
-    readonly environment: AppEnvironment;
-    readonly version: string;
-    readonly http: {
-      readonly port: number;
-    };
-  };
-  readonly ingestion: {
-    readonly mongodb: {
-      readonly url: string;
-      readonly databaseName: string;
-    };
-  };
-  readonly knowledge: {
-    readonly mongodb: {
-      readonly url: string;
-      readonly databaseName: string;
-    };
-    readonly voyageai: {
-      readonly apiKey: string;
-    };
-  };
-};
+const serverWorkerConfigSchema = z.object({
+  app: z.object({
+    environment: appEnvironmentSchema,
+    version: requiredStringSchema,
+    http: z.object({
+      port: portSchema,
+    }),
+  }),
+  ingestion: z.object({
+    mongodb: z.object({
+      url: requiredStringSchema,
+      databaseName: requiredStringSchema,
+    }),
+  }),
+  knowledge: z.object({
+    mongodb: z.object({
+      url: requiredStringSchema,
+      databaseName: requiredStringSchema,
+    }),
+    voyageai: z.object({
+      apiKey: requiredStringSchema,
+    }),
+  }),
+});
 
-const requiredString = (value: unknown): asserts value is string => {
-  if (typeof value !== "string" || value.trim().length === 0) {
-    throw new Error("must be a non-empty string");
-  }
-};
+type ServerWorkerConfig = ReadonlyDeep<
+  z.infer<typeof serverWorkerConfigSchema>
+>;
 
-const positivePort = (value: unknown): asserts value is number => {
-  if (
-    typeof value !== "number" ||
-    !Number.isInteger(value) ||
-    value < 1 ||
-    value > 65_535
-  ) {
-    throw new Error("must be an integer between 1 and 65535");
-  }
-};
-
-const configSchema: Schema<ServerWorkerConfig> = {
+const convictConfigSchema: Schema<ServerWorkerConfig> = {
   app: {
     environment: {
       doc: "Application deployment environment",
-      format: ["local", "staging", "production"],
+      format: appEnvironmentSchema.options,
       default: "local",
       env: "APP_ENV",
     },
     version: {
       doc: "Application version",
-      format: String,
+      format: (value) =>
+        serverWorkerConfigSchema.shape.app.shape.version.parse(value),
       default: "0.0.0",
       env: "APP_VERSION",
     },
     http: {
       port: {
         doc: "HTTP port",
-        format: positivePort,
+        format: (value) =>
+          serverWorkerConfigSchema.shape.app.shape.http.shape.port.parse(value),
         default: 8000,
         env: "HTTP_PORT",
       },
@@ -75,13 +69,19 @@ const configSchema: Schema<ServerWorkerConfig> = {
     mongodb: {
       url: {
         doc: "Ingestion MongoDB connection URL",
-        format: requiredString,
+        format: (value) =>
+          serverWorkerConfigSchema.shape.ingestion.shape.mongodb.shape.url.parse(
+            value,
+          ),
         default: null,
         env: "INGESTION_MONGODB_URL",
       },
       databaseName: {
         doc: "Ingestion MongoDB database name",
-        format: requiredString,
+        format: (value) =>
+          serverWorkerConfigSchema.shape.ingestion.shape.mongodb.shape.databaseName.parse(
+            value,
+          ),
         default: null,
         env: "INGESTION_MONGODB_DATABASE_NAME",
       },
@@ -91,13 +91,19 @@ const configSchema: Schema<ServerWorkerConfig> = {
     mongodb: {
       url: {
         doc: "Knowledge MongoDB connection URL",
-        format: requiredString,
+        format: (value) =>
+          serverWorkerConfigSchema.shape.knowledge.shape.mongodb.shape.url.parse(
+            value,
+          ),
         default: null,
         env: "KNOWLEDGE_MONGODB_URL",
       },
       databaseName: {
         doc: "Knowledge MongoDB database name",
-        format: requiredString,
+        format: (value) =>
+          serverWorkerConfigSchema.shape.knowledge.shape.mongodb.shape.databaseName.parse(
+            value,
+          ),
         default: null,
         env: "KNOWLEDGE_MONGODB_DATABASE_NAME",
       },
@@ -105,7 +111,10 @@ const configSchema: Schema<ServerWorkerConfig> = {
     voyageai: {
       apiKey: {
         doc: "Voyage AI API key",
-        format: requiredString,
+        format: (value) =>
+          serverWorkerConfigSchema.shape.knowledge.shape.voyageai.shape.apiKey.parse(
+            value,
+          ),
         default: null,
         env: "KNOWLEDGE_VOYAGEAI_API_KEY",
         sensitive: true,
@@ -127,7 +136,9 @@ type CreateConfigOptions = {
 const createConfig = (
   options: CreateConfigOptions = {},
 ): ServerWorkerConfig => {
-  const config = convict(configSchema, { env: options.env ?? process.env });
+  const config = convict(convictConfigSchema, {
+    env: options.env ?? process.env,
+  });
   const environment = config.get("app.environment");
 
   if (!Object.hasOwn(profiles, environment)) {
@@ -137,8 +148,8 @@ const createConfig = (
   config.load(profiles[environment]);
   config.validate({ allowed: "strict" });
 
-  return config.getProperties();
+  return serverWorkerConfigSchema.parse(config.getProperties());
 };
 
-export { configSchema, createConfig };
+export { convictConfigSchema, createConfig, serverWorkerConfigSchema };
 export type { ServerWorkerConfig };

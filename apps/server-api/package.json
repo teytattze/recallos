@@ -16,6 +16,7 @@
     "@repo/server-kernel": "workspace:*",
     "@repo/server-platform": "workspace:*",
     "convict": "catalog:",
+    "type-fest": "catalog:",
     "hono": "catalog:"
   },
   "devDependencies": {

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import convict from "convict";
 
 import localProfile from "../config/local.json";
-import { configSchema, createConfig } from "./config.ts";
+import { convictConfigSchema, createConfig } from "./config.ts";
 
 const localEnv = {
   KNOWLEDGE_VOYAGEAI_API_KEY: "voyage-test-key",
@@ -74,13 +74,18 @@ describe("server worker config", () => {
   test.each([
     [{ APP_ENV: "development", ...localEnv }, "Unsupported APP_ENV"],
     [{ HTTP_PORT: "0", ...localEnv }, "app.http.port"],
+    [{ HTTP_PORT: "65536", ...localEnv }, "app.http.port"],
     [{ ...localEnv, KNOWLEDGE_MONGODB_URL: "" }, "knowledge.mongodb.url"],
+    [
+      { ...localEnv, KNOWLEDGE_MONGODB_DATABASE_NAME: "   " },
+      "knowledge.mongodb.databaseName",
+    ],
   ])("rejects invalid environment input", (env, message) => {
     expect(() => createConfig({ env })).toThrow(message);
   });
 
   test("masks the Voyage AI key when Convict serializes config", () => {
-    const config = convict(configSchema, { env: localEnv });
+    const config = convict(convictConfigSchema, { env: localEnv });
     config.load(localProfile).validate({ allowed: "strict" });
 
     expect(config.toString()).not.toContain("voyage-test-key");
