@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@repo/server-knowledge-core": "workspace:*",
+    "hono": "catalog:",
     "mongodb": "catalog:",
     "zod": "catalog:"
   },

@@ -18,12 +18,15 @@ const voyageaiEmbeddingResponseSchema = z.object({
 });
 
 class VoyageaiEmbeddingGateway implements EmbeddingGatewayPort {
-  constructor(private readonly apiKey: string) {}
+  constructor(
+    private readonly apiKey: string,
+    private readonly embeddingsUrl = VOYAGEAI_EMBEDDINGS_URL,
+  ) {}
 
   async embed(
     input: EmbeddingGatewayPortEmbedInput,
   ): EmbeddingGatewayPortEmbedOutput {
-    const response = await fetch(VOYAGEAI_EMBEDDINGS_URL, {
+    const response = await fetch(this.embeddingsUrl, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${this.apiKey}`,

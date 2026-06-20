@@ -1,0 +1,15 @@
+{
+  "name": "@repo/server-integration-testing",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "oxlint",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "mongodb": "catalog:",
+    "playwright": "catalog:",
+    "testcontainers": "catalog:"
+  }
+}

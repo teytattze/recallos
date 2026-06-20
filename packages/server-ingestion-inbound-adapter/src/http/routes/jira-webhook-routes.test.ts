@@ -23,9 +23,7 @@ class FakeIngestEventUseCase implements IngestEventPort {
   }
 }
 
-class FakeAuthenticateWebhookRequestUseCase
-  implements AuthenticateWebhookRequestPort
-{
+class FakeAuthenticateWebhookRequestUseCase implements AuthenticateWebhookRequestPort {
   readonly executeCalls: AuthenticateWebhookRequestPortInput[] = [];
 
   execute(
@@ -36,9 +34,7 @@ class FakeAuthenticateWebhookRequestUseCase
   }
 }
 
-class FakeGetWebhookSubscriptionUseCase
-  implements GetWebhookSubscriptionPort
-{
+class FakeGetWebhookSubscriptionUseCase implements GetWebhookSubscriptionPort {
   readonly executeCalls: GetWebhookSubscriptionPortInput[] = [];
 
   execute(
@@ -102,7 +98,7 @@ test("createJiraWebhookRoutes: given a valid Jira webhook POST, it should authen
 
   // THEN
   expect(res.status).toBe(201);
-  expect(await res.text()).toBe("");
+  expect(await res.json()).toEqual({ id: "event-1" });
   expect(authenticateWebhookRequestUseCase.executeCalls).toEqual([
     {
       tenant: "organization:org1",
@@ -161,6 +157,7 @@ test("createJiraWebhookRoutes: given a Jira webhook POST without a signature, it
 
   // THEN
   expect(res.status).toBe(201);
+  expect(await res.json()).toEqual({ id: "event-1" });
   expect(authenticateWebhookRequestUseCase.executeCalls).toEqual([]);
   expect(getWebhookSubscriptionUseCase.executeCalls).toEqual([
     {

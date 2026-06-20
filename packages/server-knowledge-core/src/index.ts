@@ -1,3 +1,4 @@
+export * from "./application/ports/inbound/get-graph-node-by-event-id-port.ts";
 export * from "./application/ports/inbound/process-event-port.ts";
 export * from "./application/ports/inbound/search-graph-port.ts";
 
@@ -6,10 +7,12 @@ export * from "./application/ports/outbound/graph-node-repository-port.ts";
 export * from "./application/ports/outbound/graph-repository-port.ts";
 export * from "./application/ports/outbound/unit-of-work-port.ts";
 
+export * from "./application/use-cases/get-graph-node-by-event-id-use-case.ts";
 export * from "./application/use-cases/process-event-use-case.ts";
 
 export * from "./domain/aggregates/graph-node.ts";
 export * from "./domain/aggregates/graph.ts";
+export * from "./domain/errors/graph-node-not-found-error.ts";
 export * from "./domain/errors/graph-not-found-error.ts";
 export * from "./domain/value-objects/embedding-metadata.ts";
 export * from "./domain/value-objects/event-id.ts";

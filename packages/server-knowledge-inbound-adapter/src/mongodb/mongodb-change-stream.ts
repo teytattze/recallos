@@ -6,6 +6,10 @@ import { handleIngestionInsert } from "./handlers/ingestion-handlers.ts";
 const COLLECTION_NAME = "events" as const;
 const INSERT_PIPELINE = [{ $match: { operationType: "insert" } }] as const;
 
+type MongodbChangeStreamListenInput = {
+  onReady?: () => void;
+};
+
 class MongodbChangeStream {
   constructor(
     private readonly client: MongoClient,
@@ -13,21 +17,32 @@ class MongodbChangeStream {
     private readonly processEvent: ProcessEventPort,
   ) {}
 
-  async listen(): Promise<void> {
+  async listen(input: MongodbChangeStreamListenInput = {}): Promise<void> {
     const stream = this.collection.watch([...INSERT_PIPELINE]);
 
     try {
-      for await (const change of stream) {
-        if (change.operationType !== "insert") continue;
+      const initialChange = await stream.tryNext();
+      input.onReady?.();
 
-        await handleIngestionInsert({
-          document: change.fullDocument,
-          processEvent: this.processEvent,
-        });
+      if (initialChange !== null) {
+        await this.handleChange(initialChange);
+      }
+
+      for await (const change of stream) {
+        await this.handleChange(change);
       }
     } finally {
       await stream.close();
     }
+  }
+
+  private async handleChange(change: Document): Promise<void> {
+    if (change.operationType !== "insert") return;
+
+    await handleIngestionInsert({
+      document: change.fullDocument,
+      processEvent: this.processEvent,
+    });
   }
 
   private get collection(): Collection<Document> {
@@ -36,3 +51,4 @@ class MongodbChangeStream {
 }
 
 export { MongodbChangeStream };
+export type { MongodbChangeStreamListenInput };

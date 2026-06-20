@@ -1,9 +1,13 @@
 import type {
   GraphNodeRepositoryPort,
+  GraphNodeRepositoryPortFindByEventIdInput,
+  GraphNodeRepositoryPortFindByEventIdOutput,
   GraphNodeRepositoryPortInsertInput,
   GraphNodeRepositoryPortInsertOutput,
 } from "@repo/server-knowledge-core";
 import type { Collection, ClientSession, MongoClient } from "mongodb";
+
+import { GraphNode } from "@repo/server-knowledge-core";
 
 import type { MongodbGraphNodeModel } from "./mongodb-model.ts";
 
@@ -15,6 +19,35 @@ class MongodbGraphNodeRepository implements GraphNodeRepositoryPort {
     private readonly databaseName: string,
     private readonly session?: ClientSession,
   ) {}
+
+  async findByEventId(
+    input: GraphNodeRepositoryPortFindByEventIdInput,
+  ): GraphNodeRepositoryPortFindByEventIdOutput {
+    const model = await this.collection.findOne(
+      {
+        eventId: input.eventId.toString(),
+        tenant: input.tenant.toString(),
+      },
+      { session: this.session },
+    );
+
+    if (model === null) return null;
+
+    return GraphNode.restore({
+      tenant: model.tenant,
+      metadata: {
+        createdAt: model.createdAt,
+        updatedAt: model.updatedAt,
+      },
+      payload: {
+        id: model._id,
+        embedding: model.embedding,
+        eventId: model.eventId,
+        graphId: model.graphId,
+        rawEvent: model.rawEvent,
+      },
+    });
+  }
 
   async insert(
     input: GraphNodeRepositoryPortInsertInput,

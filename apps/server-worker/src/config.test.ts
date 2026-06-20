@@ -51,7 +51,10 @@ describe("server worker config", () => {
           url: "mongodb://localhost:27017/?replicaSet=rs0",
           databaseName: "recallos",
         },
-        voyageai: { apiKey: "voyage-test-key" },
+        voyageai: {
+          apiKey: "voyage-test-key",
+          embeddingsUrl: "https://api.voyageai.com/v1/embeddings",
+        },
       },
     });
 
@@ -69,6 +72,8 @@ describe("server worker config", () => {
       INGESTION_MONGODB_DATABASE_NAME: "ingestion",
       KNOWLEDGE_MONGODB_URL: "mongodb://knowledge:27017",
       KNOWLEDGE_MONGODB_DATABASE_NAME: "knowledge",
+      KNOWLEDGE_VOYAGEAI_EMBEDDINGS_URL:
+        "http://voyage-fixture:8080/v1/embeddings",
     });
 
     expect(config.app).toEqual({
@@ -78,6 +83,9 @@ describe("server worker config", () => {
     });
     expect(config.ingestion.mongodb.databaseName).toBe("ingestion");
     expect(config.knowledge.mongodb.databaseName).toBe("knowledge");
+    expect(config.knowledge.voyageai.embeddingsUrl).toBe(
+      "http://voyage-fixture:8080/v1/embeddings",
+    );
   });
 
   test.each(["staging", "production"])(
@@ -94,6 +102,10 @@ describe("server worker config", () => {
     [{ HTTP_PORT: "0", ...localEnv }, "app.http.port"],
     [{ HTTP_PORT: "65536", ...localEnv }, "app.http.port"],
     [{ ...localEnv, KNOWLEDGE_MONGODB_URL: "" }, "knowledge.mongodb.url"],
+    [
+      { ...localEnv, KNOWLEDGE_VOYAGEAI_EMBEDDINGS_URL: "not-a-url" },
+      "knowledge.voyageai.embeddingsUrl",
+    ],
     [
       { ...localEnv, KNOWLEDGE_MONGODB_DATABASE_NAME: "   " },
       "knowledge.mongodb.databaseName",

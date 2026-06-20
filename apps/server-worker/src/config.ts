@@ -1,5 +1,4 @@
 import type { Schema } from "convict";
-import type { ReadonlyDeep } from "type-fest";
 
 import { createConfig } from "@repo/server-platform";
 import z from "zod";
@@ -33,6 +32,7 @@ const serverWorkerConfigSchema = z.object({
     }),
     voyageai: z.object({
       apiKey: requiredStringSchema,
+      embeddingsUrl: z.url(),
     }),
   }),
 });
@@ -117,6 +117,15 @@ const convictConfigSchema: Schema<ServerWorkerConfig> = {
         default: null,
         env: "KNOWLEDGE_VOYAGEAI_API_KEY",
         sensitive: true,
+      },
+      embeddingsUrl: {
+        doc: "Voyage AI embeddings URL",
+        format: (value) =>
+          serverWorkerConfigSchema.shape.knowledge.shape.voyageai.shape.embeddingsUrl.parse(
+            value,
+          ),
+        default: "https://api.voyageai.com/v1/embeddings",
+        env: "KNOWLEDGE_VOYAGEAI_EMBEDDINGS_URL",
       },
     },
   },
