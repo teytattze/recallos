@@ -8,6 +8,8 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "date-fns": "catalog:",
+    "es-toolkit": "catalog:",
     "mongodb": "catalog:",
     "playwright": "catalog:",
     "testcontainers": "catalog:"
