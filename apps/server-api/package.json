@@ -15,10 +15,13 @@
     "@repo/server-ingestion-outbound-adapter": "workspace:*",
     "@repo/server-kernel": "workspace:*",
     "@repo/server-platform": "workspace:*",
+    "convict": "catalog:",
     "hono": "catalog:",
+    "type-fest": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*"
+    "@repo/typescript-config": "workspace:*",
+    "@types/convict": "catalog:"
   }
 }

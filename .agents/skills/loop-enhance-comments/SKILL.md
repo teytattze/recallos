@@ -1,14 +1,25 @@
 ---
 name: loop-enhance-comments
 description: >-
-  Orchestrate sub-agents to clean up comments and docstrings. Use for comment
-  audits or when comments are verbose, stale, redundant, or restate code.
+  Explicitly invoked multi-agent workflow for cleaning up comments and docstrings.
+  Use only when the user names this skill or explicitly requests sub-agents,
+  delegation, or parallel agents for a comment audit. Do not auto-trigger from a
+  comment-cleanup request alone.
 ---
 
 # Enhance Comments loop
 
 [RecallOS comment guidelines](../../../docs/engineering/comments.md) are the
-source of truth. Every sub-agent must read them. The main agent only orchestrates.
+source of truth. Every sub-agent must read them.
+
+## Authorization and agent roles
+
+- Explicit invocation of this skill authorizes its documented sub-agent workflow.
+- Do not run it merely because a request matches the subject matter.
+- The main agent scopes work, delegates edits, coordinates independent review,
+  verifies the result, and reports. It does not perform delegated edits itself.
+- If sub-agents cannot be spawned, report the workflow as blocked instead of
+  silently completing it as a single agent.
 
 ## Overview
 
@@ -16,10 +27,10 @@ source of truth. Every sub-agent must read them. The main agent only orchestrate
 flowchart TD
     start(["Start"])
     scope["Partition scope; default to the whole codebase"]
-    explore["Spawn agents to find comment issues"]
+    explore["Spawn sub-agents to find comment issues"]
     actionable{"Any issues?"}
-    edit["Spawn agents for non-overlapping comment-only edits"]
-    review["Spawn different agents to review policy and diffs"]
+    edit["Spawn sub-agents for non-overlapping comment-only edits"]
+    review["Spawn different sub-agents to review policy and diffs"]
     approved{"All reviews pass?"}
     revise["Return findings to editors"]
     report["Report changes and refactor opportunities"]

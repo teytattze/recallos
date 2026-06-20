@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
-import { commonHttpApp, commonHttpConfig } from "./common.ts";
+import { commonHttpApp } from "./common.ts";
+import { config } from "./config.ts";
 import { mongodbChangeStream } from "./ingestion.ts";
 
 const app = new Hono();
@@ -13,6 +14,6 @@ mongodbChangeStream.listen().catch((error: unknown) => {
 });
 
 export default {
-  port: commonHttpConfig.HTTP_PORT,
+  port: config.app.http.port,
   fetch: app.fetch,
 };

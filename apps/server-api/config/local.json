@@ -1,0 +1,13 @@
+{
+  "app": {
+    "http": {
+      "port": 8000
+    }
+  },
+  "ingestion": {
+    "mongodb": {
+      "url": "mongodb://localhost:27017/?replicaSet=rs0",
+      "databaseName": "recallos"
+    }
+  }
+}

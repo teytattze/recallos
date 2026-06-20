@@ -9,27 +9,28 @@ import {
   createJiraWebhookRoutes,
 } from "@repo/server-ingestion-inbound-adapter";
 import {
-  getMongodbConfig,
   MongodbUnitOfWork,
   MongodbWebhookSubscriptionRepository,
   NodeWebhookSignatureGenerator,
 } from "@repo/server-ingestion-outbound-adapter";
 import { createDefaultClock } from "@repo/server-kernel";
 
+import { config } from "./config.ts";
+
 // CONFIG
-const mongodbConfig = getMongodbConfig();
+const mongodbConfig = config.ingestion.mongodb;
 
 // OUTBOUND
 const mongodbClient = createMongodbClient({
-  url: mongodbConfig.INGESTION_MONGODB_URL,
+  url: mongodbConfig.url,
 });
 const unitOfWork = new MongodbUnitOfWork(
   mongodbClient,
-  mongodbConfig.INGESTION_MONGODB_DATABASE_NAME,
+  mongodbConfig.databaseName,
 );
 const webhookSubscriptionRepository = new MongodbWebhookSubscriptionRepository(
   mongodbClient,
-  mongodbConfig.INGESTION_MONGODB_DATABASE_NAME,
+  mongodbConfig.databaseName,
 );
 const webhookSignatureGenerator = new NodeWebhookSignatureGenerator();
 

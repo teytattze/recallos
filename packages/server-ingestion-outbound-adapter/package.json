@@ -11,8 +11,7 @@
   },
   "dependencies": {
     "@repo/server-ingestion-core": "workspace:*",
-    "mongodb": "catalog:",
-    "zod": "catalog:"
+    "mongodb": "catalog:"
   },
   "devDependencies": {
     "@repo/server-kernel": "workspace:*",

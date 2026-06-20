@@ -1,18 +1,16 @@
 import { createMongodbClient } from "@repo/server-database";
-import {
-  getMongodbChangeStreamConfig,
-  MongodbChangeStream,
-} from "@repo/server-knowledge-inbound-adapter";
+import { MongodbChangeStream } from "@repo/server-knowledge-inbound-adapter";
 
+import { config } from "./config.ts";
 import { processEventUseCase } from "./knowledge.ts";
 
-const mongodbChangeStreamConfig = getMongodbChangeStreamConfig();
+const mongodbConfig = config.ingestion.mongodb;
 const mongodbClient = createMongodbClient({
-  url: mongodbChangeStreamConfig.INGESTION_MONGODB_URL,
+  url: mongodbConfig.url,
 });
 const mongodbChangeStream = new MongodbChangeStream(
   mongodbClient,
-  mongodbChangeStreamConfig.INGESTION_MONGODB_DATABASE_NAME,
+  mongodbConfig.databaseName,
   processEventUseCase,
 );
 

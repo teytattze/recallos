@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
-import { commonHttpApp, commonHttpConfig } from "./common";
+import { commonHttpApp } from "./common";
+import { config } from "./config.ts";
 import { ingestionHttpApp } from "./ingestion";
 
 const app = new Hono();
@@ -9,6 +10,6 @@ app.route("", commonHttpApp);
 app.route("", ingestionHttpApp);
 
 export default {
-  port: commonHttpConfig.HTTP_PORT,
+  port: config.app.http.port,
   fetch: app.fetch,
 };
