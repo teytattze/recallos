@@ -6,9 +6,9 @@
 
 ## Pattern
 
-- Owns cross-cutting primitives: pg pool, pino logger, event bus, unit of work.
+- Owns cross-cutting HTTP, configuration, and logging primitives shared by server runtimes.
 - Supports infrastructure concerns without depending on domain concepts.
-- Used by apps, inbound adapters, and outbound adapters.
+- Used by composition roots and infrastructure packages that need these primitives.
 
 ## Boundaries
 

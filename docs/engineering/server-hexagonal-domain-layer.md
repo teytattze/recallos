@@ -9,13 +9,13 @@
 
 - Lives in `packages/server-<context>-core/src/domain/`.
 - Owns entities, value objects, aggregates, domain events, domain services, errors, and invariants.
-- Declares ports when it needs outside-world capabilities.
+- Keeps outside-world capabilities behind application-layer ports.
 - Accepts time as input, e.g. `createdAt: Date`; never calls `Date.now()`.
 
 ## Boundaries
 
-- Depends on `@repo/server-kernel` and `zod`.
-- No I/O, frameworks, SQL, env reads, or wall-clock reads.
+- Depends only on `@repo/server-kernel` and explicitly declared pure-library dependencies such as `zod`.
+- No I/O, database drivers, frameworks, env reads, or wall-clock reads.
 
 ## Conventions
 
@@ -42,6 +42,6 @@
 - Define domain events with `defineEvent` in `domain/events/*-event.ts`.
 - Name event factories `create<EventName>Event` and event types `<EventName>Event`.
 - Thread context errors through `parseProps` so failures carry a discriminant.
-- Compose aggregates from child value objects; short-circuit on the first child `Result.err`.
+- Compose aggregates from child value objects; allow the first thrown `DomainError` to stop construction.
 - Validate aggregate props containing value objects with `z.custom<T>((v) => v instanceof T)`.
 - Use file-local declarations plus final `export { ... }` and `export type { ... }` blocks.

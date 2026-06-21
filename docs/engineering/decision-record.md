@@ -3,7 +3,7 @@
 ## Intent
 
 - Record committed engineering decisions.
-- Keep exploratory write-ups in `docs/`.
+- Keep exploratory write-ups in `docs/thoughts/`.
 
 ## Pattern
 

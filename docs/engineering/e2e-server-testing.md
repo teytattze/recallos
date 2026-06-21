@@ -20,8 +20,8 @@ Name scenarios `<subject>: <action>, <expectation>`. Describe what the client ob
 - `fixtures/system.ts` initializes and cleans up shared test resources. It exposes resources but owns no scenario data.
 - Feature tests seed their own data in `beforeEach` and remove all data they create in `afterEach`.
 - `support/` contains stateful test-resource wrappers implementing `E2eResource`; it contains no feature-specific data.
-- Testcontainers starts MongoDB and WireMock from the root Compose file and removes them after the worker-scoped fixture.
-- API and worker processes remain externally managed; Playwright does not start application processes.
+- Testcontainers builds and starts MongoDB, WireMock, the API, and the worker from the root `compose.yml` and `compose.apps.yml` files.
+- The worker-scoped fixture waits for service health and removes the Compose environment after the test run.
 
 ## Test Rules
 
@@ -29,9 +29,9 @@ Name scenarios `<subject>: <action>, <expectation>`. Describe what the client ob
 - Use `expect.poll` for eventually consistent worker outcomes; do not add fixed sleeps.
 - Assert transport results and client-visible state, not implementation calls.
 - Keep execution single-worker while scenarios share a database and reset collections.
-- Fail fast when required external endpoints such as `E2E_API_BASE_URL` are absent.
+- Obtain mapped service URLs from the started Testcontainers environment; do not require separately managed application processes.
 
 ## Verification
 
-- Run `bun run --cwd tests/e2e-server test` with Docker, API, and worker services available.
+- Run `bun run --cwd tests/e2e-server test` with a running Docker daemon; the fixture builds and starts all required services.
 - Run TypeScript, lint, and formatting checks for every structural change.

@@ -69,10 +69,10 @@ phases and make behavior-focused tests easier to scan.
 const event = createEvent();
 
 // WHEN
-const result = await ingestEvent(event);
+const output = await ingestEvent(event);
 
 // THEN
-expect(result.isOk()).toBe(true);
+expect(output.eventId).toBe(event.id);
 ```
 
 Use these markers consistently within a test file. Do not add prose that merely
