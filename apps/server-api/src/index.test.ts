@@ -68,7 +68,9 @@ test("server api fetch: given an invalid graph node request, it should route thr
 
   // WHEN
   const response = await service.default.fetch(
-    new Request("http://localhost/api/v1/graph-nodes/by-event/event-1"),
+    new Request(
+      "http://localhost/api/v1/graphs/01952d3f-0000-7000-8000-000000000100/nodes?eventId=event-1",
+    ),
   );
 
   // THEN

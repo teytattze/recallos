@@ -9,7 +9,7 @@ type CreateKnowledgeHttpAppInput = {
 const createKnowledgeHttpApp = (input: CreateKnowledgeHttpAppInput) => {
   const app = new Hono();
 
-  app.route("/api/v1/graph-nodes", input.deps.graphNodeRoutes);
+  app.route("/api/v1/graphs", input.deps.graphNodeRoutes);
 
   return app;
 };

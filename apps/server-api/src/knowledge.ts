@@ -1,5 +1,5 @@
 import { createMongodbClient } from "@repo/server-database";
-import { GetGraphNodeByEventIdUseCase } from "@repo/server-knowledge-core";
+import { ListGraphNodesUseCase } from "@repo/server-knowledge-core";
 import {
   createGraphNodeRoutes,
   createKnowledgeHttpApp,
@@ -19,13 +19,11 @@ const graphNodeRepository = new MongodbGraphNodeRepository(
 );
 
 // CORE
-const getGraphNodeByEventIdUseCase = new GetGraphNodeByEventIdUseCase(
-  graphNodeRepository,
-);
+const listGraphNodesUseCase = new ListGraphNodesUseCase(graphNodeRepository);
 
 // INBOUND
 const graphNodeRoutes = createGraphNodeRoutes({
-  deps: { getGraphNodeByEventId: getGraphNodeByEventIdUseCase },
+  deps: { listGraphNodes: listGraphNodesUseCase },
 });
 const knowledgeHttpApp = createKnowledgeHttpApp({
   deps: { graphNodeRoutes },

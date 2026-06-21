@@ -8,8 +8,8 @@ import type {
 } from "../ports/outbound/embedding-gateway-port.ts";
 import type {
   GraphNodeRepositoryPort,
-  GraphNodeRepositoryPortFindByEventIdInput,
-  GraphNodeRepositoryPortFindByEventIdOutput,
+  GraphNodeRepositoryPortFindManyInput,
+  GraphNodeRepositoryPortFindManyOutput,
   GraphNodeRepositoryPortInsertInput,
   GraphNodeRepositoryPortInsertOutput,
 } from "../ports/outbound/graph-node-repository-port.ts";
@@ -38,10 +38,10 @@ class FakeEmbeddingGateway implements EmbeddingGatewayPort {
 class FakeGraphNodeRepository implements GraphNodeRepositoryPort {
   readonly inputs: GraphNodeRepositoryPortInsertInput[] = [];
 
-  findByEventId(
-    _input: GraphNodeRepositoryPortFindByEventIdInput,
-  ): GraphNodeRepositoryPortFindByEventIdOutput {
-    return Promise.resolve(null);
+  findMany(
+    _input: GraphNodeRepositoryPortFindManyInput,
+  ): GraphNodeRepositoryPortFindManyOutput {
+    return Promise.resolve([]);
   }
 
   insert(
