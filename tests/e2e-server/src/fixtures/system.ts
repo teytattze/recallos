@@ -34,10 +34,10 @@ const test = base.extend<{}, { system: SystemHarness }>({
             },
           ],
         });
-        await httpApiClient.init(
-          playwright.request,
-          dockerComposeEnvironment.serverApiUrl,
-        );
+        await httpApiClient.init({
+          baseUrl: dockerComposeEnvironment.serverApiUrl,
+          request: playwright.request,
+        });
 
         await use({
           api: httpApiClient.api,
