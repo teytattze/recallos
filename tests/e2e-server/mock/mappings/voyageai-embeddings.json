@@ -1,0 +1,21 @@
+{
+  "name": "VoyageAI embeddings",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/embeddings"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "data": [
+        {
+          "embedding": [0.25, 0.5],
+          "index": 0
+        }
+      ]
+    }
+  }
+}

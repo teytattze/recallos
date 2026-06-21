@@ -96,17 +96,6 @@
         "vitest": "catalog:",
       },
     },
-    "e2e/server": {
-      "name": "@repo/server-integration-testing",
-      "devDependencies": {
-        "@repo/typescript-config": "workspace:*",
-        "date-fns": "catalog:",
-        "es-toolkit": "catalog:",
-        "mongodb": "catalog:",
-        "playwright": "catalog:",
-        "testcontainers": "catalog:",
-      },
-    },
     "packages/server-database": {
       "name": "@repo/server-database",
       "dependencies": {
@@ -212,6 +201,16 @@
     "packages/typescript-config": {
       "name": "@repo/typescript-config",
       "version": "0.0.0",
+    },
+    "tests/e2e-server": {
+      "name": "@repo/e2e-server",
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "es-toolkit": "catalog:",
+        "mongodb": "catalog:",
+        "playwright": "catalog:",
+        "testcontainers": "catalog:",
+      },
     },
   },
   "catalog": {
@@ -592,6 +591,8 @@
 
     "@protobufjs/utf8": ["@protobufjs/utf8@1.1.1", "", {}, "sha512-oOAWABowe8EAbMyWKM0tYDKi8Yaox52D+HWZhAIJqQXbqe0xI/GV7FhLWqlEKreMkfDjshR5FKgi3mnle0h6Eg=="],
 
+    "@repo/e2e-server": ["@repo/e2e-server@workspace:tests/e2e-server"],
+
     "@repo/server-api": ["@repo/server-api@workspace:apps/server-api"],
 
     "@repo/server-database": ["@repo/server-database@workspace:packages/server-database"],
@@ -601,8 +602,6 @@
     "@repo/server-ingestion-inbound-adapter": ["@repo/server-ingestion-inbound-adapter@workspace:packages/server-ingestion-inbound-adapter"],
 
     "@repo/server-ingestion-outbound-adapter": ["@repo/server-ingestion-outbound-adapter@workspace:packages/server-ingestion-outbound-adapter"],
-
-    "@repo/server-integration-testing": ["@repo/server-integration-testing@workspace:e2e/server"],
 
     "@repo/server-kernel": ["@repo/server-kernel@workspace:packages/server-kernel"],
 
