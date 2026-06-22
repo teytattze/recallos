@@ -10,14 +10,16 @@ type ListGraphNodesPortInput = {
 
 type ListGraphNodesPortOutput = Promise<
   {
-    id: string;
-    tenant: string;
-    createdAt: string;
-    updatedAt: string;
-    eventId: string;
-    graphId: string;
-    rawEvent: JsonObject;
-  }[]
+    data: {
+      id: string;
+      tenant: string;
+      createdAt: string;
+      updatedAt: string;
+      eventId: string;
+      graphId: string;
+      rawEvent: JsonObject;
+    }[];
+  }
 >;
 
 interface ListGraphNodesPort {

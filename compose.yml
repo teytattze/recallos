@@ -2,7 +2,7 @@
 #
 #   INGESTION_MONGODB_URL=mongodb://localhost:27017/?replicaSet=rs0
 #   INGESTION_MONGODB_DATABASE_NAME=recallos
-#   KNOWLEDGE_VOYAGEAI_EMBEDDINGS_URL=http://localhost:4010/v1/embeddings
+#   KNOWLEDGE_VOYAGEAI_BASE_URL=http://localhost:4010/v1
 
 services:
   mongo:

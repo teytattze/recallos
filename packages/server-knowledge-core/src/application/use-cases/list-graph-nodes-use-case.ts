@@ -22,15 +22,17 @@ class ListGraphNodesUseCase implements ListGraphNodesPort {
       },
     });
 
-    return graphNodes.map((graphNode) => ({
-      id: graphNode.id.toString(),
-      tenant: graphNode.tenant.toString(),
-      createdAt: graphNode.metadata.createdAt.toISOString(),
-      updatedAt: graphNode.metadata.updatedAt.toISOString(),
-      eventId: graphNode.eventId.toString(),
-      graphId: graphNode.graphId.toString(),
-      rawEvent: graphNode.rawEvent,
-    }));
+    return {
+      data: graphNodes.map((graphNode) => ({
+        id: graphNode.id.toString(),
+        tenant: graphNode.tenant.toString(),
+        createdAt: graphNode.metadata.createdAt.toISOString(),
+        updatedAt: graphNode.metadata.updatedAt.toISOString(),
+        eventId: graphNode.eventId.toString(),
+        graphId: graphNode.graphId.toString(),
+        rawEvent: graphNode.rawEvent,
+      })),
+    };
   }
 }
 

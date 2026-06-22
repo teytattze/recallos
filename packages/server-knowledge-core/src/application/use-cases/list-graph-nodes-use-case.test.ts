@@ -65,18 +65,20 @@ test("ListGraphNodesUseCase.execute: given matching graph nodes, it should retur
   expect(repositoryInput.tenant.toString()).toBe(tenant);
   expect(repositoryInput.filters.eventId.toString()).toBe(eventId);
   expect(repositoryInput.filters.graphId.toString()).toBe(graphId);
-  expect(output).toEqual([
-    {
-      id: graphNodeId,
-      tenant,
-      createdAt: createdAt.toISOString(),
-      updatedAt: updatedAt.toISOString(),
-      eventId,
-      graphId,
-      rawEvent,
-    },
-  ]);
-  expect(output[0]).not.toHaveProperty("embedding");
+  expect(output).toEqual({
+    data: [
+      {
+        id: graphNodeId,
+        tenant,
+        createdAt: createdAt.toISOString(),
+        updatedAt: updatedAt.toISOString(),
+        eventId,
+        graphId,
+        rawEvent,
+      },
+    ],
+  });
+  expect(output.data[0]).not.toHaveProperty("embedding");
 });
 
 test("ListGraphNodesUseCase.execute: given no matching graph nodes, it should return an empty list", async () => {
@@ -87,5 +89,5 @@ test("ListGraphNodesUseCase.execute: given no matching graph nodes, it should re
     filters: { eventId, graphId },
   });
 
-  expect(output).toEqual([]);
+  expect(output).toEqual({ data: [] });
 });
