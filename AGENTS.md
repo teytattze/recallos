@@ -46,6 +46,8 @@ Core packages own policy. Adapter packages isolate delivery and infrastructure c
 
 ## Architecture
 
+### Server-side
+
 The server uses hexagonal architecture and domain-driven design to keep product rules stable while delivery mechanisms and infrastructure evolve.
 
 - **Core packages** own domain models, invariants, use cases, and port interfaces. They describe required capabilities without depending on concrete infrastructure.
