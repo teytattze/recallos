@@ -28,7 +28,7 @@ services:
       KNOWLEDGE_MONGODB_URL: mongodb://mongo:27017/?directConnection=true&replicaSet=rs0
       KNOWLEDGE_MONGODB_DATABASE_NAME: recallos-system-test
       KNOWLEDGE_VOYAGEAI_API_KEY: e2e-test-key
-      KNOWLEDGE_VOYAGEAI_EMBEDDINGS_URL: http://mock:8080/v1/embeddings
+      KNOWLEDGE_VOYAGEAI_BASE_URL: http://mock:8080/v1
     depends_on:
       mongo:
         condition: service_healthy

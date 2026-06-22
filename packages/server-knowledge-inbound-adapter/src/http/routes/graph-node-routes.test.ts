@@ -26,13 +26,13 @@ class FakeListGraphNodes implements ListGraphNodesPort {
 
   execute(input: ListGraphNodesPortInput): ListGraphNodesPortOutput {
     this.executeCalls.push(input);
-    return Promise.resolve([graphNode]);
+    return Promise.resolve({ data: [graphNode] });
   }
 }
 
 class EmptyListGraphNodes implements ListGraphNodesPort {
   execute(): ListGraphNodesPortOutput {
-    return Promise.resolve([]);
+    return Promise.resolve({ data: [] });
   }
 }
 
@@ -58,7 +58,7 @@ test("createGraphNodeRoutes: given matching graph nodes, it should return the gr
 
   // THEN
   expect(response.status).toBe(200);
-  expect(await response.json()).toEqual([graphNode]);
+  expect(await response.json()).toEqual({ data: [graphNode] });
   expect(listGraphNodes.executeCalls).toEqual([
     { tenant, filters: { eventId, graphId } },
   ]);
@@ -77,7 +77,7 @@ test("createGraphNodeRoutes: given no matching graph nodes, it should return an 
 
   // THEN
   expect(response.status).toBe(200);
-  expect(await response.json()).toEqual([]);
+  expect(await response.json()).toEqual({ data: [] });
 });
 
 test("createGraphNodeRoutes: given a missing tenant, it should return 422 without calling the use case", async () => {

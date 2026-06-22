@@ -64,7 +64,7 @@ test("VoyageaiEmbeddingGateway.embed: given an unsuccessful response, it should 
   ).rejects.toThrow("Voyage AI embedding request failed with status 429");
 });
 
-test("VoyageaiEmbeddingGateway.embed: given a custom embeddings URL, it should request that URL", async () => {
+test("VoyageaiEmbeddingGateway.embed: given a custom base URL, it should request its embeddings endpoint", async () => {
   // GIVEN
   const fetchMock = mock(() =>
     Promise.resolve(
@@ -74,8 +74,8 @@ test("VoyageaiEmbeddingGateway.embed: given a custom embeddings URL, it should r
     ),
   );
   globalThis.fetch = fetchMock as unknown as typeof fetch;
-  const embeddingsUrl = "http://127.0.0.1:3001/v1/embeddings";
-  const gateway = new VoyageaiEmbeddingGateway("test-api-key", embeddingsUrl);
+  const baseUrl = "http://127.0.0.1:3001/v1";
+  const gateway = new VoyageaiEmbeddingGateway("test-api-key", baseUrl);
 
   // WHEN
   await gateway.embed({
@@ -85,5 +85,8 @@ test("VoyageaiEmbeddingGateway.embed: given a custom embeddings URL, it should r
   });
 
   // THEN
-  expect(fetchMock).toHaveBeenCalledWith(embeddingsUrl, expect.any(Object));
+  expect(fetchMock).toHaveBeenCalledWith(
+    "http://127.0.0.1:3001/v1/embeddings",
+    expect.any(Object),
+  );
 });

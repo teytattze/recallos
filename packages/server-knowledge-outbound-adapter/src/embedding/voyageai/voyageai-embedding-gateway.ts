@@ -6,7 +6,7 @@ import type {
 
 import { z } from "zod";
 
-const VOYAGEAI_EMBEDDINGS_URL = "https://api.voyageai.com/v1/embeddings";
+const VOYAGEAI_BASE_URL = "https://api.voyageai.com/v1";
 
 const voyageaiEmbeddingResponseSchema = z.object({
   data: z.tuple([
@@ -20,13 +20,18 @@ const voyageaiEmbeddingResponseSchema = z.object({
 class VoyageaiEmbeddingGateway implements EmbeddingGatewayPort {
   constructor(
     private readonly apiKey: string,
-    private readonly embeddingsUrl = VOYAGEAI_EMBEDDINGS_URL,
+    private readonly baseUrl = VOYAGEAI_BASE_URL,
   ) {}
 
   async embed(
     input: EmbeddingGatewayPortEmbedInput,
   ): EmbeddingGatewayPortEmbedOutput {
-    const response = await fetch(this.embeddingsUrl, {
+    const embeddingsUrl = new URL(
+      "embeddings",
+      this.baseUrl.endsWith("/") ? this.baseUrl : `${this.baseUrl}/`,
+    ).toString();
+
+    const response = await fetch(embeddingsUrl, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${this.apiKey}`,

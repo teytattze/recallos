@@ -32,7 +32,7 @@ const serverWorkerConfigSchema = z.object({
     }),
     voyageai: z.object({
       apiKey: requiredStringSchema,
-      embeddingsUrl: z.url(),
+      baseUrl: z.url(),
     }),
   }),
 });
@@ -118,14 +118,14 @@ const convictConfigSchema: Schema<ServerWorkerConfig> = {
         env: "KNOWLEDGE_VOYAGEAI_API_KEY",
         sensitive: true,
       },
-      embeddingsUrl: {
-        doc: "Voyage AI embeddings URL",
+      baseUrl: {
+        doc: "Voyage AI API base URL",
         format: (value) =>
-          serverWorkerConfigSchema.shape.knowledge.shape.voyageai.shape.embeddingsUrl.parse(
+          serverWorkerConfigSchema.shape.knowledge.shape.voyageai.shape.baseUrl.parse(
             value,
           ),
-        default: "https://api.voyageai.com/v1/embeddings",
-        env: "KNOWLEDGE_VOYAGEAI_EMBEDDINGS_URL",
+        default: "https://api.voyageai.com/v1",
+        env: "KNOWLEDGE_VOYAGEAI_BASE_URL",
       },
     },
   },
