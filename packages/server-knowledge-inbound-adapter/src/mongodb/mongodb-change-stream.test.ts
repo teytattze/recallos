@@ -52,11 +52,19 @@ class RejectingProcessEvent implements ProcessEventPort {
 
 class FakeChangeStream {
   closed = false;
+  private nextIndex = 0;
 
   constructor(private readonly changes: Document[]) {}
 
+  tryNext(): Promise<Document | null> {
+    return Promise.resolve(this.changes[this.nextIndex++] ?? null);
+  }
+
   async *[Symbol.asyncIterator](): AsyncGenerator<Document> {
-    for (const change of this.changes) yield change;
+    while (this.nextIndex < this.changes.length) {
+      const change = this.changes[this.nextIndex++];
+      if (change !== undefined) yield change;
+    }
   }
 
   close(): Promise<void> {
@@ -142,6 +150,27 @@ test("MongodbChangeStream: watches inserts and processes them sequentially", asy
     processEvent.executeCalls.map((call) => call.payload.event.id),
   ).toEqual(["event-1", "event-2"]);
   expect(processEvent.maxActiveExecutions).toBe(1);
+});
+
+test("MongodbChangeStream: reports readiness after establishing the cursor and before processing changes", async () => {
+  // GIVEN
+  const processEvent = new FakeProcessEvent();
+  const stream = new FakeChangeStream([
+    insertChange("event-1", { issue: { key: "REC-1" } }),
+  ]);
+  const fake = createFakeClient(stream);
+  let processCallsWhenReady: number | undefined;
+
+  // WHEN
+  await new MongodbChangeStream(fake.client, "recallos", processEvent).listen({
+    onReady: () => {
+      processCallsWhenReady = processEvent.executeCalls.length;
+    },
+  });
+
+  // THEN
+  expect(processCallsWhenReady).toBe(0);
+  expect(processEvent.executeCalls).toHaveLength(1);
 });
 
 test("MongodbChangeStream: rejects malformed inserted documents and closes the stream", async () => {

@@ -1,8 +1,8 @@
-# Local data + queue stack for RecallOS.
+# Local data stack for RecallOS.
 #
 #   INGESTION_MONGODB_URL=mongodb://localhost:27017/?replicaSet=rs0
 #   INGESTION_MONGODB_DATABASE_NAME=recallos
-#   QUEUE_REDIS_URL=redis://localhost:6379
+#   KNOWLEDGE_VOYAGEAI_BASE_URL=http://localhost:4010/v1
 
 services:
   mongo:
@@ -27,20 +27,12 @@ services:
       retries: 10
       start_period: 10s
 
-  redis:
-    image: redis:8-alpine
-    command: ["redis-server", "--appendonly", "yes"]
+  mock:
+    image: wiremock/wiremock:3.13.2
     ports:
-      - "6379:6379"
+      - "4010:8080"
     volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
+      - ./tests/e2e-server/mock/mappings:/home/wiremock/mappings:ro
 
 volumes:
   mongo-data:
-  redis-data:

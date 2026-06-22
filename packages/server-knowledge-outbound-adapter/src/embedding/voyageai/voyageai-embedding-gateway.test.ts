@@ -63,3 +63,30 @@ test("VoyageaiEmbeddingGateway.embed: given an unsuccessful response, it should 
     }),
   ).rejects.toThrow("Voyage AI embedding request failed with status 429");
 });
+
+test("VoyageaiEmbeddingGateway.embed: given a custom base URL, it should request its embeddings endpoint", async () => {
+  // GIVEN
+  const fetchMock = mock(() =>
+    Promise.resolve(
+      Response.json({
+        data: [{ embedding: [1, 2], index: 0 }],
+      }),
+    ),
+  );
+  globalThis.fetch = fetchMock as unknown as typeof fetch;
+  const baseUrl = "http://127.0.0.1:3001/v1";
+  const gateway = new VoyageaiEmbeddingGateway("test-api-key", baseUrl);
+
+  // WHEN
+  await gateway.embed({
+    dimension: "1024",
+    model: "voyage-4-large",
+    text: "event",
+  });
+
+  // THEN
+  expect(fetchMock).toHaveBeenCalledWith(
+    "http://127.0.0.1:3001/v1/embeddings",
+    expect.any(Object),
+  );
+});

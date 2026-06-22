@@ -49,7 +49,7 @@ const createJiraWebhookRoutes = (input: JiraWebhookRoutesInput) => {
       },
     );
 
-    await input.deps.ingestEvent.execute({
+    const event = await input.deps.ingestEvent.execute({
       tenant: queryParams.tenant,
       payload: {
         external: { id: "", provider: "jira" },
@@ -58,7 +58,7 @@ const createJiraWebhookRoutes = (input: JiraWebhookRoutesInput) => {
       },
     });
 
-    return c.body(null, 201);
+    return c.json({ id: event.id }, 201);
   });
 
   return jiraWebhookRoutes;

@@ -10,12 +10,12 @@
 - Lives in `packages/server-<context>-core/src/application/`.
 - Owns use cases, transaction boundaries, and port interfaces.
 - Depends on port interfaces, never concrete implementations.
-- Inject ports such as `MemoryItemRepository`, never concrete adapters.
+- Inject ports such as `GraphNodeRepositoryPort`, never concrete adapters.
 - Name domain capabilities, not database products.
 
 ## Boundaries
 
-- Depends only on own `domain/`, `@repo/server-kernel`, `zod`, `es-toolkit`, and `date-fns`.
+- Depends only on its own `domain/`, `@repo/server-kernel`, and explicitly declared pure-library dependencies such as `zod`.
 - No concrete DBs, HTTP, framework code, platform imports, or adapter wiring.
 - Ports define contracts only; they do not implement behavior.
 - Inbound ports use application-owned input/output DTOs and do not expose domain objects.

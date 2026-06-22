@@ -32,6 +32,12 @@ describe("server API config", () => {
           databaseName: "recallos",
         },
       },
+      knowledge: {
+        mongodb: {
+          url: "mongodb://localhost:27017/?replicaSet=rs0",
+          databaseName: "recallos",
+        },
+      },
     });
   });
 
@@ -42,6 +48,8 @@ describe("server API config", () => {
       HTTP_PORT: "3131",
       INGESTION_MONGODB_URL: "mongodb://database:27017",
       INGESTION_MONGODB_DATABASE_NAME: "recallos-test",
+      KNOWLEDGE_MONGODB_URL: "mongodb://knowledge-database:27017",
+      KNOWLEDGE_MONGODB_DATABASE_NAME: "knowledge-test",
     });
 
     expect(config.app).toEqual({
@@ -53,10 +61,14 @@ describe("server API config", () => {
       url: "mongodb://database:27017",
       databaseName: "recallos-test",
     });
+    expect(config.knowledge.mongodb).toEqual({
+      url: "mongodb://knowledge-database:27017",
+      databaseName: "knowledge-test",
+    });
   });
 
   test.each(["staging", "production"])(
-    "%s requires deployment-specific ingestion config",
+    "%s requires deployment-specific datastore config",
     (environment) => {
       expect(() => createServerApiConfig({ APP_ENV: environment })).toThrow();
     },
@@ -70,6 +82,11 @@ describe("server API config", () => {
     [
       { INGESTION_MONGODB_DATABASE_NAME: "   " },
       "ingestion.mongodb.databaseName",
+    ],
+    [{ KNOWLEDGE_MONGODB_URL: "" }, "knowledge.mongodb.url"],
+    [
+      { KNOWLEDGE_MONGODB_DATABASE_NAME: "   " },
+      "knowledge.mongodb.databaseName",
     ],
   ])("rejects invalid environment input", (env, message) => {
     expect(() => createServerApiConfig(env)).toThrow(message);

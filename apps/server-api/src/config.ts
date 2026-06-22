@@ -25,6 +25,12 @@ const serverApiConfigSchema = z.object({
       databaseName: requiredStringSchema,
     }),
   }),
+  knowledge: z.object({
+    mongodb: z.object({
+      url: requiredStringSchema,
+      databaseName: requiredStringSchema,
+    }),
+  }),
 });
 
 type ServerApiConfig = z.infer<typeof serverApiConfigSchema>;
@@ -73,6 +79,28 @@ const convictConfigSchema: Schema<ServerApiConfig> = {
           ),
         default: null,
         env: "INGESTION_MONGODB_DATABASE_NAME",
+      },
+    },
+  },
+  knowledge: {
+    mongodb: {
+      url: {
+        doc: "Knowledge MongoDB connection URL",
+        format: (value) =>
+          serverApiConfigSchema.shape.knowledge.shape.mongodb.shape.url.parse(
+            value,
+          ),
+        default: null,
+        env: "KNOWLEDGE_MONGODB_URL",
+      },
+      databaseName: {
+        doc: "Knowledge MongoDB database name",
+        format: (value) =>
+          serverApiConfigSchema.shape.knowledge.shape.mongodb.shape.databaseName.parse(
+            value,
+          ),
+        default: null,
+        env: "KNOWLEDGE_MONGODB_DATABASE_NAME",
       },
     },
   },

@@ -1,6 +1,7 @@
-import type { ClientSession, Collection, MongoClient } from "mongodb";
+import type { ClientSession, Collection, Filter, MongoClient } from "mongodb";
 
-import { GraphNode } from "@repo/server-knowledge-core";
+import { Tenant } from "@repo/server-kernel";
+import { EventId, GraphId, GraphNode } from "@repo/server-knowledge-core";
 import { expect, test } from "bun:test";
 
 import type { MongodbGraphNodeModel } from "./mongodb-model.ts";
@@ -10,13 +11,27 @@ import { MongodbGraphNodeRepository } from "./mongodb-graph-node-repository.ts";
 type InsertOneOptions = Parameters<
   Collection<MongodbGraphNodeModel>["insertOne"]
 >[1];
+type FindOptions = Parameters<Collection<MongodbGraphNodeModel>["find"]>[1];
 
 class FakeCollection {
   readonly calls: {
     model: MongodbGraphNodeModel;
     options: InsertOneOptions;
   }[] = [];
+  readonly findCalls: {
+    filter: Filter<MongodbGraphNodeModel>;
+    options: FindOptions;
+  }[] = [];
+  findResult: MongodbGraphNodeModel[] = [];
   error?: Error;
+
+  find(
+    filter: Filter<MongodbGraphNodeModel>,
+    options: FindOptions,
+  ): { toArray: () => Promise<MongodbGraphNodeModel[]> } {
+    this.findCalls.push({ filter, options });
+    return { toArray: () => Promise.resolve(this.findResult) };
+  }
 
   insertOne(
     model: MongodbGraphNodeModel,
@@ -40,17 +55,19 @@ class FakeMongoClient {
 const createdAt = new Date("2026-01-02T00:00:00Z");
 const updatedAt = new Date("2026-01-03T00:00:00Z");
 const graphId = "01952d3f-0000-7000-8000-000000000100";
+const tenant = "organization:org1";
+const eventId = "event-1";
 
 const restoreNode = (): GraphNode =>
   GraphNode.restore({
-    tenant: "organization:org1",
+    tenant,
     metadata: { createdAt, updatedAt },
     payload: {
       id: "node-1",
       embedding: [0.1, 0.2],
-      eventId: "event-1",
+      eventId,
       graphId,
-      rawEvent: { issue: { key: "event-1" } },
+      rawEvent: { issue: { key: eventId } },
     },
   });
 
@@ -84,6 +101,77 @@ test("MongodbGraphNodeRepository.insert: given a graph node, it should insert it
       options: { session },
     },
   ]);
+});
+
+test("MongodbGraphNodeRepository.findMany: given tenant and filters, it should restore matching graph nodes", async () => {
+  // GIVEN
+  const client = new FakeMongoClient();
+  const session = { id: "session-1" } as unknown as ClientSession;
+  client.collection.findResult = [
+    {
+      _id: "node-1",
+      createdAt,
+      updatedAt,
+      tenant,
+      embedding: [0.1, 0.2],
+      eventId,
+      graphId,
+      rawEvent: { issue: { key: eventId } },
+    },
+  ];
+  const repository = new MongodbGraphNodeRepository(
+    client as unknown as MongoClient,
+    "recallos",
+    session,
+  );
+
+  // WHEN
+  const nodes = await repository.findMany({
+    tenant: Tenant.fromString(tenant),
+    filters: {
+      eventId: EventId.restore({ payload: eventId }),
+      graphId: GraphId.restore({ payload: graphId }),
+    },
+  });
+
+  // THEN
+  expect(client.collection.findCalls).toEqual([
+    {
+      filter: { eventId, graphId, tenant },
+      options: { session },
+    },
+  ]);
+  expect(nodes).toHaveLength(1);
+  const node = nodes[0]!;
+  expect(node.id.toString()).toBe("node-1");
+  expect(node.metadata.createdAt).toEqual(createdAt);
+  expect(node.metadata.updatedAt).toEqual(updatedAt);
+  expect(node.tenant.toString()).toBe(tenant);
+  expect(node.embedding).toEqual([0.1, 0.2]);
+  expect(node.eventId.toString()).toBe(eventId);
+  expect(node.graphId.toString()).toBe(graphId);
+  expect(node.rawEvent).toEqual({ issue: { key: eventId } });
+});
+
+test("MongodbGraphNodeRepository.findMany: given no matching graph nodes, it should return an empty list", async () => {
+  // GIVEN
+  const client = new FakeMongoClient();
+  const repository = new MongodbGraphNodeRepository(
+    client as unknown as MongoClient,
+    "recallos",
+  );
+
+  // WHEN
+  const nodes = await repository.findMany({
+    tenant: Tenant.fromString(tenant),
+    filters: {
+      eventId: EventId.restore({ payload: eventId }),
+      graphId: GraphId.restore({ payload: graphId }),
+    },
+  });
+
+  // THEN
+  expect(nodes).toEqual([]);
 });
 
 test("MongodbGraphNodeRepository.insert: given an insert error, it should rethrow it", async () => {

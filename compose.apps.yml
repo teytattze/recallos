@@ -1,0 +1,36 @@
+services:
+  server-api:
+    build:
+      context: ./apps/server-api
+      dockerfile: ../../dockers/Dockerfile.server-api
+    ports:
+      - "8000:8000"
+    environment:
+      HTTP_PORT: 8000
+      INGESTION_MONGODB_URL: mongodb://mongo:27017/?directConnection=true&replicaSet=rs0
+      INGESTION_MONGODB_DATABASE_NAME: recallos-system-test
+      KNOWLEDGE_MONGODB_URL: mongodb://mongo:27017/?directConnection=true&replicaSet=rs0
+      KNOWLEDGE_MONGODB_DATABASE_NAME: recallos-system-test
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  server-worker:
+    build:
+      context: ./apps/server-worker
+      dockerfile: ../../dockers/Dockerfile.server-worker
+    ports:
+      - "8001:8001"
+    environment:
+      HTTP_PORT: 8001
+      INGESTION_MONGODB_URL: mongodb://mongo:27017/?directConnection=true&replicaSet=rs0
+      INGESTION_MONGODB_DATABASE_NAME: recallos-system-test
+      KNOWLEDGE_MONGODB_URL: mongodb://mongo:27017/?directConnection=true&replicaSet=rs0
+      KNOWLEDGE_MONGODB_DATABASE_NAME: recallos-system-test
+      KNOWLEDGE_VOYAGEAI_API_KEY: e2e-test-key
+      KNOWLEDGE_VOYAGEAI_BASE_URL: http://mock:8080/v1
+    depends_on:
+      mongo:
+        condition: service_healthy
+      mock:
+        condition: service_started

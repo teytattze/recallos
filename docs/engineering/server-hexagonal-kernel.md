@@ -9,9 +9,9 @@
 
 - Owns base types: `Entity`, `AggregateRoot`, `ValueObject`, `TenantAwareAggregateRoot`.
 - Owns identity and ownership: `Id`, `Tenant`/`TenantType`, `EntityMetadata`.
-- Owns primitives: `DomainEvent`, `DomainError`, `Clock`, `Result`.
+- Owns primitives: `DomainEvent`, `DomainError`, and `Clock`.
 - Owns helpers: `parseProps`, `defineError`, `defineEvent`, `InvariantViolation`,
-  `createFixedClock`.
+  `createDefaultClock`, and `createFixedClock`.
 - Accepts only primitives reused across contexts and free of context meaning.
 
 ## Boundaries

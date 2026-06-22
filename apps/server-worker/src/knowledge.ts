@@ -24,6 +24,7 @@ const graphNodeRepository = new MongodbGraphNodeRepository(
 );
 const embeddingGateway = new VoyageaiEmbeddingGateway(
   config.knowledge.voyageai.apiKey,
+  config.knowledge.voyageai.baseUrl,
 );
 
 const processEventUseCase = new ProcessEventUseCase(

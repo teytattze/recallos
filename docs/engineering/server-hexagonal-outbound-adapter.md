@@ -8,20 +8,20 @@
 
 - Lives in `packages/server-<context>-outbound-adapter`.
 - Owns persistence and gateway adapters.
-- Implements ports for Postgres, pgvector, graph storage, and external APIs.
+- Implements ports against MongoDB and external APIs such as VoyageAI.
 - Talks to other adapters only through the application layer.
 
 ## Boundaries
 
-- Depends on `@repo/server-<context>-core`, `@repo/server-platform`, and drivers such as `pg` or SDK clients.
+- Depends on `@repo/server-<context>-core` and explicitly declared drivers such as `mongodb` or SDK clients.
 - No business logic.
 
 ## Conventions
 
 - DB adapters live in `persistence/`.
-- External API adapters live in `gateways/`.
+- External API adapters live in a capability and technology directory, such as `embedding/voyageai/`.
 - Use kebab-case filenames that mirror the exported symbol.
-- Name persistence adapters `<role>-<technology>-<kind>.ts`, e.g. `event-log-prisma-repository.ts`.
-- Name adapter-owned interfaces `<Capability>Port` in `<capability>-port.ts`.
+- Name persistence adapters `<technology>-<concept>-<kind>.ts`, e.g. `mongodb-event-repository.ts`.
+- Implement application-owned port interfaces; do not define competing adapter-local ports.
 - Use file-local declarations plus final `export { ... }` and `export type { ... }` blocks.
-- Keep the package barrel explicit: persistence exports first, then gateway/relay exports.
+- Keep package barrels explicit and group exports by capability.

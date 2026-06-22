@@ -9,5 +9,11 @@
       "url": "mongodb://localhost:27017/?replicaSet=rs0",
       "databaseName": "recallos"
     }
+  },
+  "knowledge": {
+    "mongodb": {
+      "url": "mongodb://localhost:27017/?replicaSet=rs0",
+      "databaseName": "recallos"
+    }
   }
 }

@@ -1,0 +1,16 @@
+{
+  "name": "@repo/e2e-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "oxlint",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "es-toolkit": "catalog:",
+    "mongodb": "catalog:",
+    "playwright": "catalog:",
+    "testcontainers": "catalog:"
+  }
+}

@@ -13,7 +13,7 @@
 - Throw ordinary `Error` values for technical faults where no domain category is useful.
 - Treat `DomainError.category` as routing metadata, not an HTTP status.
 
-Do not return `Result` from domain factories, use cases, or inbound ports.
+Return successful values directly from domain factories, use cases, and inbound ports.
 If a caller needs to react to a failure, it catches a thrown `DomainError` and switches on `kind` or `category`.
 
 ## Layer Rules
@@ -90,8 +90,8 @@ Worker adapters map the same distinction to acknowledge, retry, or dead-letter b
 
 ## Anti-Patterns
 
-- Returning `Result` from domain factories, use cases, or inbound ports.
+- Encoding domain failures in return values instead of throwing `DomainError` values.
 - Catching domain errors only to rethrow the same value.
 - Mapping every concrete `error.kind` in HTTP adapters when `category` is sufficient.
 - Catching infrastructure exceptions inside use cases and converting them to domain errors.
-- Letting raw `ZodError`, Prisma errors, SDK errors, or framework errors cross inward into the domain or application layers.
+- Letting raw `ZodError`, MongoDB errors, SDK errors, or framework errors cross inward into the domain or application layers.
