@@ -1,7 +1,7 @@
 import type {
   GraphNodeRepositoryPort,
-  GraphNodeRepositoryPortFindByEventIdInput,
-  GraphNodeRepositoryPortFindByEventIdOutput,
+  GraphNodeRepositoryPortFindManyInput,
+  GraphNodeRepositoryPortFindManyOutput,
   GraphNodeRepositoryPortInsertInput,
   GraphNodeRepositoryPortInsertOutput,
 } from "@repo/server-knowledge-core";
@@ -20,33 +20,36 @@ class MongodbGraphNodeRepository implements GraphNodeRepositoryPort {
     private readonly session?: ClientSession,
   ) {}
 
-  async findByEventId(
-    input: GraphNodeRepositoryPortFindByEventIdInput,
-  ): GraphNodeRepositoryPortFindByEventIdOutput {
-    const model = await this.collection.findOne(
-      {
-        eventId: input.eventId.toString(),
-        tenant: input.tenant.toString(),
-      },
-      { session: this.session },
+  async findMany(
+    input: GraphNodeRepositoryPortFindManyInput,
+  ): GraphNodeRepositoryPortFindManyOutput {
+    const models = await this.collection
+      .find(
+        {
+          eventId: input.filters.eventId.toString(),
+          graphId: input.filters.graphId.toString(),
+          tenant: input.tenant.toString(),
+        },
+        { session: this.session },
+      )
+      .toArray();
+
+    return models.map((model) =>
+      GraphNode.restore({
+        tenant: model.tenant,
+        metadata: {
+          createdAt: model.createdAt,
+          updatedAt: model.updatedAt,
+        },
+        payload: {
+          id: model._id,
+          embedding: model.embedding,
+          eventId: model.eventId,
+          graphId: model.graphId,
+          rawEvent: model.rawEvent,
+        },
+      }),
     );
-
-    if (model === null) return null;
-
-    return GraphNode.restore({
-      tenant: model.tenant,
-      metadata: {
-        createdAt: model.createdAt,
-        updatedAt: model.updatedAt,
-      },
-      payload: {
-        id: model._id,
-        embedding: model.embedding,
-        eventId: model.eventId,
-        graphId: model.graphId,
-        rawEvent: model.rawEvent,
-      },
-    });
   }
 
   async insert(

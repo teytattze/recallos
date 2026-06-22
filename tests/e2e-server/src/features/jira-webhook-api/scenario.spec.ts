@@ -69,21 +69,32 @@ test("Jira client: submits an authenticated webhook event, the event becomes ava
   const ingestion = (await ingestionResponse.json()) as { id: string };
   expect(ingestion.id).toEqual(expect.any(String));
 
-  const nodeQuery = new URLSearchParams({ tenant: TENANT });
-  const nodePath = `/api/v1/graph-nodes/by-event/${encodeURIComponent(ingestion.id)}?${nodeQuery.toString()}`;
+  const nodeQuery = new URLSearchParams({
+    eventId: ingestion.id,
+    tenant: TENANT,
+  });
+  const nodePath = `/api/v1/graphs/${encodeURIComponent(GRAPH_ID)}/nodes?${nodeQuery.toString()}`;
   await expect
-    .poll(async () => (await system.api.get(nodePath)).status(), {
-      timeout: 20_000,
-      intervals: [100, 250, 500],
-    })
-    .toBe(200);
+    .poll(
+      async () => {
+        const response = await system.api.get(nodePath);
+        return ((await response.json()) as unknown[]).length;
+      },
+      {
+        timeout: 20_000,
+        intervals: [100, 250, 500],
+      },
+    )
+    .toBe(1);
 
   const nodeResponse = await system.api.get(nodePath);
   expect(nodeResponse.status()).toBe(200);
-  expect(await nodeResponse.json()).toMatchObject({
-    tenant: TENANT,
-    eventId: ingestion.id,
-    graphId: GRAPH_ID,
-    rawEvent: WEBHOOK_BODY,
-  });
+  expect(await nodeResponse.json()).toEqual([
+    expect.objectContaining({
+      tenant: TENANT,
+      eventId: ingestion.id,
+      graphId: GRAPH_ID,
+      rawEvent: WEBHOOK_BODY,
+    }),
+  ]);
 });

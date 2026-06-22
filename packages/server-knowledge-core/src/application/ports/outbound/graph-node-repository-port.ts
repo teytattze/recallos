@@ -2,12 +2,16 @@ import type { Tenant } from "@repo/server-kernel";
 
 import type { GraphNode } from "../../../domain/aggregates/graph-node.ts";
 import type { EventId } from "../../../domain/value-objects/event-id.ts";
+import type { GraphId } from "../../../domain/value-objects/graph-id.ts";
 
-type GraphNodeRepositoryPortFindByEventIdInput = {
-  eventId: EventId;
+type GraphNodeRepositoryPortFindManyInput = {
   tenant: Tenant;
+  filters: {
+    eventId: EventId;
+    graphId: GraphId;
+  };
 };
-type GraphNodeRepositoryPortFindByEventIdOutput = Promise<GraphNode | null>;
+type GraphNodeRepositoryPortFindManyOutput = Promise<GraphNode[]>;
 
 type GraphNodeRepositoryPortInsertInput = {
   data: GraphNode;
@@ -15,9 +19,9 @@ type GraphNodeRepositoryPortInsertInput = {
 type GraphNodeRepositoryPortInsertOutput = Promise<void>;
 
 interface GraphNodeRepositoryPort {
-  findByEventId(
-    input: GraphNodeRepositoryPortFindByEventIdInput,
-  ): GraphNodeRepositoryPortFindByEventIdOutput;
+  findMany(
+    input: GraphNodeRepositoryPortFindManyInput,
+  ): GraphNodeRepositoryPortFindManyOutput;
   insert(
     input: GraphNodeRepositoryPortInsertInput,
   ): GraphNodeRepositoryPortInsertOutput;
@@ -25,8 +29,8 @@ interface GraphNodeRepositoryPort {
 
 export type {
   GraphNodeRepositoryPort,
-  GraphNodeRepositoryPortFindByEventIdInput,
-  GraphNodeRepositoryPortFindByEventIdOutput,
+  GraphNodeRepositoryPortFindManyInput,
+  GraphNodeRepositoryPortFindManyOutput,
   GraphNodeRepositoryPortInsertInput,
   GraphNodeRepositoryPortInsertOutput,
 };

@@ -1,7 +1,7 @@
 import type { ClientSession, Collection, Filter, MongoClient } from "mongodb";
 
 import { Tenant } from "@repo/server-kernel";
-import { EventId, GraphNode } from "@repo/server-knowledge-core";
+import { EventId, GraphId, GraphNode } from "@repo/server-knowledge-core";
 import { expect, test } from "bun:test";
 
 import type { MongodbGraphNodeModel } from "./mongodb-model.ts";
@@ -11,28 +11,26 @@ import { MongodbGraphNodeRepository } from "./mongodb-graph-node-repository.ts";
 type InsertOneOptions = Parameters<
   Collection<MongodbGraphNodeModel>["insertOne"]
 >[1];
-type FindOneOptions = Parameters<
-  Collection<MongodbGraphNodeModel>["findOne"]
->[1];
+type FindOptions = Parameters<Collection<MongodbGraphNodeModel>["find"]>[1];
 
 class FakeCollection {
   readonly calls: {
     model: MongodbGraphNodeModel;
     options: InsertOneOptions;
   }[] = [];
-  readonly findOneCalls: {
+  readonly findCalls: {
     filter: Filter<MongodbGraphNodeModel>;
-    options: FindOneOptions;
+    options: FindOptions;
   }[] = [];
-  findOneResult: MongodbGraphNodeModel | null = null;
+  findResult: MongodbGraphNodeModel[] = [];
   error?: Error;
 
-  findOne(
+  find(
     filter: Filter<MongodbGraphNodeModel>,
-    options: FindOneOptions,
-  ): Promise<MongodbGraphNodeModel | null> {
-    this.findOneCalls.push({ filter, options });
-    return Promise.resolve(this.findOneResult);
+    options: FindOptions,
+  ): { toArray: () => Promise<MongodbGraphNodeModel[]> } {
+    this.findCalls.push({ filter, options });
+    return { toArray: () => Promise.resolve(this.findResult) };
   }
 
   insertOne(
@@ -105,20 +103,22 @@ test("MongodbGraphNodeRepository.insert: given a graph node, it should insert it
   ]);
 });
 
-test("MongodbGraphNodeRepository.findByEventId: given a tenant event node, it should restore the graph node", async () => {
+test("MongodbGraphNodeRepository.findMany: given tenant and filters, it should restore matching graph nodes", async () => {
   // GIVEN
   const client = new FakeMongoClient();
   const session = { id: "session-1" } as unknown as ClientSession;
-  client.collection.findOneResult = {
-    _id: "node-1",
-    createdAt,
-    updatedAt,
-    tenant,
-    embedding: [0.1, 0.2],
-    eventId,
-    graphId,
-    rawEvent: { issue: { key: eventId } },
-  };
+  client.collection.findResult = [
+    {
+      _id: "node-1",
+      createdAt,
+      updatedAt,
+      tenant,
+      embedding: [0.1, 0.2],
+      eventId,
+      graphId,
+      rawEvent: { issue: { key: eventId } },
+    },
+  ];
   const repository = new MongodbGraphNodeRepository(
     client as unknown as MongoClient,
     "recallos",
@@ -126,29 +126,34 @@ test("MongodbGraphNodeRepository.findByEventId: given a tenant event node, it sh
   );
 
   // WHEN
-  const node = await repository.findByEventId({
-    eventId: EventId.restore({ payload: eventId }),
+  const nodes = await repository.findMany({
     tenant: Tenant.fromString(tenant),
+    filters: {
+      eventId: EventId.restore({ payload: eventId }),
+      graphId: GraphId.restore({ payload: graphId }),
+    },
   });
 
   // THEN
-  expect(client.collection.findOneCalls).toEqual([
+  expect(client.collection.findCalls).toEqual([
     {
-      filter: { eventId, tenant },
+      filter: { eventId, graphId, tenant },
       options: { session },
     },
   ]);
-  expect(node?.id.toString()).toBe("node-1");
-  expect(node?.metadata.createdAt).toEqual(createdAt);
-  expect(node?.metadata.updatedAt).toEqual(updatedAt);
-  expect(node?.tenant.toString()).toBe(tenant);
-  expect(node?.embedding).toEqual([0.1, 0.2]);
-  expect(node?.eventId.toString()).toBe(eventId);
-  expect(node?.graphId.toString()).toBe(graphId);
-  expect(node?.rawEvent).toEqual({ issue: { key: eventId } });
+  expect(nodes).toHaveLength(1);
+  const node = nodes[0]!;
+  expect(node.id.toString()).toBe("node-1");
+  expect(node.metadata.createdAt).toEqual(createdAt);
+  expect(node.metadata.updatedAt).toEqual(updatedAt);
+  expect(node.tenant.toString()).toBe(tenant);
+  expect(node.embedding).toEqual([0.1, 0.2]);
+  expect(node.eventId.toString()).toBe(eventId);
+  expect(node.graphId.toString()).toBe(graphId);
+  expect(node.rawEvent).toEqual({ issue: { key: eventId } });
 });
 
-test("MongodbGraphNodeRepository.findByEventId: given no tenant event node, it should return null", async () => {
+test("MongodbGraphNodeRepository.findMany: given no matching graph nodes, it should return an empty list", async () => {
   // GIVEN
   const client = new FakeMongoClient();
   const repository = new MongodbGraphNodeRepository(
@@ -157,13 +162,16 @@ test("MongodbGraphNodeRepository.findByEventId: given no tenant event node, it s
   );
 
   // WHEN
-  const node = await repository.findByEventId({
-    eventId: EventId.restore({ payload: eventId }),
+  const nodes = await repository.findMany({
     tenant: Tenant.fromString(tenant),
+    filters: {
+      eventId: EventId.restore({ payload: eventId }),
+      graphId: GraphId.restore({ payload: graphId }),
+    },
   });
 
   // THEN
-  expect(node).toBeNull();
+  expect(nodes).toEqual([]);
 });
 
 test("MongodbGraphNodeRepository.insert: given an insert error, it should rethrow it", async () => {

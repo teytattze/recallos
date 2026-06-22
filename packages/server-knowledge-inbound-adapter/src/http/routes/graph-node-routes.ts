@@ -1,16 +1,16 @@
-import type { GetGraphNodeByEventIdPort } from "@repo/server-knowledge-core";
+import type { ListGraphNodesPort } from "@repo/server-knowledge-core";
 
 import { Hono, type Context } from "hono";
 import { ZodError } from "zod";
 
 import {
-  graphNodeByEventIdPathParams,
-  graphNodeByEventIdQueryParams,
+  listGraphNodesPathParams,
+  listGraphNodesQueryParams,
 } from "../dtos/graph-node-dtos.ts";
 
 type CreateGraphNodeRoutesInput = {
   deps: {
-    getGraphNodeByEventId: GetGraphNodeByEventIdPort;
+    listGraphNodes: ListGraphNodesPort;
   };
 };
 
@@ -27,20 +27,24 @@ const isCategorizedError = (error: unknown): error is CategorizedError =>
 const createGraphNodeRoutes = (input: CreateGraphNodeRoutesInput) => {
   const routes = new Hono();
 
-  routes.get("/by-event/:eventId", async (c: Context) => {
+  routes.get("/:graphId/nodes", async (c: Context) => {
     try {
-      const pathParams = graphNodeByEventIdPathParams.parse({
-        eventId: c.req.param("eventId"),
+      const pathParams = listGraphNodesPathParams.parse({
+        graphId: c.req.param("graphId"),
       });
-      const queryParams = graphNodeByEventIdQueryParams.parse({
+      const queryParams = listGraphNodesQueryParams.parse({
+        eventId: c.req.query("eventId"),
         tenant: c.req.query("tenant"),
       });
-      const graphNode = await input.deps.getGraphNodeByEventId.execute({
+      const graphNodes = await input.deps.listGraphNodes.execute({
         tenant: queryParams.tenant,
-        payload: { eventId: pathParams.eventId },
+        filters: {
+          eventId: queryParams.eventId,
+          graphId: pathParams.graphId,
+        },
       });
 
-      return c.json(graphNode);
+      return c.json(graphNodes);
     } catch (error) {
       if (
         error instanceof ZodError ||
@@ -48,10 +52,6 @@ const createGraphNodeRoutes = (input: CreateGraphNodeRoutesInput) => {
       ) {
         return c.json({ message: "Invalid request" }, 422);
       }
-      if (isCategorizedError(error) && error.category === "not-found") {
-        return c.json({ message: "Graph node not found" }, 404);
-      }
-
       throw error;
     }
   });

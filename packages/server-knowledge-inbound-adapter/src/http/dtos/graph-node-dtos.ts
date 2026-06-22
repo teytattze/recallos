@@ -1,11 +1,12 @@
 import { z } from "zod";
 
-const graphNodeByEventIdPathParams = z.object({
-  eventId: z.string().trim().min(1),
+const listGraphNodesPathParams = z.object({
+  graphId: z.string().trim().min(1),
 });
 
-const graphNodeByEventIdQueryParams = z.object({
+const listGraphNodesQueryParams = z.object({
+  eventId: z.string().trim().min(1),
   tenant: z.string().trim().min(1),
 });
 
-export { graphNodeByEventIdPathParams, graphNodeByEventIdQueryParams };
+export { listGraphNodesPathParams, listGraphNodesQueryParams };
