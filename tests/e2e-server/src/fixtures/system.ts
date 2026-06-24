@@ -27,6 +27,7 @@ const test = base.extend<{}, { system: SystemHarness }>({
             {
               name: DATABASE_NAME,
               collectionDefs: [
+                { name: "apikey", indexes: [] },
                 { name: "events", indexes: [] },
                 { name: "graphs", indexes: [] },
                 { name: "webhook-subscriptions", indexes: [] },

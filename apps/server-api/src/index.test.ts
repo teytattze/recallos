@@ -59,7 +59,7 @@ test("server api fetch: given a health request, it should route through the comm
   expect(await response.json()).toEqual({ message: "ok" });
 });
 
-test("server api fetch: given an invalid graph node request, it should route through the knowledge app", async () => {
+test("server api fetch: given a graph node request without an IAM API key, it should return 401", async () => {
   // GIVEN
   const service = await withServerApiEnv(
     () =>
@@ -74,6 +74,6 @@ test("server api fetch: given an invalid graph node request, it should route thr
   );
 
   // THEN
-  expect(response.status).toBe(422);
-  expect(await response.json()).toEqual({ message: "Invalid request" });
+  expect(response.status).toBe(401);
+  expect(await response.json()).toEqual({ message: "Unauthorized" });
 });

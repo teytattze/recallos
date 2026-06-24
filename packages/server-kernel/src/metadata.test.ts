@@ -20,7 +20,9 @@ test("EntityMetadata.restore: given explicit dates, it should return them throug
   const updatedAt = new Date("2026-02-01T00:00:00Z");
 
   // WHEN
-  const metadata = EntityMetadata.restore({ payload: { createdAt, updatedAt } });
+  const metadata = EntityMetadata.restore({
+    payload: { createdAt, updatedAt },
+  });
 
   // THEN
   expect(metadata.createdAt).toEqual(createdAt);

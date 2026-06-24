@@ -30,7 +30,9 @@ class EventExternal extends ValueObject<EventExternalProps> {
   }
 
   static restore(input: RestoreEventExternalInput): EventExternal {
-    return new EventExternal(parseProps(eventExternalPropsSchema, input.payload));
+    return new EventExternal(
+      parseProps(eventExternalPropsSchema, input.payload),
+    );
   }
 
   get id(): EventExternalProps["id"] {

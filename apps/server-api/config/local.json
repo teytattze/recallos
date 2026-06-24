@@ -10,6 +10,25 @@
       "databaseName": "recallos"
     }
   },
+  "iam": {
+    "baseUrl": "http://localhost:8000",
+    "basePath": "/api/v1/iam",
+    "trustedOrigins": ["http://localhost:3000", "http://localhost:8000"],
+    "secrets": [
+      {
+        "version": 1,
+        "value": "local-iam-secret-change-before-production"
+      }
+    ],
+    "mongodb": {
+      "url": "mongodb://localhost:27017/?replicaSet=rs0",
+      "databaseName": "recallos-iam"
+    },
+    "resend": {
+      "apiKey": "local-resend-api-key",
+      "from": "RecallOS <noreply@example.local>"
+    }
+  },
   "knowledge": {
     "mongodb": {
       "url": "mongodb://localhost:27017/?replicaSet=rs0",

@@ -9,6 +9,14 @@ services:
       HTTP_PORT: 8000
       INGESTION_MONGODB_URL: mongodb://mongo:27017/?directConnection=true&replicaSet=rs0
       INGESTION_MONGODB_DATABASE_NAME: recallos-system-test
+      IAM_BASE_URL: http://localhost:8000
+      IAM_BASE_PATH: /api/v1/iam
+      IAM_TRUSTED_ORIGINS: http://localhost:8000
+      IAM_SECRETS: 1:e2e-iam-secret-change-before-production
+      IAM_MONGODB_URL: mongodb://mongo:27017/?directConnection=true&replicaSet=rs0
+      IAM_MONGODB_DATABASE_NAME: recallos-system-test
+      IAM_RESEND_API_KEY: e2e-resend-api-key
+      IAM_RESEND_FROM: "RecallOS <noreply@example.local>"
       KNOWLEDGE_MONGODB_URL: mongodb://mongo:27017/?directConnection=true&replicaSet=rs0
       KNOWLEDGE_MONGODB_DATABASE_NAME: recallos-system-test
     depends_on:

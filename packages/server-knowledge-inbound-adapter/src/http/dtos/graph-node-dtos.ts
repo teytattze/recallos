@@ -6,7 +6,6 @@ const listGraphNodesPathParams = z.object({
 
 const listGraphNodesQueryParams = z.object({
   eventId: z.string().trim().min(1),
-  tenant: z.string().trim().min(1),
 });
 
 export { listGraphNodesPathParams, listGraphNodesQueryParams };
