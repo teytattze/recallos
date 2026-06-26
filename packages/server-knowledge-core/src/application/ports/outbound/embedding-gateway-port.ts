@@ -2,6 +2,7 @@ type EmbeddingGatewayPortEmbedInput = {
   model: "voyage-4-large";
   dimension: "1024";
   text: string;
+  inputType: "document" | "query";
 };
 
 type EmbeddingGatewayPortEmbedOutput = Promise<{

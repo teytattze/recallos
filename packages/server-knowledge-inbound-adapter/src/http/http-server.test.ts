@@ -20,3 +20,20 @@ test("createKnowledgeHttpApp: given graph node routes, it should mount them unde
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({ graphId: "graph-1" });
 });
+
+test("createKnowledgeHttpApp: given MCP routes, it should mount them under the knowledge API path", async () => {
+  // GIVEN
+  const graphNodeRoutes = new Hono();
+  const mcpRoutes = new Hono();
+  mcpRoutes.post("/mcp", (c) => c.json({ ok: true }));
+  const app = createKnowledgeHttpApp({ deps: { graphNodeRoutes, mcpRoutes } });
+
+  // WHEN
+  const response = await app.request("http://localhost/api/v1/knowledge/mcp", {
+    method: "POST",
+  });
+
+  // THEN
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({ ok: true });
+});

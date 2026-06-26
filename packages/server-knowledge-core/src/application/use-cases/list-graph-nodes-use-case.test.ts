@@ -6,6 +6,8 @@ import type {
   GraphNodeRepositoryPortFindManyOutput,
   GraphNodeRepositoryPortInsertInput,
   GraphNodeRepositoryPortInsertOutput,
+  GraphNodeRepositoryPortSearchByEmbeddingInput,
+  GraphNodeRepositoryPortSearchByEmbeddingOutput,
 } from "../ports/outbound/graph-node-repository-port.ts";
 
 import { GraphNode } from "../../domain/aggregates/graph-node.ts";
@@ -27,6 +29,12 @@ class FakeGraphNodeRepository implements GraphNodeRepositoryPort {
     _input: GraphNodeRepositoryPortInsertInput,
   ): GraphNodeRepositoryPortInsertOutput {
     return Promise.resolve();
+  }
+
+  searchByEmbedding(
+    _input: GraphNodeRepositoryPortSearchByEmbeddingInput,
+  ): GraphNodeRepositoryPortSearchByEmbeddingOutput {
+    return Promise.resolve([]);
   }
 }
 

@@ -70,6 +70,7 @@ describe("server API config", () => {
           url: "mongodb://localhost:27017/?replicaSet=rs0",
           databaseName: "recallos",
         },
+        voyageai: { apiKey: "local-voyageai-api-key" },
       },
     });
   });
@@ -99,6 +100,7 @@ describe("server API config", () => {
       IAM_API_KEY_RATE_LIMIT_TIME_WINDOW_MILLISECONDS: "60000",
       KNOWLEDGE_MONGODB_URL: "mongodb://knowledge-database:27017",
       KNOWLEDGE_MONGODB_DATABASE_NAME: "knowledge-test",
+      KNOWLEDGE_VOYAGEAI_API_KEY: "pa_test",
     });
 
     expect(config.app).toEqual({
@@ -141,9 +143,12 @@ describe("server API config", () => {
         },
       },
     });
-    expect(config.knowledge.mongodb).toEqual({
-      url: "mongodb://knowledge-database:27017",
-      databaseName: "knowledge-test",
+    expect(config.knowledge).toEqual({
+      mongodb: {
+        url: "mongodb://knowledge-database:27017",
+        databaseName: "knowledge-test",
+      },
+      voyageai: { apiKey: "pa_test" },
     });
   });
 
@@ -175,6 +180,7 @@ describe("server API config", () => {
       { KNOWLEDGE_MONGODB_DATABASE_NAME: "   " },
       "knowledge.mongodb.databaseName",
     ],
+    [{ KNOWLEDGE_VOYAGEAI_API_KEY: "" }, "knowledge.voyageai.apiKey"],
   ])("rejects invalid environment input", (env, message) => {
     expect(() => createServerApiConfig(env)).toThrow(message);
   });

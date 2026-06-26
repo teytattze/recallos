@@ -91,6 +91,9 @@ const serverApiConfigSchema = z.object({
       url: requiredStringSchema,
       databaseName: requiredStringSchema,
     }),
+    voyageai: z.object({
+      apiKey: requiredStringSchema,
+    }),
   }),
 });
 
@@ -306,6 +309,18 @@ const convictConfigSchema: Schema<ServerApiConfig> = {
           ),
         default: null,
         env: "KNOWLEDGE_MONGODB_DATABASE_NAME",
+      },
+    },
+    voyageai: {
+      apiKey: {
+        doc: "Voyage AI API key for knowledge embeddings",
+        format: (value) =>
+          serverApiConfigSchema.shape.knowledge.shape.voyageai.shape.apiKey.parse(
+            value,
+          ),
+        default: null,
+        env: "KNOWLEDGE_VOYAGEAI_API_KEY",
+        sensitive: true,
       },
     },
   },

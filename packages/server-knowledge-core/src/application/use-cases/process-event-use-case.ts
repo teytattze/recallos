@@ -42,6 +42,7 @@ class ProcessEventUseCase implements ProcessEventPort {
       dimension: graph.embeddingMetadata.dimension,
       model: graph.embeddingMetadata.model,
       text: JSON.stringify(input.payload.event.raw),
+      inputType: "document",
     });
 
     const graphNode = GraphNode.create({

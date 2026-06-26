@@ -2,6 +2,9 @@ import type {
   ListGraphNodesPort,
   ListGraphNodesPortInput,
   ListGraphNodesPortOutput,
+  SearchGraphPort,
+  SearchGraphPortInput,
+  SearchGraphPortOutput,
 } from "@repo/server-knowledge-core";
 
 import { expect, test } from "bun:test";
@@ -30,6 +33,15 @@ class FakeListGraphNodes implements ListGraphNodesPort {
   }
 }
 
+class FakeSearchGraph implements SearchGraphPort {
+  readonly executeCalls: SearchGraphPortInput[] = [];
+
+  execute(input: SearchGraphPortInput): SearchGraphPortOutput {
+    this.executeCalls.push(input);
+    return Promise.resolve({ data: [{ rawEvent: graphNode.rawEvent }] });
+  }
+}
+
 class EmptyListGraphNodes implements ListGraphNodesPort {
   execute(): ListGraphNodesPortOutput {
     return Promise.resolve({ data: [] });
@@ -50,7 +62,7 @@ test("createGraphNodeRoutes: given matching graph nodes, it should return the gr
   // GIVEN
   const listGraphNodes = new FakeListGraphNodes();
   const routes = createGraphNodeRoutes({
-    deps: { listGraphNodes },
+    deps: { listGraphNodes, searchGraph: new FakeSearchGraph() },
     resolveTenant: () => tenant,
   });
 
@@ -70,7 +82,10 @@ test("createGraphNodeRoutes: given matching graph nodes, it should return the gr
 test("createGraphNodeRoutes: given no matching graph nodes, it should return an empty list", async () => {
   // GIVEN
   const routes = createGraphNodeRoutes({
-    deps: { listGraphNodes: new EmptyListGraphNodes() },
+    deps: {
+      listGraphNodes: new EmptyListGraphNodes(),
+      searchGraph: new FakeSearchGraph(),
+    },
     resolveTenant: () => tenant,
   });
 
@@ -88,7 +103,7 @@ test("createGraphNodeRoutes: given a missing event id, it should return 422 with
   // GIVEN
   const listGraphNodes = new FakeListGraphNodes();
   const routes = createGraphNodeRoutes({
-    deps: { listGraphNodes },
+    deps: { listGraphNodes, searchGraph: new FakeSearchGraph() },
     resolveTenant: () => tenant,
   });
 
@@ -104,7 +119,10 @@ test("createGraphNodeRoutes: given a missing event id, it should return 422 with
 test("createGraphNodeRoutes: given a malformed tenant rejected by the core, it should return 422", async () => {
   // GIVEN
   const routes = createGraphNodeRoutes({
-    deps: { listGraphNodes: new InvalidListGraphNodes() },
+    deps: {
+      listGraphNodes: new InvalidListGraphNodes(),
+      searchGraph: new FakeSearchGraph(),
+    },
     resolveTenant: () => "malformed",
   });
 
@@ -112,6 +130,53 @@ test("createGraphNodeRoutes: given a malformed tenant rejected by the core, it s
   const response = await routes.request(
     `http://localhost/${graphId}/nodes?eventId=${eventId}&tenant=${tenant}`,
   );
+
+  // THEN
+  expect(response.status).toBe(422);
+  expect(await response.json()).toEqual({ message: "Invalid request" });
+});
+
+test("createGraphNodeRoutes: given a search query, it should return matching raw event DTOs", async () => {
+  // GIVEN
+  const searchGraph = new FakeSearchGraph();
+  const routes = createGraphNodeRoutes({
+    deps: { listGraphNodes: new EmptyListGraphNodes(), searchGraph },
+    resolveTenant: () => tenant,
+  });
+
+  // WHEN
+  const response = await routes.request(`http://localhost/${graphId}/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query: "billing incident" }),
+  });
+
+  // THEN
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({
+    data: [{ rawEvent: { issue: { key: "REC-1" } } }],
+  });
+  expect(searchGraph.executeCalls).toEqual([
+    { tenant, payload: { graphId, query: "billing incident" } },
+  ]);
+});
+
+test("createGraphNodeRoutes: given malformed search JSON, it should return 422", async () => {
+  // GIVEN
+  const routes = createGraphNodeRoutes({
+    deps: {
+      listGraphNodes: new EmptyListGraphNodes(),
+      searchGraph: new FakeSearchGraph(),
+    },
+    resolveTenant: () => tenant,
+  });
+
+  // WHEN
+  const response = await routes.request(`http://localhost/${graphId}/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{",
+  });
 
   // THEN
   expect(response.status).toBe(422);

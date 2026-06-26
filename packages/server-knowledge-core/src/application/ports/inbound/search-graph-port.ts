@@ -3,13 +3,13 @@ import type { JsonObject } from "type-fest";
 type SearchGraphPortInput = {
   tenant: string;
   payload: {
-    queries: string[];
+    graphId: string;
+    query: string;
   };
 };
 
 type SearchGraphPortOutput = Promise<{
-  graphId: string;
-  results: {
+  data: {
     rawEvent: JsonObject;
   }[];
 }>;
