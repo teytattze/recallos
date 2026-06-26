@@ -37,14 +37,19 @@ Server apps assemble capabilities and manage runtime lifecycle. They do not impo
 
 Core packages own policy. Adapter packages isolate delivery and infrastructure choices so those choices can change without rewriting business rules.
 
-### Tests and documentation
+### Tests
 
 - `tests/e2e-server/`: system tests that exercise the API, worker, data stores, and external-service boundaries together.
-- `docs/engineering/`: authoritative engineering and testing patterns.
+
+### Documentation
+
+- `docs/engineering-patterns/`: authoritative engineering and testing patterns.
 - `docs/thoughts/`: exploratory designs, not descriptions of current behavior unless explicitly stated.
 - `decision-records/`: durable decisions and their reasoning. New records follow `template.md`.
 
 ## Architecture
+
+> **IMPORTANT:** Keep code changes aligned with the relevant pattern in `docs/engineering-patterns/`. Before changing architecture, tests, error handling, comments, or decision records, consult the matching pattern document. If implementation and pattern disagree, either update the implementation to match the pattern or make an explicit, reviewed pattern change alongside the code.
 
 ### Server-side
 
@@ -56,7 +61,7 @@ The server uses hexagonal architecture and domain-driven design to keep product 
 - **Composition roots** choose implementations, wire dependencies, and manage runtime lifecycle.
 - **Platform packages** provide shared operational concerns. Core packages must not depend on them.
 
-Dependencies point inward. Enforce this through workspace dependency declarations and follow the layer-specific guidance in `docs/engineering/`.
+Dependencies point inward. Enforce this through workspace dependency declarations and follow the layer-specific guidance in `docs/engineering-patterns/`.
 
 ## Behavioral guidelines
 

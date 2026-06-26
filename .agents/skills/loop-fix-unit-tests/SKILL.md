@@ -9,7 +9,7 @@ description: >-
 
 # Fix Unit Tests loop
 
-[RecallOS server unit testing pattern](../../../docs/engineering/server-unit-testing.md)
+[RecallOS server unit testing pattern](../../../docs/engineering-patterns/server-unit-testing.md)
 is the source of truth. Every sub-agent must read it.
 
 ## Authorization and agent roles

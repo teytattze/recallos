@@ -9,7 +9,7 @@ description: >-
 
 # Enhance Comments loop
 
-[RecallOS comment guidelines](../../../docs/engineering/comments.md) are the
+[RecallOS comment guidelines](../../../docs/engineering-patterns/comments.md) are the
 source of truth. Every sub-agent must read them.
 
 ## Authorization and agent roles

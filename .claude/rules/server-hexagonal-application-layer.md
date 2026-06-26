@@ -3,4 +3,4 @@ paths:
   - "packages/server-*-core/src/application/**/*"
 ---
 
-The source of truth for this pattern is [`docs/engineering/server-hexagonal-application-layer.md`](../../docs/engineering/server-hexagonal-application-layer.md).
+The source of truth for this pattern is [`docs/engineering-patterns/server-hexagonal-application-layer.md`](../../docs/engineering-patterns/server-hexagonal-application-layer.md).
