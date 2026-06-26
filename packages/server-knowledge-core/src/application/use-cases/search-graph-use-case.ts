@@ -31,7 +31,7 @@ class SearchGraphUseCase implements SearchGraphPort {
       });
     }
 
-    const embedding = await this.embeddingGateway.embed({
+    const embedResult = await this.embeddingGateway.embed({
       model: graph.embeddingMetadata.model,
       dimension: graph.embeddingMetadata.dimension,
       text: input.payload.query,
@@ -40,7 +40,7 @@ class SearchGraphUseCase implements SearchGraphPort {
     const graphNodes = await this.graphNodeRepository.searchByEmbedding({
       tenant,
       filters: { graphId },
-      embedding: embedding.embedding,
+      embedding: embedResult.embedding,
       limit: 10,
     });
 
