@@ -8,10 +8,13 @@ import {
   listGraphNodesQueryParams,
 } from "../dtos/graph-node-dtos.ts";
 
+type ResolveTenant = (c: Context) => string;
+
 type CreateGraphNodeRoutesInput = {
   deps: {
     listGraphNodes: ListGraphNodesPort;
   };
+  resolveTenant: ResolveTenant;
 };
 
 type CategorizedError = {
@@ -34,10 +37,9 @@ const createGraphNodeRoutes = (input: CreateGraphNodeRoutesInput) => {
       });
       const queryParams = listGraphNodesQueryParams.parse({
         eventId: c.req.query("eventId"),
-        tenant: c.req.query("tenant"),
       });
       const graphNodes = await input.deps.listGraphNodes.execute({
-        tenant: queryParams.tenant,
+        tenant: input.resolveTenant(c),
         filters: {
           eventId: queryParams.eventId,
           graphId: pathParams.graphId,

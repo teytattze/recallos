@@ -10,8 +10,4 @@ const webhookSubscriptionRequestBodySchema = z.object({
   }),
 });
 
-const webhookSubscriptionQueryParams = z.object({
-  tenant: z.string(),
-});
-
-export { webhookSubscriptionRequestBodySchema, webhookSubscriptionQueryParams };
+export { webhookSubscriptionRequestBodySchema };

@@ -6,7 +6,9 @@ type EventRepositoryPortInsertInput = {
 type EventRepositoryPortInsertOutput = Promise<void>;
 
 interface EventRepositoryPort {
-  insert(input: EventRepositoryPortInsertInput): EventRepositoryPortInsertOutput;
+  insert(
+    input: EventRepositoryPortInsertInput,
+  ): EventRepositoryPortInsertOutput;
 }
 
 export type {

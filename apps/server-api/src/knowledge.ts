@@ -7,6 +7,7 @@ import {
 import { MongodbGraphNodeRepository } from "@repo/server-knowledge-outbound-adapter";
 
 import { config } from "./config.ts";
+import { getTenant, requireKnowledgeRead } from "./iam";
 
 // CONFIG
 const mongodbConfig = config.knowledge.mongodb;
@@ -24,9 +25,13 @@ const listGraphNodesUseCase = new ListGraphNodesUseCase(graphNodeRepository);
 // INBOUND
 const graphNodeRoutes = createGraphNodeRoutes({
   deps: { listGraphNodes: listGraphNodesUseCase },
+  resolveTenant: getTenant,
 });
 const knowledgeHttpApp = createKnowledgeHttpApp({
-  deps: { graphNodeRoutes },
+  deps: {
+    graphNodeMiddlewares: [requireKnowledgeRead],
+    graphNodeRoutes,
+  },
 });
 
 export { knowledgeHttpApp };

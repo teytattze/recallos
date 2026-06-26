@@ -1,0 +1,24 @@
+{
+  "name": "@repo/server-iam-outbound-adapter",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "oxlint",
+    "test": "bun test --randomize --pass-with-no-tests"
+  },
+  "dependencies": {
+    "@better-auth/api-key": "1.6.11",
+    "@repo/server-iam-core": "workspace:*",
+    "@repo/server-kernel": "workspace:*",
+    "better-auth": "catalog:",
+    "mongodb": "catalog:",
+    "resend": "6.6.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*"
+  }
+}

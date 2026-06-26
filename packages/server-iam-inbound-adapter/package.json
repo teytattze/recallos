@@ -1,0 +1,19 @@
+{
+  "name": "@repo/server-iam-inbound-adapter",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "oxlint",
+    "test": "bun test --randomize"
+  },
+  "dependencies": {
+    "@repo/server-iam-core": "workspace:*",
+    "hono": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*"
+  }
+}

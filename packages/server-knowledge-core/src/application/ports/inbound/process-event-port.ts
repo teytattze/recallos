@@ -17,8 +17,4 @@ interface ProcessEventPort {
   execute(input: ProcessEventPortInput): ProcessEventPortOutput;
 }
 
-export type {
-  ProcessEventPort,
-  ProcessEventPortInput,
-  ProcessEventPortOutput,
-};
+export type { ProcessEventPort, ProcessEventPortInput, ProcessEventPortOutput };

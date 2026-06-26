@@ -6,6 +6,8 @@ import {
   DATABASE_NAME,
   GRAPH,
   GRAPH_ID,
+  IAM_API_KEY,
+  IAM_API_KEY_RECORD,
   SUBSCRIPTION_ID,
   TENANT,
   WEBHOOK_BODY,
@@ -14,6 +16,11 @@ import {
 } from "./scenario-data.js";
 
 test.beforeEach(async ({ system }) => {
+  await system.database.seedCollection({
+    databaseName: DATABASE_NAME,
+    collectionName: "apikey",
+    docs: [IAM_API_KEY_RECORD],
+  });
   await system.database.seedCollection({
     databaseName: DATABASE_NAME,
     collectionName: "graphs",
@@ -29,6 +36,7 @@ test.beforeEach(async ({ system }) => {
 test.afterEach(async ({ system }) => {
   const collectionNames = [
     "events",
+    "apikey",
     "graph-nodes",
     "graphs",
     "webhook-subscriptions",
@@ -71,14 +79,16 @@ test("Jira client: submits an authenticated webhook event, the event becomes ava
 
   const nodeQuery = new URLSearchParams({
     eventId: ingestion.id,
-    tenant: TENANT,
   });
   const nodePath = `/api/v1/graphs/${encodeURIComponent(GRAPH_ID)}/nodes?${nodeQuery.toString()}`;
   await expect
     .poll(
       async () => {
-        const response = await system.api.get(nodePath);
-        return ((await response.json()) as unknown[]).length;
+        const response = await system.api.get(nodePath, {
+          headers: { "X-API-Key": IAM_API_KEY },
+        });
+        const body = (await response.json()) as { data: unknown[] };
+        return body.data.length;
       },
       {
         timeout: 20_000,
@@ -87,14 +97,18 @@ test("Jira client: submits an authenticated webhook event, the event becomes ava
     )
     .toBe(1);
 
-  const nodeResponse = await system.api.get(nodePath);
+  const nodeResponse = await system.api.get(nodePath, {
+    headers: { "X-API-Key": IAM_API_KEY },
+  });
   expect(nodeResponse.status()).toBe(200);
-  expect(await nodeResponse.json()).toEqual([
-    expect.objectContaining({
-      tenant: TENANT,
-      eventId: ingestion.id,
-      graphId: GRAPH_ID,
-      rawEvent: WEBHOOK_BODY,
-    }),
-  ]);
+  expect(await nodeResponse.json()).toEqual({
+    data: [
+      expect.objectContaining({
+        tenant: TENANT,
+        eventId: ingestion.id,
+        graphId: GRAPH_ID,
+        rawEvent: WEBHOOK_BODY,
+      }),
+    ],
+  });
 });

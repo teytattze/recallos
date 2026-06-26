@@ -49,11 +49,14 @@ class InvalidListGraphNodes implements ListGraphNodesPort {
 test("createGraphNodeRoutes: given matching graph nodes, it should return the graph nodes", async () => {
   // GIVEN
   const listGraphNodes = new FakeListGraphNodes();
-  const routes = createGraphNodeRoutes({ deps: { listGraphNodes } });
+  const routes = createGraphNodeRoutes({
+    deps: { listGraphNodes },
+    resolveTenant: () => tenant,
+  });
 
   // WHEN
   const response = await routes.request(
-    `http://localhost/${graphId}/nodes?eventId=${eventId}&tenant=${tenant}`,
+    `http://localhost/${graphId}/nodes?eventId=${eventId}`,
   );
 
   // THEN
@@ -68,11 +71,12 @@ test("createGraphNodeRoutes: given no matching graph nodes, it should return an 
   // GIVEN
   const routes = createGraphNodeRoutes({
     deps: { listGraphNodes: new EmptyListGraphNodes() },
+    resolveTenant: () => tenant,
   });
 
   // WHEN
   const response = await routes.request(
-    `http://localhost/${graphId}/nodes?eventId=${eventId}&tenant=${tenant}`,
+    `http://localhost/${graphId}/nodes?eventId=${eventId}`,
   );
 
   // THEN
@@ -80,15 +84,16 @@ test("createGraphNodeRoutes: given no matching graph nodes, it should return an 
   expect(await response.json()).toEqual({ data: [] });
 });
 
-test("createGraphNodeRoutes: given a missing tenant, it should return 422 without calling the use case", async () => {
+test("createGraphNodeRoutes: given a missing event id, it should return 422 without calling the use case", async () => {
   // GIVEN
   const listGraphNodes = new FakeListGraphNodes();
-  const routes = createGraphNodeRoutes({ deps: { listGraphNodes } });
+  const routes = createGraphNodeRoutes({
+    deps: { listGraphNodes },
+    resolveTenant: () => tenant,
+  });
 
   // WHEN
-  const response = await routes.request(
-    `http://localhost/${graphId}/nodes?eventId=${eventId}`,
-  );
+  const response = await routes.request(`http://localhost/${graphId}/nodes`);
 
   // THEN
   expect(response.status).toBe(422);
@@ -100,11 +105,12 @@ test("createGraphNodeRoutes: given a malformed tenant rejected by the core, it s
   // GIVEN
   const routes = createGraphNodeRoutes({
     deps: { listGraphNodes: new InvalidListGraphNodes() },
+    resolveTenant: () => "malformed",
   });
 
   // WHEN
   const response = await routes.request(
-    `http://localhost/${graphId}/nodes?eventId=${eventId}&tenant=malformed`,
+    `http://localhost/${graphId}/nodes?eventId=${eventId}&tenant=${tenant}`,
   );
 
   // THEN

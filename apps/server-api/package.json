@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@repo/server-database": "workspace:*",
+    "@repo/server-iam-core": "workspace:*",
+    "@repo/server-iam-inbound-adapter": "workspace:*",
+    "@repo/server-iam-outbound-adapter": "workspace:*",
     "@repo/server-ingestion-core": "workspace:*",
     "@repo/server-ingestion-inbound-adapter": "workspace:*",
     "@repo/server-ingestion-outbound-adapter": "workspace:*",

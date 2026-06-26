@@ -8,9 +8,7 @@ import { test, expect } from "bun:test";
 
 import { createWebhookSubscriptionRoutes } from "./webhook-subscription-routes";
 
-class FakeCreateWebhookSubscriptionUseCase
-  implements CreateWebhookSubscriptionPort
-{
+class FakeCreateWebhookSubscriptionUseCase implements CreateWebhookSubscriptionPort {
   readonly executeCalls: CreateWebhookSubscriptionPortInput[] = [];
 
   execute(
@@ -33,21 +31,19 @@ test("createWebhookSubscriptionRoutes: given a valid webhook subscription POST, 
     new FakeCreateWebhookSubscriptionUseCase();
   const routes = createWebhookSubscriptionRoutes({
     deps: { createWebhookSubscription: createWebhookSubscriptionUseCase },
+    resolveTenant: () => "organization:org1",
   });
 
   // WHEN
-  const res = await routes.request(
-    "http://localhost/webhook-subscriptions?tenant=organization:org1",
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        provider: "jira",
-        context: { graphId: "graph-1" },
-        secret: { algorithm: "hmac_sha256" },
-      }),
-    },
-  );
+  const res = await routes.request("http://localhost/webhook-subscriptions", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      provider: "jira",
+      context: { graphId: "graph-1" },
+      secret: { algorithm: "hmac_sha256" },
+    }),
+  });
 
   // THEN
   expect(res.status).toBe(201);

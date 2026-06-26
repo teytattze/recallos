@@ -35,9 +35,7 @@ class FakeEventRepository implements EventRepositoryPort {
   }
 }
 
-class FakeWebhookSubscriptionRepository
-  implements WebhookSubscriptionRepositoryPort
-{
+class FakeWebhookSubscriptionRepository implements WebhookSubscriptionRepositoryPort {
   findById(
     _input: WebhookSubscriptionRepositoryPortFindByIdInput,
   ): WebhookSubscriptionRepositoryPortFindByIdOutput {

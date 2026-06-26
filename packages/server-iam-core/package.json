@@ -1,0 +1,19 @@
+{
+  "name": "@repo/server-iam-core",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "oxlint",
+    "test": "bun test --randomize"
+  },
+  "dependencies": {
+    "@repo/server-kernel": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*"
+  }
+}
