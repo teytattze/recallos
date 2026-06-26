@@ -19,7 +19,7 @@ import {
 import { createDefaultClock } from "@repo/server-kernel";
 
 import { config } from "./config.ts";
-import { getIamTenant, requireIngestionWrite } from "./iam";
+import { getTenant, requireIngestionWrite } from "./iam";
 
 // CONFIG
 const mongodbConfig = config.ingestion.mongodb;
@@ -65,7 +65,7 @@ const jiraWebhookRoutes = createJiraWebhookRoutes({
 });
 const webhookSubscriptionRoutes = createWebhookSubscriptionRoutes({
   deps: { createWebhookSubscription: createWebhookSubscriptionUseCase },
-  resolveTenant: getIamTenant,
+  resolveTenant: getTenant,
 });
 const ingestionHttpApp = createIngestionHttpApp({
   deps: {

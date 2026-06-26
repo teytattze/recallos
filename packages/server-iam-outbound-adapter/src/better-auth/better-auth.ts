@@ -8,9 +8,9 @@ import { createAccessControl } from "better-auth/plugins/access";
 import { defaultStatements } from "better-auth/plugins/organization/access";
 
 import { ResendOtpEmailSender } from "../email/resend-otp-email-sender.ts";
-import { BetterAuthIamApiKeyVerifier } from "./better-auth-iam-api-key-verifier.ts";
+import { BetterAuthApiKeyVerifier } from "./better-auth-api-key-verifier.ts";
 
-type BetterAuthIamConfig = {
+type BetterAuthConfig = {
   readonly baseUrl: string;
   readonly basePath: string;
   readonly secrets: readonly {
@@ -41,16 +41,16 @@ type BetterAuthIamConfig = {
   };
 };
 
-type CreateBetterAuthIamInput = {
+type CreateBetterAuthInput = {
   readonly mongodbClient: MongoClient;
-  readonly config: BetterAuthIamConfig;
+  readonly config: BetterAuthConfig;
 };
 
-const iamAccessControl = createAccessControl({
+const accessControl = createAccessControl({
   ...defaultStatements,
   apiKey: ["create", "read", "update", "delete"],
 } as const);
-const ownerRole = iamAccessControl.newRole({
+const ownerRole = accessControl.newRole({
   organization: ["update", "delete"],
   member: ["create", "update", "delete"],
   invitation: ["create", "cancel"],
@@ -58,7 +58,7 @@ const ownerRole = iamAccessControl.newRole({
   ac: ["create", "read", "update", "delete"],
   apiKey: ["create", "read", "update", "delete"],
 });
-const adminRole = iamAccessControl.newRole({
+const adminRole = accessControl.newRole({
   organization: ["update"],
   member: ["create", "update", "delete"],
   invitation: ["create", "cancel"],
@@ -66,7 +66,7 @@ const adminRole = iamAccessControl.newRole({
   ac: ["create", "read", "update", "delete"],
   apiKey: ["create", "read", "update", "delete"],
 });
-const memberRole = iamAccessControl.newRole({
+const memberRole = accessControl.newRole({
   organization: [],
   member: [],
   invitation: [],
@@ -75,7 +75,7 @@ const memberRole = iamAccessControl.newRole({
   apiKey: ["read"],
 });
 
-const createBetterAuthIam = (input: CreateBetterAuthIamInput) => {
+const createBetterAuth = (input: CreateBetterAuthInput) => {
   const otpEmailSender = new ResendOtpEmailSender(input.config.resend);
   const auth = betterAuth({
     appName: "RecallOS",
@@ -98,7 +98,7 @@ const createBetterAuthIam = (input: CreateBetterAuthIamInput) => {
     },
     plugins: [
       organization({
-        ac: iamAccessControl,
+        ac: accessControl,
         roles: {
           owner: ownerRole,
           admin: adminRole,
@@ -132,12 +132,12 @@ const createBetterAuthIam = (input: CreateBetterAuthIamInput) => {
 
   return {
     handler: auth.handler,
-    apiKeyVerifier: new BetterAuthIamApiKeyVerifier({
+    apiKeyVerifier: new BetterAuthApiKeyVerifier({
       api: auth.api,
       configId: input.config.apiKey.configId,
     }),
   };
 };
 
-export { createBetterAuthIam };
-export type { BetterAuthIamConfig, CreateBetterAuthIamInput };
+export { createBetterAuth };
+export type { BetterAuthConfig, CreateBetterAuthInput };

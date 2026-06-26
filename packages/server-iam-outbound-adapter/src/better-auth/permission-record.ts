@@ -1,9 +1,9 @@
-import { type IamPermission, iamPermissionSchema } from "@repo/server-iam-core";
+import { type Permission, permissionSchema } from "@repo/server-iam-core";
 
 type BetterAuthPermissionRecord = Record<string, string[]>;
 
 const toBetterAuthPermissionRecord = (
-  permissions: readonly IamPermission[],
+  permissions: readonly Permission[],
 ): BetterAuthPermissionRecord => {
   const permissionRecord: BetterAuthPermissionRecord = {};
 
@@ -21,7 +21,7 @@ const toBetterAuthPermissionRecord = (
   return permissionRecord;
 };
 
-const fromBetterAuthPermissionRecord = (input: unknown): IamPermission[] => {
+const fromBetterAuthPermissionRecord = (input: unknown): Permission[] => {
   const parsedInput = typeof input === "string" ? parseJson(input) : input;
 
   if (
@@ -38,7 +38,7 @@ const fromBetterAuthPermissionRecord = (input: unknown): IamPermission[] => {
     return actions.flatMap((action) => {
       if (typeof action !== "string") return [];
 
-      const parsedPermission = iamPermissionSchema.safeParse(
+      const parsedPermission = permissionSchema.safeParse(
         `${resource}:${action}`,
       );
 

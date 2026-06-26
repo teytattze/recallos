@@ -1,17 +1,17 @@
 import type {
-  IamApiKeyVerifierPort,
-  IamApiKeyVerifierPortVerifyInput,
-  IamApiKeyVerifierPortVerifyOutput,
-  IamPermission,
+  ApiKeyVerifierPort,
+  ApiKeyVerifierPortVerifyInput,
+  ApiKeyVerifierPortVerifyOutput,
+  Permission,
 } from "@repo/server-iam-core";
 
-import { createInvalidIamApiKeyError } from "@repo/server-iam-core";
+import { createInvalidApiKeyError } from "@repo/server-iam-core";
 import { Tenant } from "@repo/server-kernel";
 
 import {
   fromBetterAuthPermissionRecord,
   toBetterAuthPermissionRecord,
-} from "./iam-permission-record.ts";
+} from "./permission-record.ts";
 
 type BetterAuthVerifyApiKeyResult = {
   readonly valid: boolean;
@@ -32,17 +32,17 @@ type BetterAuthApiKeyApi = {
   }) => Promise<BetterAuthVerifyApiKeyResult>;
 };
 
-type BetterAuthIamApiKeyVerifierInput = {
+type BetterAuthApiKeyVerifierInput = {
   readonly api: BetterAuthApiKeyApi;
   readonly configId: string;
 };
 
-class BetterAuthIamApiKeyVerifier implements IamApiKeyVerifierPort {
-  constructor(private readonly input: BetterAuthIamApiKeyVerifierInput) {}
+class BetterAuthApiKeyVerifier implements ApiKeyVerifierPort {
+  constructor(private readonly input: BetterAuthApiKeyVerifierInput) {}
 
   async verify(
-    input: IamApiKeyVerifierPortVerifyInput,
-  ): IamApiKeyVerifierPortVerifyOutput {
+    input: ApiKeyVerifierPortVerifyInput,
+  ): ApiKeyVerifierPortVerifyOutput {
     const result = await this.input.api.verifyApiKey({
       body: {
         key: input.apiKey,
@@ -52,15 +52,13 @@ class BetterAuthIamApiKeyVerifier implements IamApiKeyVerifierPort {
     });
 
     if (!result.valid || result.key === null) {
-      throw createInvalidIamApiKeyError("Invalid IAM API key");
+      throw createInvalidApiKeyError("Invalid API key");
     }
 
     const organizationId = result.key.referenceId;
 
     if (organizationId === undefined || organizationId.length === 0) {
-      throw createInvalidIamApiKeyError(
-        "IAM API key is not organization-owned",
-      );
+      throw createInvalidApiKeyError("API key is not organization-owned");
     }
 
     return {
@@ -76,8 +74,8 @@ class BetterAuthIamApiKeyVerifier implements IamApiKeyVerifierPort {
 
   private resolvePermissions(input: {
     readonly storedPermissions: unknown;
-    readonly verifiedPermissions: readonly IamPermission[];
-  }): readonly IamPermission[] {
+    readonly verifiedPermissions: readonly Permission[];
+  }): readonly Permission[] {
     const storedPermissions = fromBetterAuthPermissionRecord(
       input.storedPermissions,
     );
@@ -88,5 +86,5 @@ class BetterAuthIamApiKeyVerifier implements IamApiKeyVerifierPort {
   }
 }
 
-export { BetterAuthIamApiKeyVerifier };
+export { BetterAuthApiKeyVerifier };
 export type { BetterAuthApiKeyApi, BetterAuthVerifyApiKeyResult };

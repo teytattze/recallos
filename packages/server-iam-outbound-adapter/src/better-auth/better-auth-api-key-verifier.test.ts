@@ -1,12 +1,12 @@
-import { iamPermissions } from "@repo/server-iam-core";
+import { permissions } from "@repo/server-iam-core";
 import { expect, test } from "bun:test";
 
 import type {
   BetterAuthApiKeyApi,
   BetterAuthVerifyApiKeyResult,
-} from "./better-auth-iam-api-key-verifier.ts";
+} from "./better-auth-api-key-verifier.ts";
 
-import { BetterAuthIamApiKeyVerifier } from "./better-auth-iam-api-key-verifier.ts";
+import { BetterAuthApiKeyVerifier } from "./better-auth-api-key-verifier.ts";
 
 class FakeBetterAuthApi implements BetterAuthApiKeyApi {
   readonly verifyApiKeyCalls: Parameters<
@@ -23,7 +23,7 @@ class FakeBetterAuthApi implements BetterAuthApiKeyApi {
   }
 }
 
-test("BetterAuthIamApiKeyVerifier.verify: given a valid org-owned key, it should return an IAM principal", async () => {
+test("BetterAuthApiKeyVerifier.verify: given a valid org-owned key, it should return a principal", async () => {
   const api = new FakeBetterAuthApi({
     valid: true,
     key: {
@@ -32,7 +32,7 @@ test("BetterAuthIamApiKeyVerifier.verify: given a valid org-owned key, it should
       permissions: { knowledge: ["read"] },
     },
   });
-  const verifier = new BetterAuthIamApiKeyVerifier({
+  const verifier = new BetterAuthApiKeyVerifier({
     api,
     configId: "org-keys",
   });
@@ -40,13 +40,13 @@ test("BetterAuthIamApiKeyVerifier.verify: given a valid org-owned key, it should
   expect(
     await verifier.verify({
       apiKey: "rcl_valid",
-      requiredPermissions: [iamPermissions.knowledgeRead],
+      requiredPermissions: [permissions.knowledgeRead],
     }),
   ).toEqual({
     tenant: "organization:org1",
     organizationId: "org1",
     apiKeyId: "key1",
-    permissions: [iamPermissions.knowledgeRead],
+    permissions: [permissions.knowledgeRead],
   });
   expect(api.verifyApiKeyCalls).toEqual([
     [
@@ -61,8 +61,8 @@ test("BetterAuthIamApiKeyVerifier.verify: given a valid org-owned key, it should
   ]);
 });
 
-test("BetterAuthIamApiKeyVerifier.verify: given an invalid key, it should throw an IAM error", async () => {
-  const verifier = new BetterAuthIamApiKeyVerifier({
+test("BetterAuthApiKeyVerifier.verify: given an invalid key, it should throw an error", async () => {
+  const verifier = new BetterAuthApiKeyVerifier({
     api: new FakeBetterAuthApi({ valid: false, key: null }),
     configId: "org-keys",
   });
@@ -70,16 +70,16 @@ test("BetterAuthIamApiKeyVerifier.verify: given an invalid key, it should throw 
   try {
     await verifier.verify({
       apiKey: "rcl_invalid",
-      requiredPermissions: [iamPermissions.knowledgeRead],
+      requiredPermissions: [permissions.knowledgeRead],
     });
-    throw new Error("Expected invalid IAM API key error");
+    throw new Error("Expected invalid API key error");
   } catch (error) {
-    expect(error).toMatchObject({ kind: "InvalidIamApiKey" });
+    expect(error).toMatchObject({ kind: "InvalidApiKey" });
   }
 });
 
-test("BetterAuthIamApiKeyVerifier.verify: given a user-owned key, it should throw an IAM error", async () => {
-  const verifier = new BetterAuthIamApiKeyVerifier({
+test("BetterAuthApiKeyVerifier.verify: given a user-owned key, it should throw an error", async () => {
+  const verifier = new BetterAuthApiKeyVerifier({
     api: new FakeBetterAuthApi({
       valid: true,
       key: { id: "key1", permissions: { knowledge: ["read"] } },
@@ -90,10 +90,10 @@ test("BetterAuthIamApiKeyVerifier.verify: given a user-owned key, it should thro
   try {
     await verifier.verify({
       apiKey: "rcl_user",
-      requiredPermissions: [iamPermissions.knowledgeRead],
+      requiredPermissions: [permissions.knowledgeRead],
     });
-    throw new Error("Expected invalid IAM API key error");
+    throw new Error("Expected invalid API key error");
   } catch (error) {
-    expect(error).toMatchObject({ kind: "InvalidIamApiKey" });
+    expect(error).toMatchObject({ kind: "InvalidApiKey" });
   }
 });

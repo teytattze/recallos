@@ -1,11 +1,11 @@
-import type { IamPermission, VerifyIamApiKeyPort } from "@repo/server-iam-core";
+import type { Permission, VerifyApiKeyPort } from "@repo/server-iam-core";
 import type { MiddlewareHandler } from "hono";
 
-import type { IamHonoEnv } from "./iam-context.ts";
+import type { HonoEnv } from "./context.ts";
 
-type CreateIamApiKeyMiddlewareInput = {
-  readonly requiredPermissions: readonly IamPermission[];
-  readonly verifyIamApiKey: VerifyIamApiKeyPort;
+type CreateApiKeyMiddlewareInput = {
+  readonly requiredPermissions: readonly Permission[];
+  readonly verifyApiKey: VerifyApiKeyPort;
 };
 
 type CategorizedError = {
@@ -18,31 +18,31 @@ const isCategorizedError = (error: unknown): error is CategorizedError =>
   "kind" in error &&
   typeof error.kind === "string";
 
-const createIamApiKeyMiddleware = (
-  input: CreateIamApiKeyMiddlewareInput,
-): MiddlewareHandler<IamHonoEnv> => {
+const createApiKeyMiddleware = (
+  input: CreateApiKeyMiddlewareInput,
+): MiddlewareHandler<HonoEnv> => {
   return async (c, next) => {
     try {
-      const principal = await input.verifyIamApiKey.execute({
+      const principal = await input.verifyApiKey.execute({
         apiKey: c.req.header("x-api-key"),
         requiredPermissions: input.requiredPermissions,
       });
 
-      c.set("iamPrincipal", principal);
+      c.set("principal", principal);
 
       await next();
       return undefined;
     } catch (error) {
       if (
         isCategorizedError(error) &&
-        (error.kind === "MissingIamApiKey" || error.kind === "InvalidIamApiKey")
+        (error.kind === "MissingApiKey" || error.kind === "InvalidApiKey")
       ) {
         return c.json({ message: "Unauthorized" }, 401);
       }
 
       if (
         isCategorizedError(error) &&
-        error.kind === "InsufficientIamPermission"
+        error.kind === "InsufficientPermission"
       ) {
         return c.json({ message: "Forbidden" }, 403);
       }
@@ -52,5 +52,5 @@ const createIamApiKeyMiddleware = (
   };
 };
 
-export { createIamApiKeyMiddleware };
-export type { CreateIamApiKeyMiddlewareInput };
+export { createApiKeyMiddleware };
+export type { CreateApiKeyMiddlewareInput };

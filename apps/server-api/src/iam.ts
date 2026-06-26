@@ -1,10 +1,10 @@
 import { createMongodbClient } from "@repo/server-database";
-import { iamPermissions, VerifyIamApiKeyUseCase } from "@repo/server-iam-core";
+import { permissions, VerifyApiKeyUseCase } from "@repo/server-iam-core";
 import {
-  createIamApiKeyMiddleware,
-  getIamTenant,
+  createApiKeyMiddleware,
+  getTenant,
 } from "@repo/server-iam-inbound-adapter";
-import { createBetterAuthIam } from "@repo/server-iam-outbound-adapter";
+import { createBetterAuth } from "@repo/server-iam-outbound-adapter";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
@@ -17,7 +17,7 @@ const iamConfig = config.iam;
 const mongodbClient = createMongodbClient({
   url: iamConfig.mongodb.url,
 });
-const betterAuthIam = createBetterAuthIam({
+const betterAuth = createBetterAuth({
   mongodbClient,
   config: {
     baseUrl: iamConfig.baseUrl,
@@ -34,9 +34,7 @@ const betterAuthIam = createBetterAuthIam({
 });
 
 // CORE
-const verifyIamApiKeyUseCase = new VerifyIamApiKeyUseCase(
-  betterAuthIam.apiKeyVerifier,
-);
+const verifyApiKeyUseCase = new VerifyApiKeyUseCase(betterAuth.apiKeyVerifier);
 
 // INBOUND
 const iamHttpApp = new Hono();
@@ -51,21 +49,16 @@ iamHttpApp.use(
   }),
 );
 iamHttpApp.on(["POST", "GET"], `${iamConfig.basePath}/*`, (c) =>
-  betterAuthIam.handler(c.req.raw),
+  betterAuth.handler(c.req.raw),
 );
 
-const requireKnowledgeRead = createIamApiKeyMiddleware({
-  requiredPermissions: [iamPermissions.knowledgeRead],
-  verifyIamApiKey: verifyIamApiKeyUseCase,
+const requireKnowledgeRead = createApiKeyMiddleware({
+  requiredPermissions: [permissions.knowledgeRead],
+  verifyApiKey: verifyApiKeyUseCase,
 });
-const requireIngestionWrite = createIamApiKeyMiddleware({
-  requiredPermissions: [iamPermissions.ingestionWrite],
-  verifyIamApiKey: verifyIamApiKeyUseCase,
+const requireIngestionWrite = createApiKeyMiddleware({
+  requiredPermissions: [permissions.ingestionWrite],
+  verifyApiKey: verifyApiKeyUseCase,
 });
 
-export {
-  getIamTenant,
-  iamHttpApp,
-  requireIngestionWrite,
-  requireKnowledgeRead,
-};
+export { getTenant, iamHttpApp, requireIngestionWrite, requireKnowledgeRead };
