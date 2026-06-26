@@ -25,6 +25,7 @@ test("VoyageaiEmbeddingGateway.embed: given text, it should request and return i
     dimension: "1024",
     model: "voyage-4-large",
     text: "event",
+    inputType: "document",
   });
 
   // THEN
@@ -60,6 +61,7 @@ test("VoyageaiEmbeddingGateway.embed: given an unsuccessful response, it should 
       dimension: "1024",
       model: "voyage-4-large",
       text: "event",
+      inputType: "document",
     }),
   ).rejects.toThrow("Voyage AI embedding request failed with status 429");
 });
@@ -82,6 +84,7 @@ test("VoyageaiEmbeddingGateway.embed: given a custom base URL, it should request
     dimension: "1024",
     model: "voyage-4-large",
     text: "event",
+    inputType: "document",
   });
 
   // THEN

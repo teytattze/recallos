@@ -39,7 +39,7 @@ class VoyageaiEmbeddingGateway implements EmbeddingGatewayPort {
       },
       body: JSON.stringify({
         input: input.text,
-        input_type: "document",
+        input_type: input.inputType,
         model: input.model,
         output_dimension: Number(input.dimension),
       }),

@@ -1,4 +1,10 @@
-import type { ClientSession, Collection, Filter, MongoClient } from "mongodb";
+import type {
+  ClientSession,
+  Collection,
+  Document,
+  Filter,
+  MongoClient,
+} from "mongodb";
 
 import { Tenant } from "@repo/server-kernel";
 import { EventId, GraphId, GraphNode } from "@repo/server-knowledge-core";
@@ -12,6 +18,9 @@ type InsertOneOptions = Parameters<
   Collection<MongodbGraphNodeModel>["insertOne"]
 >[1];
 type FindOptions = Parameters<Collection<MongodbGraphNodeModel>["find"]>[1];
+type AggregateOptions = Parameters<
+  Collection<MongodbGraphNodeModel>["aggregate"]
+>[1];
 
 class FakeCollection {
   readonly calls: {
@@ -22,7 +31,12 @@ class FakeCollection {
     filter: Filter<MongodbGraphNodeModel>;
     options: FindOptions;
   }[] = [];
+  readonly aggregateCalls: {
+    pipeline: Document[];
+    options: AggregateOptions;
+  }[] = [];
   findResult: MongodbGraphNodeModel[] = [];
+  aggregateResult: MongodbGraphNodeModel[] = [];
   error?: Error;
 
   find(
@@ -31,6 +45,14 @@ class FakeCollection {
   ): { toArray: () => Promise<MongodbGraphNodeModel[]> } {
     this.findCalls.push({ filter, options });
     return { toArray: () => Promise.resolve(this.findResult) };
+  }
+
+  aggregate(
+    pipeline: Document[],
+    options: AggregateOptions,
+  ): { toArray: () => Promise<MongodbGraphNodeModel[]> } {
+    this.aggregateCalls.push({ pipeline, options });
+    return { toArray: () => Promise.resolve(this.aggregateResult) };
   }
 
   insertOne(
@@ -191,4 +213,56 @@ test("MongodbGraphNodeRepository.insert: given an insert error, it should rethro
 
   // THEN
   expect(error).toBe(thrown);
+});
+
+test("MongodbGraphNodeRepository.searchByEmbedding: given tenant and graph id, it should run a limited vector search", async () => {
+  // GIVEN
+  const client = new FakeMongoClient();
+  const session = { id: "session-1" } as unknown as ClientSession;
+  client.collection.aggregateResult = [
+    {
+      _id: "node-1",
+      createdAt,
+      updatedAt,
+      tenant,
+      embedding: [0.1, 0.2],
+      eventId,
+      graphId,
+      rawEvent: { issue: { key: eventId } },
+    },
+  ];
+  const repository = new MongodbGraphNodeRepository(
+    client as unknown as MongoClient,
+    "recallos",
+    session,
+  );
+
+  // WHEN
+  const nodes = await repository.searchByEmbedding({
+    tenant: Tenant.fromString(tenant),
+    filters: { graphId: GraphId.restore({ payload: graphId }) },
+    embedding: [0.4, 0.5],
+    limit: 25,
+  });
+
+  // THEN
+  expect(client.collection.aggregateCalls).toEqual([
+    {
+      pipeline: [
+        {
+          $vectorSearch: {
+            index: "graph_node_embedding",
+            path: "embedding",
+            queryVector: [0.4, 0.5],
+            limit: 10,
+            numCandidates: 100,
+            filter: { graphId, tenant },
+          },
+        },
+      ],
+      options: { session },
+    },
+  ]);
+  expect(nodes).toHaveLength(1);
+  expect(nodes[0]!.rawEvent).toEqual({ issue: { key: eventId } });
 });

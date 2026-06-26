@@ -1,11 +1,15 @@
-import type { ListGraphNodesPort } from "@repo/server-knowledge-core";
+import type {
+  ListGraphNodesPort,
+  SearchGraphPort,
+} from "@repo/server-knowledge-core";
 
 import { Hono, type Context } from "hono";
 import { ZodError } from "zod";
 
 import {
-  listGraphNodesPathParams,
+  graphPathParams,
   listGraphNodesQueryParams,
+  searchGraphBody,
 } from "../dtos/graph-node-dtos.ts";
 
 type ResolveTenant = (c: Context) => string;
@@ -13,6 +17,7 @@ type ResolveTenant = (c: Context) => string;
 type CreateGraphNodeRoutesInput = {
   deps: {
     listGraphNodes: ListGraphNodesPort;
+    searchGraph: SearchGraphPort;
   };
   resolveTenant: ResolveTenant;
 };
@@ -32,7 +37,7 @@ const createGraphNodeRoutes = (input: CreateGraphNodeRoutesInput) => {
 
   routes.get("/:graphId/nodes", async (c: Context) => {
     try {
-      const pathParams = listGraphNodesPathParams.parse({
+      const pathParams = graphPathParams.parse({
         graphId: c.req.param("graphId"),
       });
       const queryParams = listGraphNodesQueryParams.parse({
@@ -48,10 +53,27 @@ const createGraphNodeRoutes = (input: CreateGraphNodeRoutesInput) => {
 
       return c.json(graphNodes);
     } catch (error) {
-      if (
-        error instanceof ZodError ||
-        (isCategorizedError(error) && error.category === "validation")
-      ) {
+      if (isValidationError(error)) {
+        return c.json({ message: "Invalid request" }, 422);
+      }
+      throw error;
+    }
+  });
+
+  routes.post("/:graphId/search", async (c: Context) => {
+    try {
+      const pathParams = graphPathParams.parse({
+        graphId: c.req.param("graphId"),
+      });
+      const body = searchGraphBody.parse(await c.req.json());
+      const results = await input.deps.searchGraph.execute({
+        tenant: input.resolveTenant(c),
+        payload: { graphId: pathParams.graphId, query: body.query },
+      });
+
+      return c.json(results);
+    } catch (error) {
+      if (isValidationError(error)) {
         return c.json({ message: "Invalid request" }, 422);
       }
       throw error;
@@ -60,5 +82,10 @@ const createGraphNodeRoutes = (input: CreateGraphNodeRoutesInput) => {
 
   return routes;
 };
+
+const isValidationError = (error: unknown): boolean =>
+  error instanceof SyntaxError ||
+  error instanceof ZodError ||
+  (isCategorizedError(error) && error.category === "validation");
 
 export { createGraphNodeRoutes };
