@@ -13,6 +13,16 @@ type GraphNodeRepositoryPortFindManyInput = {
 };
 type GraphNodeRepositoryPortFindManyOutput = Promise<GraphNode[]>;
 
+type GraphNodeRepositoryPortSearchByEmbeddingInput = {
+  tenant: Tenant;
+  filters: {
+    graphId: GraphId;
+  };
+  embedding: number[];
+  limit: number;
+};
+type GraphNodeRepositoryPortSearchByEmbeddingOutput = Promise<GraphNode[]>;
+
 type GraphNodeRepositoryPortInsertInput = {
   data: GraphNode;
 };
@@ -25,6 +35,9 @@ interface GraphNodeRepositoryPort {
   insert(
     input: GraphNodeRepositoryPortInsertInput,
   ): GraphNodeRepositoryPortInsertOutput;
+  searchByEmbedding(
+    input: GraphNodeRepositoryPortSearchByEmbeddingInput,
+  ): GraphNodeRepositoryPortSearchByEmbeddingOutput;
 }
 
 export type {
@@ -32,5 +45,7 @@ export type {
   GraphNodeRepositoryPortFindManyInput,
   GraphNodeRepositoryPortFindManyOutput,
   GraphNodeRepositoryPortInsertInput,
+  GraphNodeRepositoryPortSearchByEmbeddingInput,
+  GraphNodeRepositoryPortSearchByEmbeddingOutput,
   GraphNodeRepositoryPortInsertOutput,
 };

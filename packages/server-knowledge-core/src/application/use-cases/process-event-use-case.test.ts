@@ -12,6 +12,8 @@ import type {
   GraphNodeRepositoryPortFindManyOutput,
   GraphNodeRepositoryPortInsertInput,
   GraphNodeRepositoryPortInsertOutput,
+  GraphNodeRepositoryPortSearchByEmbeddingInput,
+  GraphNodeRepositoryPortSearchByEmbeddingOutput,
 } from "../ports/outbound/graph-node-repository-port.ts";
 import type {
   GraphRepositoryPort,
@@ -49,6 +51,12 @@ class FakeGraphNodeRepository implements GraphNodeRepositoryPort {
   ): GraphNodeRepositoryPortInsertOutput {
     this.inputs.push(input);
     return Promise.resolve();
+  }
+
+  searchByEmbedding(
+    _input: GraphNodeRepositoryPortSearchByEmbeddingInput,
+  ): GraphNodeRepositoryPortSearchByEmbeddingOutput {
+    return Promise.resolve([]);
   }
 }
 
@@ -105,6 +113,7 @@ test("ProcessEventUseCase.execute: given an existing graph, it should embed and 
       dimension: "1024",
       model: "voyage-4-large",
       text: JSON.stringify(event.raw),
+      inputType: "document",
     },
   ]);
   expect(graphNodeRepository.inputs).toHaveLength(1);

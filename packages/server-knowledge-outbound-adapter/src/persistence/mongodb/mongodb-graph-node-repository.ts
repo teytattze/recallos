@@ -4,6 +4,8 @@ import type {
   GraphNodeRepositoryPortFindManyOutput,
   GraphNodeRepositoryPortInsertInput,
   GraphNodeRepositoryPortInsertOutput,
+  GraphNodeRepositoryPortSearchByEmbeddingInput,
+  GraphNodeRepositoryPortSearchByEmbeddingOutput,
 } from "@repo/server-knowledge-core";
 import type { Collection, ClientSession, MongoClient } from "mongodb";
 
@@ -34,22 +36,34 @@ class MongodbGraphNodeRepository implements GraphNodeRepositoryPort {
       )
       .toArray();
 
-    return models.map((model) =>
-      GraphNode.restore({
-        tenant: model.tenant,
-        metadata: {
-          createdAt: model.createdAt,
-          updatedAt: model.updatedAt,
-        },
-        payload: {
-          id: model._id,
-          embedding: model.embedding,
-          eventId: model.eventId,
-          graphId: model.graphId,
-          rawEvent: model.rawEvent,
-        },
-      }),
-    );
+    return this.restoreGraphNodes(models);
+  }
+
+  async searchByEmbedding(
+    input: GraphNodeRepositoryPortSearchByEmbeddingInput,
+  ): GraphNodeRepositoryPortSearchByEmbeddingOutput {
+    const models = await this.collection
+      .aggregate<MongodbGraphNodeModel>(
+        [
+          {
+            $vectorSearch: {
+              index: "graph_node_embedding",
+              path: "embedding",
+              queryVector: input.embedding,
+              limit: Math.min(input.limit, 10),
+              numCandidates: 100,
+              filter: {
+                graphId: input.filters.graphId.toString(),
+                tenant: input.tenant.toString(),
+              },
+            },
+          },
+        ],
+        { session: this.session },
+      )
+      .toArray();
+
+    return this.restoreGraphNodes(models);
   }
 
   async insert(
@@ -68,6 +82,25 @@ class MongodbGraphNodeRepository implements GraphNodeRepositoryPort {
     } satisfies MongodbGraphNodeModel;
 
     await this.collection.insertOne(model, { session: this.session });
+  }
+
+  private restoreGraphNodes(models: MongodbGraphNodeModel[]): GraphNode[] {
+    return models.map((model) =>
+      GraphNode.restore({
+        tenant: model.tenant,
+        metadata: {
+          createdAt: model.createdAt,
+          updatedAt: model.updatedAt,
+        },
+        payload: {
+          id: model._id,
+          embedding: model.embedding,
+          eventId: model.eventId,
+          graphId: model.graphId,
+          rawEvent: model.rawEvent,
+        },
+      }),
+    );
   }
 
   private get collection(): Collection<MongodbGraphNodeModel> {

@@ -9,6 +9,7 @@ export * from "./application/ports/outbound/unit-of-work-port.ts";
 
 export * from "./application/use-cases/list-graph-nodes-use-case.ts";
 export * from "./application/use-cases/process-event-use-case.ts";
+export * from "./application/use-cases/search-graph-use-case.ts";
 
 export * from "./domain/aggregates/graph-node.ts";
 export * from "./domain/aggregates/graph.ts";
