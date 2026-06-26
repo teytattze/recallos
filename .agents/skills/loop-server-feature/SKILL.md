@@ -10,7 +10,7 @@ description: >-
 
 # Server Feature loop
 
-[RecallOS engineering patterns](../../../docs/engineering/README.md) are the source
+[RecallOS engineering patterns](../../../docs/engineering-patterns/README.md) are the source
 of truth. Every sub-agent must read the patterns for its scope.
 
 ## Authorization and agent roles

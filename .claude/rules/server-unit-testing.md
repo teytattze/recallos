@@ -4,4 +4,4 @@ paths:
   - "packages/server-*/**/*.test.ts"
 ---
 
-The source of truth for this pattern is [`docs/engineering/server-unit-testing.md`](../../docs/engineering/server-unit-testing.md).
+The source of truth for this pattern is [`docs/engineering-patterns/server-unit-testing.md`](../../docs/engineering-patterns/server-unit-testing.md).
