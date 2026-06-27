@@ -66,6 +66,7 @@
     "dotenv": "17.4.2",
     "es-toolkit": "1.47.1",
     "hono": "4.12.26",
+    "input-otp": "1.4.2",
     "jsdom": "29.1.1",
     "lucide-react": "1.21.0",
     "mongodb": "7.3.0",
