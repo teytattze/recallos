@@ -1,27 +1,29 @@
 {
-  "name": "web-marketing",
+  "name": "@repo/web",
   "private": true,
   "type": "module",
-  "imports": {
-    "#/*": "./src/*"
-  },
   "scripts": {
     "build": "bunx --bun vite build",
     "dev": "bunx --bun vite dev --port 3000",
-    "preview": "bunx --bun vite preview",
+    "start": "bun run ./.output/server/index.mjs",
     "test": "vitest run"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",
+    "@better-auth/api-key": "catalog:",
     "@fontsource-variable/figtree": "catalog:",
     "@posthog/react": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/react-devtools": "catalog:",
+    "@tanstack/react-form": "catalog:",
+    "@tanstack/react-form-devtools": "catalog:",
+    "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-router-devtools": "catalog:",
     "@tanstack/react-router-ssr-query": "catalog:",
     "@tanstack/react-start": "catalog:",
     "@tanstack/router-plugin": "catalog:",
+    "better-auth": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "lucide-react": "catalog:",
@@ -31,7 +33,8 @@
     "shadcn": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
-    "tw-animate-css": "catalog:"
+    "tw-animate-css": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
@@ -48,11 +51,5 @@
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss"
-    ]
   }
 }

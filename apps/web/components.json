@@ -1,6 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "base-luma",
+  "style": "base-lyra",
   "rsc": false,
   "tsx": true,
   "tailwind": {
@@ -12,10 +12,10 @@
   },
   "aliases": {
     "components": "@/components",
-    "utils": "@/lib/utils",
+    "utils": "@/libs/ui/utils",
     "ui": "@/components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
+    "lib": "@/libs/ui",
+    "hooks": "@/components/ui/hooks"
   },
   "iconLibrary": "lucide",
   "rtl": false,
