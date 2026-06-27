@@ -30,7 +30,7 @@ abstract class Entity<
     return this._id.equals(other._id);
   }
 
-  toJSON(): TProps {
+  toJSON(): TProps & { id: TId } {
     return {
       id: this.id,
       ...this._props,
