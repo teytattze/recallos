@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { cn } from "./utils";
+import { cn } from "@/libs/ui/utils";
 
 test("cn: given conflicting Tailwind classes, it should keep the later class", () => {
   // WHEN
