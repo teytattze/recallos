@@ -8,9 +8,9 @@ type PendingProps = {
 function Pending(props: PendingProps) {
   return (
     <Center>
-      <div className="flex max-w-80 items-center gap-x-2">
+      <div className="shimmer flex max-w-80 items-center gap-x-2">
         <Spinner />
-        <p className="shimmer">{props.message ?? "Loading..."}</p>
+        <p>{props.message ?? "Loading..."}</p>
       </div>
     </Center>
   );

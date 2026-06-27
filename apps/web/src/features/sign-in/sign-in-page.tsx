@@ -77,7 +77,7 @@ function SignInPage() {
     await stepToHandleFormSubmit[step]();
   };
 
-  const StepComponent = stepToComponent[step];
+  const StepComponent = stepToComponent["email-otp-verified"];
 
   return (
     <StepComponent
