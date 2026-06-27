@@ -194,12 +194,12 @@ test("MongodbWebhookSubscriptionRepository.findById: given a stored subscription
   expect(subscription?.tenant.toString()).toBe(tenant);
   expect(subscription?.metadata.createdAt).toEqual(createdAt);
   expect(subscription?.metadata.updatedAt).toEqual(updatedAt);
-  expect(String(subscription?.provider)).toBe("jira");
+  expect(subscription?.provider).toBe("jira");
   expect(subscription?.context.id.toString()).toBe(contextId);
   expect(subscription?.context.metadata.createdAt).toEqual(contextCreatedAt);
   expect(subscription?.context.metadata.updatedAt).toEqual(contextUpdatedAt);
   expect(subscription?.context.graphId.toString()).toBe(graphId);
   expect(subscription?.secret.id.toString()).toBe(secretId);
-  expect(String(subscription?.secret.algorithm)).toBe("hmac_sha256");
-  expect(String(subscription?.secret.value)).toBe(storedSecretValue);
+  expect(subscription?.secret.algorithm).toBe("hmac_sha256");
+  expect(subscription?.secret.value).toBe(storedSecretValue);
 });

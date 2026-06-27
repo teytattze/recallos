@@ -109,9 +109,7 @@ test("CreateWebhookSubscriptionUseCase.execute: given valid input, it should cre
   expect(
     unitOfWork.webhookSubscriptions.inserted[0]!.metadata.createdAt,
   ).toEqual(now);
-  expect(String(unitOfWork.webhookSubscriptions.inserted[0]!.provider)).toBe(
-    "jira",
-  );
+  expect(unitOfWork.webhookSubscriptions.inserted[0]!.provider).toBe("jira");
   expect(
     unitOfWork.webhookSubscriptions.inserted[0]!.context.graphId.value,
   ).toBe(validInput.payload.context.graphId);
