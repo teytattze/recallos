@@ -1,41 +1,44 @@
 {
   "app": {
+    "version": "0.0.0",
     "http": {
       "port": 8000
     }
   },
   "ingestion": {
     "mongodb": {
-      "url": "mongodb://localhost:27017/?replicaSet=rs0",
       "databaseName": "recallos"
     }
   },
   "iam": {
     "baseUrl": "http://localhost:8000",
     "basePath": "/api/v1/iam",
-    "trustedOrigins": ["http://localhost:3000", "http://localhost:8000"],
-    "secrets": [
-      {
-        "version": 1,
-        "value": "local-iam-secret-change-before-production"
-      }
-    ],
     "mongodb": {
-      "url": "mongodb://localhost:27017/?replicaSet=rs0",
-      "databaseName": "recallos-iam"
+      "databaseName": "recallos"
     },
     "resend": {
       "apiKey": "local-resend-api-key",
       "from": "RecallOS <noreply@example.local>"
+    },
+    "otp": {
+      "length": 8,
+      "expiresInSeconds": 300,
+      "allowedAttempts": 3
+    },
+    "apiKey": {
+      "configId": "org-keys",
+      "prefix": "rcl_",
+      "rateLimit": {
+        "enabled": true,
+        "maxRequests": 1000,
+        "timeWindowMilliseconds": 3600000
+      }
     }
   },
   "knowledge": {
     "mongodb": {
-      "url": "mongodb://localhost:27017/?replicaSet=rs0",
       "databaseName": "recallos"
     },
-    "voyageai": {
-      "apiKey": "local-voyageai-api-key"
-    }
+    "voyageai": {}
   }
 }

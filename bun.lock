@@ -17,6 +17,7 @@
     "apps/server-api": {
       "name": "@repo/server-api",
       "dependencies": {
+        "@repo/app-config": "workspace:*",
         "@repo/server-database": "workspace:*",
         "@repo/server-iam-core": "workspace:*",
         "@repo/server-iam-inbound-adapter": "workspace:*",
@@ -29,14 +30,13 @@
         "@repo/server-knowledge-inbound-adapter": "workspace:*",
         "@repo/server-knowledge-outbound-adapter": "workspace:*",
         "@repo/server-platform": "workspace:*",
-        "convict": "catalog:",
+        "dotenv": "catalog:",
         "hono": "catalog:",
         "type-fest": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
-        "@types/convict": "catalog:",
       },
     },
     "apps/server-worker": {
