@@ -1,7 +1,7 @@
 import { defineConfig, envSchema } from "@repo/app-config";
 import z from "zod";
 
-const activeEnv = envSchema.parse(import.meta.env.VITE_APP_ENVIRONMENT);
+const activeEnv = envSchema.parse(import.meta.env.VITE_ENV);
 
 const config = defineConfig({
   schema: z.object({

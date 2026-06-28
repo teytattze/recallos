@@ -2,7 +2,7 @@ import { defineConfig, envSchema } from "@repo/app-config";
 import z from "zod";
 import "dotenv/config";
 
-const env = envSchema.parse(process.env.NODE_ENV);
+const activeEnv = envSchema.parse(process.env.NODE_ENV);
 
 const config = defineConfig({
   schema: z.object({
@@ -204,6 +204,6 @@ const config = defineConfig({
       },
     },
   },
-})(env);
+})(activeEnv);
 
 export { config };
