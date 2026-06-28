@@ -15,16 +15,16 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { withFormSubmitPreventDefault } from "@/libs/form/utils";
-import type { SignInSendEmailOtpForm } from "@/features/sign-in/forms/sign-in-send-email-otp-form";
-import type { SignInVerifyEmailOtpForm } from "@/features/sign-in/forms/sign-in-verify-email-otp-form";
+import type { SignUpSendEmailOtpForm } from "@/features/sign-up/forms/sign-up-send-email-otp-form";
+import type { SignUpVerifyEmailOtpForm } from "@/features/sign-up/forms/sign-up-verify-email-otp-form";
 
-type SignInVerifyEmailOtpStepProps = {
-  sendEmailOtpForm: SignInSendEmailOtpForm;
-  verifyEmailOtpForm: SignInVerifyEmailOtpForm;
+type SignUpVerifyEmailOtpStepProps = {
+  sendEmailOtpForm: SignUpSendEmailOtpForm;
+  verifyEmailOtpForm: SignUpVerifyEmailOtpForm;
   onBack: () => void;
 };
 
-function SignInVerifyEmailOtpStep(props: SignInVerifyEmailOtpStepProps) {
+function SignUpVerifyEmailOtpStep(props: SignUpVerifyEmailOtpStepProps) {
   const { onBack, sendEmailOtpForm, verifyEmailOtpForm } = props;
 
   return (
@@ -102,4 +102,4 @@ function SignInVerifyEmailOtpStep(props: SignInVerifyEmailOtpStepProps) {
   );
 }
 
-export { SignInVerifyEmailOtpStep };
+export { SignUpVerifyEmailOtpStep };

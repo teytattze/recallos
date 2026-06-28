@@ -81,7 +81,7 @@ const config = defineConfig({
         },
         resend: {
           apiKey: "local-resend-api-key",
-          from: "RecallOS <noreply@example.local>",
+          from: "RecallOS <noreply@notifications.recallos.io>",
         },
         otp: {
           length: 8,
@@ -123,7 +123,7 @@ const config = defineConfig({
         },
         resend: {
           apiKey: "local-resend-api-key",
-          from: "RecallOS <noreply@example.local>",
+          from: "RecallOS <noreply@notifications.recallos.io>",
         },
         otp: {
           length: 8,
@@ -168,8 +168,8 @@ const config = defineConfig({
     iam: {
       baseUrl: process.env.IAM_BASE_URL,
       basePath: process.env.IAM_BASE_PATH,
-      trustedOrigins: JSON.parse(process.env.IAM_TRUSTED_ORIGINS ?? ""),
-      secrets: JSON.parse(process.env.IAM_SECRETS ?? ""),
+      trustedOrigins: JSON.parse(process.env.IAM_TRUSTED_ORIGINS ?? "[]"),
+      secrets: JSON.parse(process.env.IAM_SECRETS ?? "[]"),
       mongodb: {
         url: process.env.IAM_MONGODB_URL,
         databaseName: process.env.IAM_MONGODB_DATABASE_NAME,
