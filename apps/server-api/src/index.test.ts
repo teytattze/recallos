@@ -4,21 +4,31 @@ type ServiceModule = typeof import("./index.ts");
 
 const withServerApiEnv = async <T>(run: () => Promise<T>): Promise<T> => {
   const previous = {
-    APP_ENV: process.env.APP_ENV,
-    HTTP_PORT: process.env.APP_HTTP_PORT,
+    NODE_ENV: process.env.NODE_ENV,
+    APP_HTTP_PORT: process.env.APP_HTTP_PORT,
     INGESTION_MONGODB_URL: process.env.INGESTION_MONGODB_URL,
     INGESTION_MONGODB_DATABASE_NAME:
       process.env.INGESTION_MONGODB_DATABASE_NAME,
+    IAM_MONGODB_URL: process.env.IAM_MONGODB_URL,
+    IAM_TRUSTED_ORIGINS: process.env.IAM_TRUSTED_ORIGINS,
+    IAM_SECRETS: process.env.IAM_SECRETS,
     KNOWLEDGE_MONGODB_URL: process.env.KNOWLEDGE_MONGODB_URL,
     KNOWLEDGE_MONGODB_DATABASE_NAME:
       process.env.KNOWLEDGE_MONGODB_DATABASE_NAME,
     KNOWLEDGE_VOYAGEAI_API_KEY: process.env.KNOWLEDGE_VOYAGEAI_API_KEY,
   };
   try {
-    process.env.APP_ENV = "local";
-    process.env.HTTP_PORT = "3131";
+    process.env.NODE_ENV = "local";
+    process.env.APP_HTTP_PORT = "3131";
     process.env.INGESTION_MONGODB_URL = "mongodb://127.0.0.1:27017";
     process.env.INGESTION_MONGODB_DATABASE_NAME = "recallos-test";
+    process.env.IAM_MONGODB_URL = "mongodb://127.0.0.1:27017";
+    process.env.IAM_TRUSTED_ORIGINS = JSON.stringify([
+      "http://localhost:8000",
+    ]);
+    process.env.IAM_SECRETS = JSON.stringify([
+      { version: 1, value: "local-iam-secret-change-before-production" },
+    ]);
     process.env.KNOWLEDGE_MONGODB_URL = "mongodb://127.0.0.1:27017";
     process.env.KNOWLEDGE_MONGODB_DATABASE_NAME = "recallos-test";
     process.env.KNOWLEDGE_VOYAGEAI_API_KEY = "pa_test";

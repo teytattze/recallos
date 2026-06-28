@@ -1,5 +1,5 @@
 {
-  "name": "@repo/server-platform",
+  "name": "@repo/app-config",
   "private": true,
   "type": "module",
   "exports": {
@@ -10,9 +10,8 @@
     "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
-    "hono": "catalog:",
-    "pino": "catalog:",
-    "pino-pretty": "catalog:"
+    "es-toolkit": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*"

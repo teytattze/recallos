@@ -25,6 +25,8 @@ jobs:
             build_dir: dist
           - app: server-worker
             build_dir: dist
+          - app: web
+            build_dir: .output
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -73,6 +75,8 @@ jobs:
             build_dir: dist
           - app: server-worker
             build_dir: dist
+          - app: web
+            build_dir: .output
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6

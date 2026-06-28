@@ -9,19 +9,19 @@
     "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
+    "@repo/app-config": "workspace:*",
     "@repo/server-database": "workspace:*",
     "@repo/server-kernel": "workspace:*",
     "@repo/server-knowledge-core": "workspace:*",
     "@repo/server-knowledge-inbound-adapter": "workspace:*",
     "@repo/server-knowledge-outbound-adapter": "workspace:*",
     "@repo/server-platform": "workspace:*",
-    "convict": "catalog:",
+    "dotenv": "catalog:",
     "hono": "catalog:",
     "type-fest": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
-    "@types/convict": "catalog:"
+    "@repo/typescript-config": "workspace:*"
   }
 }
