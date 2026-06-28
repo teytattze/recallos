@@ -2,7 +2,7 @@ import { defineConfig, envSchema } from "@repo/app-config";
 import z from "zod";
 import "dotenv/config";
 
-const env = envSchema.parse(process.env.NODE_ENV);
+const activeEnv = envSchema.parse(process.env.NODE_ENV);
 
 const config = defineConfig({
   schema: z.object({
@@ -120,17 +120,20 @@ const config = defineConfig({
     ingestion: {
       mongodb: {
         url: process.env.INGESTION_MONGODB_URL,
+        databaseName: process.env.INGESTION_MONGODB_DATABASE_NAME,
       },
     },
     knowledge: {
       mongodb: {
         url: process.env.KNOWLEDGE_MONGODB_URL,
+        databaseName: process.env.KNOWLEDGE_MONGODB_DATABASE_NAME,
       },
       voyageai: {
         apiKey: process.env.KNOWLEDGE_VOYAGEAI_API_KEY,
+        baseUrl: process.env.KNOWLEDGE_VOYAGEAI_BASE_URL,
       },
     },
   },
-})(env);
+})(activeEnv);
 
 export { config };

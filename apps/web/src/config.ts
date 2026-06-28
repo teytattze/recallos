@@ -1,23 +1,39 @@
+import { defineConfig, envSchema } from "@repo/app-config";
 import z from "zod";
 
-const configSchema = z.object({
-  app: z.object({
-    environment: z.enum(["local", "staging", "production"]).default("local"),
-  }),
-  iam: z.object({
-    authBaseUrl: z.url().default("http://localhost:8000"),
-  }),
-});
+const activeEnv = envSchema.parse(import.meta.env.VITE_APP_ENVIRONMENT);
 
-const env = import.meta.env;
+const config = defineConfig({
+  schema: z.object({
+    app: z.object({
+      version: z.string(),
+    }),
+    iam: z.object({
+      authBaseUrl: z.url(),
+    }),
+  }),
 
-const config = configSchema.parse({
-  app: {
-    environment: env.VITE_APP_ENVIRONMENT,
+  base: {
+    local: {
+      app: { version: "0.0.0" },
+      iam: { authBaseUrl: "http://localhost:8000" },
+    },
+    test: {
+      app: { version: "0.0.0" },
+      iam: { authBaseUrl: "http://localhost:8000" },
+    },
+    staging: {},
+    production: {},
   },
-  iam: {
-    authBaseUrl: env.VITE_IAM_AUTH_BASE_URL,
+
+  runtime: {
+    app: {
+      version: import.meta.env.VITE_APP_VERSION,
+    },
+    iam: {
+      authBaseUrl: import.meta.env.VITE_IAM_AUTH_BASE_URL,
+    },
   },
-});
+})(activeEnv);
 
 export { config };

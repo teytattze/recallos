@@ -65,6 +65,7 @@
         "@better-auth/api-key": "catalog:",
         "@fontsource-variable/figtree": "catalog:",
         "@posthog/react": "catalog:",
+        "@repo/app-config": "workspace:*",
         "@tailwindcss/vite": "catalog:",
         "@tanstack/react-devtools": "catalog:",
         "@tanstack/react-form": "catalog:",

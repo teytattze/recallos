@@ -17,7 +17,7 @@ type DefineConfigOptions<T extends z.ZodObject> = {
     staging: PartialDeep<z.input<T>>;
     production: PartialDeep<z.input<T>>;
   };
-  runtime: PartialDeep<DeepUnknownify<z.input<T>>>;
+  runtime: DeepUnknownify<z.input<T>>;
 };
 
 const defineConfig =
