@@ -28,6 +28,7 @@ type BetterAuthClient = {
 
 const betterAuthClient: BetterAuthClient = createAuthClient({
   baseURL: config.iam.authBaseUrl,
+  basePath: config.iam.authBasePath,
   plugins: [emailOTPClient(), organizationClient(), apiKeyClient()],
 });
 

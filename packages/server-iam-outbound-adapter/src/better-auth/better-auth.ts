@@ -83,7 +83,7 @@ const createBetterAuth = (input: CreateBetterAuthInput) => {
     basePath: input.config.basePath,
     database: mongodbAdapter(
       input.mongodbClient.db(input.config.mongodb.databaseName),
-      { client: input.mongodbClient },
+      { client: input.mongodbClient, usePlural: true },
     ),
     secrets: [...input.config.secrets],
     trustedOrigins: [...input.config.trustedOrigins],

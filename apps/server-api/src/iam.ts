@@ -39,15 +39,18 @@ const verifyApiKeyUseCase = new VerifyApiKeyUseCase(betterAuth.apiKeyVerifier);
 // INBOUND
 const iamHttpApp = new Hono();
 
-iamHttpApp.use(
-  `${iamConfig.basePath}/*`,
-  cors({
-    origin: iamConfig.trustedOrigins,
-    allowHeaders: ["Content-Type", "Authorization", "X-API-Key"],
-    allowMethods: ["POST", "GET", "OPTIONS"],
-    credentials: true,
-  }),
+["/email-otp/send-verification-otp", "/sign-in/email-otp"].map((subPath) =>
+  iamHttpApp.use(
+    `${iamConfig.basePath}${subPath}`,
+    cors({
+      origin: iamConfig.trustedOrigins,
+      allowHeaders: ["Content-Type", "Authorization", "X-API-Key"],
+      allowMethods: ["POST", "GET", "OPTIONS"],
+      credentials: true,
+    }),
+  ),
 );
+
 iamHttpApp.on(["POST", "GET"], `${iamConfig.basePath}/*`, (c) =>
   betterAuth.handler(c.req.raw),
 );

@@ -10,17 +10,24 @@ const config = defineConfig({
     }),
     iam: z.object({
       authBaseUrl: z.url(),
+      authBasePath: z.string(),
     }),
   }),
 
   base: {
     local: {
       app: { version: "0.0.0" },
-      iam: { authBaseUrl: "http://localhost:8000" },
+      iam: {
+        authBaseUrl: "http://localhost:8000",
+        authBasePath: "/api/v1/iam",
+      },
     },
     test: {
       app: { version: "0.0.0" },
-      iam: { authBaseUrl: "http://localhost:8000" },
+      iam: {
+        authBaseUrl: "http://localhost:8000",
+        authBasePath: "/api/v1/iam",
+      },
     },
     staging: {},
     production: {},
@@ -32,6 +39,7 @@ const config = defineConfig({
     },
     iam: {
       authBaseUrl: import.meta.env.VITE_IAM_AUTH_BASE_URL,
+      authBasePath: import.meta.env.VITE_IAM_AUTH_BASE_PATH,
     },
   },
 })(activeEnv);
