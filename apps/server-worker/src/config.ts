@@ -1,147 +1,136 @@
-import type { Schema } from "convict";
-
-import { createConfig } from "@repo/server-platform";
+import { defineConfig, envSchema } from "@repo/app-config";
 import z from "zod";
+import "dotenv/config";
 
-import localProfile from "../config/local.json";
-import productionProfile from "../config/production.json";
-import stagingProfile from "../config/staging.json";
+const env = envSchema.parse(process.env.NODE_ENV);
 
-const appEnvironmentSchema = z.enum(["local", "staging", "production"]);
-const requiredStringSchema = z.string().trim().min(1);
-const portSchema = z.number().int().min(1).max(65_535);
-
-const serverWorkerConfigSchema = z.object({
-  app: z.object({
-    environment: appEnvironmentSchema,
-    version: requiredStringSchema,
-    http: z.object({
-      port: portSchema,
+const config = defineConfig({
+  schema: z.object({
+    app: z.object({
+      version: z.string(),
+      http: z.object({
+        port: z.coerce.number().int().positive(),
+      }),
+    }),
+    ingestion: z.object({
+      mongodb: z.object({
+        url: z.url(),
+        databaseName: z.string(),
+      }),
+    }),
+    knowledge: z.object({
+      mongodb: z.object({
+        url: z.url(),
+        databaseName: z.string(),
+      }),
+      voyageai: z.object({
+        apiKey: z.string(),
+        baseUrl: z.url(),
+      }),
     }),
   }),
-  ingestion: z.object({
-    mongodb: z.object({
-      url: requiredStringSchema,
-      databaseName: requiredStringSchema,
-    }),
-  }),
-  knowledge: z.object({
-    mongodb: z.object({
-      url: requiredStringSchema,
-      databaseName: requiredStringSchema,
-    }),
-    voyageai: z.object({
-      apiKey: requiredStringSchema,
-      baseUrl: z.url(),
-    }),
-  }),
-});
 
-type ServerWorkerConfig = z.infer<typeof serverWorkerConfigSchema>;
-
-const convictConfigSchema: Schema<ServerWorkerConfig> = {
-  app: {
-    environment: {
-      doc: "Application deployment environment",
-      format: appEnvironmentSchema.options,
-      default: "local",
-      env: "APP_ENV",
+  base: {
+    local: {
+      app: {
+        version: "0.0.0",
+        http: { port: 8001 },
+      },
+      ingestion: {
+        mongodb: {
+          databaseName: "recallos",
+        },
+      },
+      knowledge: {
+        mongodb: {
+          databaseName: "recallos",
+        },
+        voyageai: {
+          baseUrl: "https://api.voyageai.com/v1",
+        },
+      },
     },
-    version: {
-      doc: "Application version",
-      format: (value) =>
-        serverWorkerConfigSchema.shape.app.shape.version.parse(value),
-      default: "0.0.0",
-      env: "APP_VERSION",
+
+    test: {
+      app: {
+        version: "0.0.0",
+        http: { port: 8001 },
+      },
+      ingestion: {
+        mongodb: {
+          databaseName: "recallos",
+        },
+      },
+      knowledge: {
+        mongodb: {
+          databaseName: "recallos",
+        },
+        voyageai: {
+          baseUrl: "https://api.voyageai.com/v1",
+        },
+      },
     },
-    http: {
-      port: {
-        doc: "HTTP port",
-        format: (value) =>
-          serverWorkerConfigSchema.shape.app.shape.http.shape.port.parse(value),
-        default: 8000,
-        env: "HTTP_PORT",
+
+    staging: {
+      app: {
+        http: { port: 8001 },
+      },
+      ingestion: {
+        mongodb: {
+          databaseName: "recallos",
+        },
+      },
+      knowledge: {
+        mongodb: {
+          databaseName: "recallos",
+        },
+        voyageai: {
+          baseUrl: "https://api.voyageai.com/v1",
+        },
+      },
+    },
+
+    production: {
+      app: {
+        http: { port: 8001 },
+      },
+      ingestion: {
+        mongodb: {
+          databaseName: "recallos",
+        },
+      },
+      knowledge: {
+        mongodb: {
+          databaseName: "recallos",
+        },
+        voyageai: {
+          baseUrl: "https://api.voyageai.com/v1",
+        },
       },
     },
   },
-  ingestion: {
-    mongodb: {
-      url: {
-        doc: "Ingestion MongoDB connection URL",
-        format: (value) =>
-          serverWorkerConfigSchema.shape.ingestion.shape.mongodb.shape.url.parse(
-            value,
-          ),
-        default: null,
-        env: "INGESTION_MONGODB_URL",
+
+  runtime: {
+    app: {
+      version: process.env.APP_VERSION,
+      http: {
+        port: process.env.APP_HTTP_PORT,
       },
-      databaseName: {
-        doc: "Ingestion MongoDB database name",
-        format: (value) =>
-          serverWorkerConfigSchema.shape.ingestion.shape.mongodb.shape.databaseName.parse(
-            value,
-          ),
-        default: null,
-        env: "INGESTION_MONGODB_DATABASE_NAME",
+    },
+    ingestion: {
+      mongodb: {
+        url: process.env.INGESTION_MONGODB_URL,
+      },
+    },
+    knowledge: {
+      mongodb: {
+        url: process.env.KNOWLEDGE_MONGODB_URL,
+      },
+      voyageai: {
+        apiKey: process.env.KNOWLEDGE_VOYAGEAI_API_KEY,
       },
     },
   },
-  knowledge: {
-    mongodb: {
-      url: {
-        doc: "Knowledge MongoDB connection URL",
-        format: (value) =>
-          serverWorkerConfigSchema.shape.knowledge.shape.mongodb.shape.url.parse(
-            value,
-          ),
-        default: null,
-        env: "KNOWLEDGE_MONGODB_URL",
-      },
-      databaseName: {
-        doc: "Knowledge MongoDB database name",
-        format: (value) =>
-          serverWorkerConfigSchema.shape.knowledge.shape.mongodb.shape.databaseName.parse(
-            value,
-          ),
-        default: null,
-        env: "KNOWLEDGE_MONGODB_DATABASE_NAME",
-      },
-    },
-    voyageai: {
-      apiKey: {
-        doc: "Voyage AI API key",
-        format: (value) =>
-          serverWorkerConfigSchema.shape.knowledge.shape.voyageai.shape.apiKey.parse(
-            value,
-          ),
-        default: null,
-        env: "KNOWLEDGE_VOYAGEAI_API_KEY",
-        sensitive: true,
-      },
-      baseUrl: {
-        doc: "Voyage AI API base URL",
-        format: (value) =>
-          serverWorkerConfigSchema.shape.knowledge.shape.voyageai.shape.baseUrl.parse(
-            value,
-          ),
-        default: "https://api.voyageai.com/v1",
-        env: "KNOWLEDGE_VOYAGEAI_BASE_URL",
-      },
-    },
-  },
-};
+})(env);
 
-const profiles = {
-  local: localProfile,
-  staging: stagingProfile,
-  production: productionProfile,
-} as const;
-
-const config = createConfig({
-  schema: convictConfigSchema,
-  parser: serverWorkerConfigSchema,
-  profiles,
-});
-
-export { config, convictConfigSchema, profiles, serverWorkerConfigSchema };
-export type { ServerWorkerConfig };
+export { config };

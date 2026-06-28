@@ -42,20 +42,20 @@
     "apps/server-worker": {
       "name": "@repo/server-worker",
       "dependencies": {
+        "@repo/app-config": "workspace:*",
         "@repo/server-database": "workspace:*",
         "@repo/server-kernel": "workspace:*",
         "@repo/server-knowledge-core": "workspace:*",
         "@repo/server-knowledge-inbound-adapter": "workspace:*",
         "@repo/server-knowledge-outbound-adapter": "workspace:*",
         "@repo/server-platform": "workspace:*",
-        "convict": "catalog:",
+        "dotenv": "catalog:",
         "hono": "catalog:",
         "type-fest": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
-        "@types/convict": "catalog:",
       },
     },
     "apps/web": {
@@ -107,6 +107,17 @@
         "typescript": "catalog:",
         "vite": "catalog:",
         "vitest": "catalog:",
+      },
+    },
+    "packages/app-config": {
+      "name": "@repo/app-config",
+      "dependencies": {
+        "es-toolkit": "catalog:",
+        "zod": "catalog:",
+      },
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "@types/convict": "catalog:",
       },
     },
     "packages/server-database": {
@@ -679,6 +690,8 @@
     "@protobufjs/pool": ["@protobufjs/pool@1.1.0", "", {}, "sha512-0kELaGSIDBKvcgS4zkjz1PeddatrjYcmMWOlAuAPwAeccUrPHdUqo/J6LiymHHEiJT5NrF1UVwxY14f+fy4WQw=="],
 
     "@protobufjs/utf8": ["@protobufjs/utf8@1.1.1", "", {}, "sha512-oOAWABowe8EAbMyWKM0tYDKi8Yaox52D+HWZhAIJqQXbqe0xI/GV7FhLWqlEKreMkfDjshR5FKgi3mnle0h6Eg=="],
+
+    "@repo/app-config": ["@repo/app-config@workspace:packages/app-config"],
 
     "@repo/e2e-server": ["@repo/e2e-server@workspace:tests/e2e-server"],
 
