@@ -7,6 +7,7 @@ import { SignInSendEmailOtpStep } from "@/features/sign-in/components/sign-in-se
 import { SignInVerifyEmailOtpStep } from "@/features/sign-in/components/sign-in-verify-email-otp-step";
 import { useSignInSendEmailOtpForm } from "@/features/sign-in/forms/sign-in-send-email-otp-form";
 import { useSignInVerifyEmailOtpForm } from "@/features/sign-in/forms/sign-in-verify-email-otp-form";
+import { toast } from "sonner";
 
 type StepKey = "send-email-otp" | "verify-email-otp" | "email-otp-verified";
 
@@ -22,8 +23,12 @@ function SignInPage() {
 
   const sendEmailOtpForm = useSignInSendEmailOtpForm({
     onSubmit: async (props) => {
-      await sendEmailOtp({ email: props.value.email });
-      setStep("verify-email-otp");
+      try {
+        await sendEmailOtp({ email: props.value.email });
+        setStep("verify-email-otp");
+      } catch (error) {
+        toast.error("Failed to send email OTP");
+      }
     },
   });
   const email = useSelector(
@@ -34,8 +39,15 @@ function SignInPage() {
   const verifyEmailOtpForm = useSignInVerifyEmailOtpForm({
     defaultValues: { email },
     onSubmit: async (props) => {
-      await verifyEmailOtp({ email: props.value.email, otp: props.value.otp });
-      setStep("email-otp-verified");
+      try {
+        await verifyEmailOtp({
+          email: props.value.email,
+          otp: props.value.otp,
+        });
+        setStep("email-otp-verified");
+      } catch (error) {
+        toast.error("Email OTP verification failed");
+      }
     },
   });
 

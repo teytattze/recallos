@@ -6,6 +6,7 @@ import { type ReactNode, useState } from "react";
 
 import appCss from "../styles.css?url";
 import PostHogProvider from "../vendors/posthog/posthog-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -56,6 +57,7 @@ function RootDocument({ children }: { children: ReactNode }) {
             />
           </QueryClientProvider>
         </PostHogProvider>
+        <Toaster position="top-center" />
         <Scripts />
       </body>
     </html>
