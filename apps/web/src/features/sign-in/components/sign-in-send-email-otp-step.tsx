@@ -1,21 +1,48 @@
-import type { SignInStepProps } from "@/features/sign-in/sign-in-types";
-
 import { Button } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
-import { Field, FieldGroup } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import type { SignInSendEmailOtpForm } from "@/features/sign-in/forms/sign-in-send-email-otp-form";
+import { withFormSubmitPreventDefault } from "@/libs/form/utils";
 
-function SignInSendEmailOtpStep(props: SignInStepProps) {
+type SignInSendEmailOtpStepProps = {
+  form: SignInSendEmailOtpForm;
+};
+
+function SignInSendEmailOtpStep(props: SignInSendEmailOtpStepProps) {
+  const { form } = props;
+
   return (
     <Center className="gap-y-2">
       <div>
         <h1 className="text-base">Sign In</h1>
       </div>
-      <form className="w-64" onSubmit={props.onFormSubmit}>
+      <form
+        className="w-64"
+        onSubmit={withFormSubmitPreventDefault(form.handleSubmit)}
+      >
         <FieldGroup>
-          <Field>
-            <Input placeholder="Enter your email..." />
-          </Field>
+          <form.Field
+            name="email"
+            children={(field) => {
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid;
+              return (
+                <Field data-invalid={isInvalid}>
+                  <Input
+                    id={`${field.form._formId}-email`}
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                    placeholder="Enter your email..."
+                  />
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                </Field>
+              );
+            }}
+          />
           <Field>
             <Button type="submit" variant="secondary">
               Send OTP

@@ -22,6 +22,7 @@
     "@tanstack/react-router-devtools": "catalog:",
     "@tanstack/react-router-ssr-query": "catalog:",
     "@tanstack/react-start": "catalog:",
+    "@tanstack/react-store": "catalog:",
     "@tanstack/router-plugin": "catalog:",
     "better-auth": "catalog:",
     "class-variance-authority": "catalog:",
