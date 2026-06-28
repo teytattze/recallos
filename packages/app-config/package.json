@@ -14,7 +14,6 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
-    "@types/convict": "catalog:"
+    "@repo/typescript-config": "workspace:*"
   }
 }
