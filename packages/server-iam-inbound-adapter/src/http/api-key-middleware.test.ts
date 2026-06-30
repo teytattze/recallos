@@ -15,6 +15,7 @@ import { getTenant, type HonoEnv } from "./context.ts";
 const principal: Principal = {
   tenant: "organization:org1",
   organizationId: "org1",
+  authenticationMethod: "api-key",
   apiKeyId: "key1",
   permissions: [permissions.knowledgeRead],
 };

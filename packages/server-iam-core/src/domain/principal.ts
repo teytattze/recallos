@@ -1,10 +1,22 @@
 import type { Permission } from "./permission.ts";
 
-type Principal = {
+type PrincipalBase = {
   readonly tenant: string;
   readonly organizationId: string;
-  readonly apiKeyId: string;
   readonly permissions: readonly Permission[];
 };
 
-export type { Principal };
+type ApiKeyPrincipal = PrincipalBase & {
+  readonly authenticationMethod: "api-key";
+  readonly apiKeyId: string;
+};
+
+type SessionCookiePrincipal = PrincipalBase & {
+  readonly authenticationMethod: "session-cookie";
+  readonly sessionId: string;
+  readonly userId: string;
+};
+
+type Principal = ApiKeyPrincipal | SessionCookiePrincipal;
+
+export type { ApiKeyPrincipal, Principal, SessionCookiePrincipal };

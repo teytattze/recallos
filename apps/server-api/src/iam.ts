@@ -1,7 +1,11 @@
 import { createMongodbClient } from "@repo/server-database";
-import { permissions, VerifyApiKeyUseCase } from "@repo/server-iam-core";
 import {
-  createApiKeyMiddleware,
+  permissions,
+  VerifyApiKeyUseCase,
+  VerifySessionCookieUseCase,
+} from "@repo/server-iam-core";
+import {
+  createAuthenticationMiddleware,
   getTenant,
 } from "@repo/server-iam-inbound-adapter";
 import { createBetterAuth } from "@repo/server-iam-outbound-adapter";
@@ -35,6 +39,9 @@ const betterAuth = createBetterAuth({
 
 // CORE
 const verifyApiKeyUseCase = new VerifyApiKeyUseCase(betterAuth.apiKeyVerifier);
+const verifySessionCookieUseCase = new VerifySessionCookieUseCase(
+  betterAuth.sessionCookieVerifier,
+);
 
 // INBOUND
 const iamHttpApp = new Hono();
@@ -55,13 +62,15 @@ iamHttpApp.on(["POST", "GET"], `${iamConfig.basePath}/*`, (c) =>
   betterAuth.handler(c.req.raw),
 );
 
-const requireKnowledgeRead = createApiKeyMiddleware({
+const requireKnowledgeRead = createAuthenticationMiddleware({
   requiredPermissions: [permissions.knowledgeRead],
   verifyApiKey: verifyApiKeyUseCase,
+  verifySessionCookie: verifySessionCookieUseCase,
 });
-const requireIngestionWrite = createApiKeyMiddleware({
+const requireIngestionWrite = createAuthenticationMiddleware({
   requiredPermissions: [permissions.ingestionWrite],
   verifyApiKey: verifyApiKeyUseCase,
+  verifySessionCookie: verifySessionCookieUseCase,
 });
 
 export { getTenant, iamHttpApp, requireIngestionWrite, requireKnowledgeRead };
