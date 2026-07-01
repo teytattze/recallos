@@ -5,6 +5,7 @@
   "scripts": {
     "build": "bunx --bun vite build",
     "dev": "bunx --bun vite dev",
+    "generate-routes": "tsr generate",
     "start": "bun run ./.output/server/index.mjs",
     "test": "vitest run"
   },
@@ -24,6 +25,7 @@
     "@tanstack/react-router-ssr-query": "catalog:",
     "@tanstack/react-start": "catalog:",
     "@tanstack/react-store": "catalog:",
+    "@tanstack/router-cli": "catalog:",
     "@tanstack/router-plugin": "catalog:",
     "better-auth": "catalog:",
     "class-variance-authority": "catalog:",
@@ -34,7 +36,7 @@
     "posthog-js": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "shadcn": "catalog:",
+    "shadcn": "^4.12.0",
     "sonner": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",

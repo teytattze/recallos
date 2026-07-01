@@ -1,13 +1,13 @@
 import { useSelector } from "@tanstack/react-store";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { iamAuthDataHook } from "@/data/iam/iam-auth-data-hook";
-import { useSignUpSendEmailOtpForm } from "@/features/sign-up/forms/sign-up-send-email-otp-form";
-import { useSignUpVerifyEmailOtpForm } from "@/features/sign-up/forms/sign-up-verify-email-otp-form";
-import { toast } from "sonner";
+import { SignUpEmailOtpVerifiedStep } from "@/features/sign-up/components/sign-up-email-otp-verified-step";
 import { SignUpSendEmailOtpStep } from "@/features/sign-up/components/sign-up-send-email-otp-step";
 import { SignUpVerifyEmailOtpStep } from "@/features/sign-up/components/sign-up-verify-email-otp-step";
-import { SignUpEmailOtpVerifiedStep } from "@/features/sign-up/components/sign-up-email-otp-verified-step";
+import { useSignUpSendEmailOtpForm } from "@/features/sign-up/forms/sign-up-send-email-otp-form";
+import { useSignUpVerifyEmailOtpForm } from "@/features/sign-up/forms/sign-up-verify-email-otp-form";
 
 type StepKey = "send-email-otp" | "verify-email-otp" | "email-otp-verified";
 

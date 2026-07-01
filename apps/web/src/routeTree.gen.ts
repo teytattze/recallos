@@ -8,97 +8,254 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignUpRouteRouteImport } from './routes/sign-up/route'
-import { Route as SignInRouteRouteImport } from './routes/sign-in/route'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as IndexRouteImport } from "./routes/index";
+import { Route as PlatformRouteImport } from "./routes/platform";
+import { Route as PlatformBillingRouteImport } from "./routes/platform/billing";
+import { Route as PlatformBrainRouteImport } from "./routes/platform/brain";
+import { Route as PlatformFeedbackRouteImport } from "./routes/platform/feedback";
+import { Route as PlatformInboxRouteImport } from "./routes/platform/inbox";
+import { Route as PlatformIndexRouteImport } from "./routes/platform/index";
+import { Route as PlatformWebhookSubscriptionRouteImport } from "./routes/platform/webhook-subscription";
+import { Route as SignInRouteRouteImport } from "./routes/sign-in/route";
+import { Route as SignUpRouteRouteImport } from "./routes/sign-up/route";
 
+const PlatformRoute = PlatformRouteImport.update({
+  id: "/platform",
+  path: "/platform",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const SignUpRouteRoute = SignUpRouteRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
+  id: "/sign-up",
+  path: "/sign-up",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const SignInRouteRoute = SignInRouteRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
+  id: "/sign-in",
+  path: "/sign-in",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
+const PlatformIndexRoute = PlatformIndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => PlatformRoute,
+} as any);
+const PlatformWebhookSubscriptionRoute =
+  PlatformWebhookSubscriptionRouteImport.update({
+    id: "/webhook-subscription",
+    path: "/webhook-subscription",
+    getParentRoute: () => PlatformRoute,
+  } as any);
+const PlatformInboxRoute = PlatformInboxRouteImport.update({
+  id: "/inbox",
+  path: "/inbox",
+  getParentRoute: () => PlatformRoute,
+} as any);
+const PlatformFeedbackRoute = PlatformFeedbackRouteImport.update({
+  id: "/feedback",
+  path: "/feedback",
+  getParentRoute: () => PlatformRoute,
+} as any);
+const PlatformBrainRoute = PlatformBrainRouteImport.update({
+  id: "/brain",
+  path: "/brain",
+  getParentRoute: () => PlatformRoute,
+} as any);
+const PlatformBillingRoute = PlatformBillingRouteImport.update({
+  id: "/billing",
+  path: "/billing",
+  getParentRoute: () => PlatformRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/sign-in': typeof SignInRouteRoute
-  '/sign-up': typeof SignUpRouteRoute
+  "/": typeof IndexRoute;
+  "/sign-in": typeof SignInRouteRoute;
+  "/sign-up": typeof SignUpRouteRoute;
+  "/platform": typeof PlatformRouteWithChildren;
+  "/platform/billing": typeof PlatformBillingRoute;
+  "/platform/brain": typeof PlatformBrainRoute;
+  "/platform/feedback": typeof PlatformFeedbackRoute;
+  "/platform/inbox": typeof PlatformInboxRoute;
+  "/platform/webhook-subscription": typeof PlatformWebhookSubscriptionRoute;
+  "/platform/": typeof PlatformIndexRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/sign-in': typeof SignInRouteRoute
-  '/sign-up': typeof SignUpRouteRoute
+  "/": typeof IndexRoute;
+  "/sign-in": typeof SignInRouteRoute;
+  "/sign-up": typeof SignUpRouteRoute;
+  "/platform/billing": typeof PlatformBillingRoute;
+  "/platform/brain": typeof PlatformBrainRoute;
+  "/platform/feedback": typeof PlatformFeedbackRoute;
+  "/platform/inbox": typeof PlatformInboxRoute;
+  "/platform/webhook-subscription": typeof PlatformWebhookSubscriptionRoute;
+  "/platform": typeof PlatformIndexRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/sign-in': typeof SignInRouteRoute
-  '/sign-up': typeof SignUpRouteRoute
+  __root__: typeof rootRouteImport;
+  "/": typeof IndexRoute;
+  "/sign-in": typeof SignInRouteRoute;
+  "/sign-up": typeof SignUpRouteRoute;
+  "/platform": typeof PlatformRouteWithChildren;
+  "/platform/billing": typeof PlatformBillingRoute;
+  "/platform/brain": typeof PlatformBrainRoute;
+  "/platform/feedback": typeof PlatformFeedbackRoute;
+  "/platform/inbox": typeof PlatformInboxRoute;
+  "/platform/webhook-subscription": typeof PlatformWebhookSubscriptionRoute;
+  "/platform/": typeof PlatformIndexRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sign-in' | '/sign-up'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sign-in' | '/sign-up'
-  id: '__root__' | '/' | '/sign-in' | '/sign-up'
-  fileRoutesById: FileRoutesById
+  fileRoutesByFullPath: FileRoutesByFullPath;
+  fullPaths:
+    | "/"
+    | "/sign-in"
+    | "/sign-up"
+    | "/platform"
+    | "/platform/billing"
+    | "/platform/brain"
+    | "/platform/feedback"
+    | "/platform/inbox"
+    | "/platform/webhook-subscription"
+    | "/platform/";
+  fileRoutesByTo: FileRoutesByTo;
+  to:
+    | "/"
+    | "/sign-in"
+    | "/sign-up"
+    | "/platform/billing"
+    | "/platform/brain"
+    | "/platform/feedback"
+    | "/platform/inbox"
+    | "/platform/webhook-subscription"
+    | "/platform";
+  id:
+    | "__root__"
+    | "/"
+    | "/sign-in"
+    | "/sign-up"
+    | "/platform"
+    | "/platform/billing"
+    | "/platform/brain"
+    | "/platform/feedback"
+    | "/platform/inbox"
+    | "/platform/webhook-subscription"
+    | "/platform/";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  SignInRouteRoute: typeof SignInRouteRoute
-  SignUpRouteRoute: typeof SignUpRouteRoute
+  IndexRoute: typeof IndexRoute;
+  SignInRouteRoute: typeof SignInRouteRoute;
+  SignUpRouteRoute: typeof SignUpRouteRoute;
+  PlatformRoute: typeof PlatformRouteWithChildren;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/sign-up': {
-      id: '/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof SignUpRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-in': {
-      id: '/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+    "/platform": {
+      id: "/platform";
+      path: "/platform";
+      fullPath: "/platform";
+      preLoaderRoute: typeof PlatformRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/sign-up": {
+      id: "/sign-up";
+      path: "/sign-up";
+      fullPath: "/sign-up";
+      preLoaderRoute: typeof SignUpRouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/sign-in": {
+      id: "/sign-in";
+      path: "/sign-in";
+      fullPath: "/sign-in";
+      preLoaderRoute: typeof SignInRouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/platform/": {
+      id: "/platform/";
+      path: "/";
+      fullPath: "/platform/";
+      preLoaderRoute: typeof PlatformIndexRouteImport;
+      parentRoute: typeof PlatformRoute;
+    };
+    "/platform/webhook-subscription": {
+      id: "/platform/webhook-subscription";
+      path: "/webhook-subscription";
+      fullPath: "/platform/webhook-subscription";
+      preLoaderRoute: typeof PlatformWebhookSubscriptionRouteImport;
+      parentRoute: typeof PlatformRoute;
+    };
+    "/platform/inbox": {
+      id: "/platform/inbox";
+      path: "/inbox";
+      fullPath: "/platform/inbox";
+      preLoaderRoute: typeof PlatformInboxRouteImport;
+      parentRoute: typeof PlatformRoute;
+    };
+    "/platform/feedback": {
+      id: "/platform/feedback";
+      path: "/feedback";
+      fullPath: "/platform/feedback";
+      preLoaderRoute: typeof PlatformFeedbackRouteImport;
+      parentRoute: typeof PlatformRoute;
+    };
+    "/platform/brain": {
+      id: "/platform/brain";
+      path: "/brain";
+      fullPath: "/platform/brain";
+      preLoaderRoute: typeof PlatformBrainRouteImport;
+      parentRoute: typeof PlatformRoute;
+    };
+    "/platform/billing": {
+      id: "/platform/billing";
+      path: "/billing";
+      fullPath: "/platform/billing";
+      preLoaderRoute: typeof PlatformBillingRouteImport;
+      parentRoute: typeof PlatformRoute;
+    };
   }
 }
+
+interface PlatformRouteChildren {
+  PlatformBillingRoute: typeof PlatformBillingRoute;
+  PlatformBrainRoute: typeof PlatformBrainRoute;
+  PlatformFeedbackRoute: typeof PlatformFeedbackRoute;
+  PlatformInboxRoute: typeof PlatformInboxRoute;
+  PlatformWebhookSubscriptionRoute: typeof PlatformWebhookSubscriptionRoute;
+  PlatformIndexRoute: typeof PlatformIndexRoute;
+}
+
+const PlatformRouteChildren: PlatformRouteChildren = {
+  PlatformBillingRoute: PlatformBillingRoute,
+  PlatformBrainRoute: PlatformBrainRoute,
+  PlatformFeedbackRoute: PlatformFeedbackRoute,
+  PlatformInboxRoute: PlatformInboxRoute,
+  PlatformWebhookSubscriptionRoute: PlatformWebhookSubscriptionRoute,
+  PlatformIndexRoute: PlatformIndexRoute,
+};
+
+const PlatformRouteWithChildren = PlatformRoute._addFileChildren(
+  PlatformRouteChildren,
+);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SignInRouteRoute: SignInRouteRoute,
   SignUpRouteRoute: SignUpRouteRoute,
-}
+  PlatformRoute: PlatformRouteWithChildren,
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
+  ._addFileTypes<FileRouteTypes>();
