@@ -64,6 +64,7 @@ class BetterAuthApiKeyVerifier implements ApiKeyVerifierPort {
     return {
       tenant: Tenant.create("organization", organizationId).toString(),
       organizationId,
+      authenticationMethod: "api-key",
       apiKeyId: result.key.id,
       permissions: this.resolvePermissions({
         storedPermissions: result.key.permissions,

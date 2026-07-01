@@ -45,6 +45,7 @@ test("BetterAuthApiKeyVerifier.verify: given a valid org-owned key, it should re
   ).toEqual({
     tenant: "organization:org1",
     organizationId: "org1",
+    authenticationMethod: "api-key",
     apiKeyId: "key1",
     permissions: [permissions.knowledgeRead],
   });

@@ -13,9 +13,10 @@ import { VerifyApiKeyUseCase } from "./verify-api-key-use-case.ts";
 const principal = {
   tenant: "organization:org1",
   organizationId: "org1",
+  authenticationMethod: "api-key",
   apiKeyId: "key1",
   permissions: [permissions.knowledgeRead],
-};
+} as const;
 
 class FakeApiKeyVerifier implements ApiKeyVerifierPort {
   readonly verifyCalls: ApiKeyVerifierPortVerifyInput[] = [];

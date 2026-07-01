@@ -9,6 +9,7 @@ import { defaultStatements } from "better-auth/plugins/organization/access";
 
 import { ResendOtpEmailSender } from "../email/resend-otp-email-sender.ts";
 import { BetterAuthApiKeyVerifier } from "./better-auth-api-key-verifier.ts";
+import { BetterAuthSessionCookieVerifier } from "./better-auth-session-cookie-verifier.ts";
 
 type BetterAuthConfig = {
   readonly baseUrl: string;
@@ -49,6 +50,8 @@ type CreateBetterAuthInput = {
 const accessControl = createAccessControl({
   ...defaultStatements,
   apiKey: ["create", "read", "update", "delete"],
+  ingestion: ["write"],
+  knowledge: ["read"],
 } as const);
 const ownerRole = accessControl.newRole({
   organization: ["update", "delete"],
@@ -57,6 +60,8 @@ const ownerRole = accessControl.newRole({
   team: ["create", "update", "delete"],
   ac: ["create", "read", "update", "delete"],
   apiKey: ["create", "read", "update", "delete"],
+  ingestion: ["write"],
+  knowledge: ["read"],
 });
 const adminRole = accessControl.newRole({
   organization: ["update"],
@@ -65,6 +70,8 @@ const adminRole = accessControl.newRole({
   team: ["create", "update", "delete"],
   ac: ["create", "read", "update", "delete"],
   apiKey: ["create", "read", "update", "delete"],
+  ingestion: ["write"],
+  knowledge: ["read"],
 });
 const memberRole = accessControl.newRole({
   organization: [],
@@ -73,6 +80,8 @@ const memberRole = accessControl.newRole({
   team: [],
   ac: ["read"],
   apiKey: ["read"],
+  ingestion: [],
+  knowledge: ["read"],
 });
 
 const createBetterAuth = (input: CreateBetterAuthInput) => {
@@ -135,6 +144,12 @@ const createBetterAuth = (input: CreateBetterAuthInput) => {
     apiKeyVerifier: new BetterAuthApiKeyVerifier({
       api: auth.api,
       configId: input.config.apiKey.configId,
+    }),
+    sessionCookieVerifier: new BetterAuthSessionCookieVerifier({
+      api: {
+        getSession: (request) => auth.api.getSession(request),
+        hasPermission: (request) => auth.api.hasPermission(request),
+      },
     }),
   };
 };
