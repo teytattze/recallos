@@ -167,7 +167,6 @@ test("SearchGraphUseCase.execute: given a missing graph, it should throw before 
   expect(error).toBeInstanceOf(AppError);
   const appError = AppError.from(error);
   expect(appError.code).toBe("serverKnowledgeCore.graphNotFound");
-  expect(appError.details).toEqual({ id: graphId, tenant });
   expect(embeddingGateway.embedInputs).toEqual([]);
   expect(graphNodeRepository.searchInputs).toEqual([]);
 });

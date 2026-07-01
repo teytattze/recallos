@@ -50,7 +50,7 @@ test("EventExternal.create: given an unsupported provider, it should throw an In
 
   // THEN
   expect(error).toBeInstanceOf(AppError);
-  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
+  expect(AppError.from(error).code).toBe("invariantViolation");
 });
 
 test("EventExternal.restore: given an unsupported provider, it should throw an InvariantViolation app error", () => {
@@ -69,7 +69,7 @@ test("EventExternal.restore: given an unsupported provider, it should throw an I
 
   // THEN
   expect(error).toBeInstanceOf(AppError);
-  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
+  expect(AppError.from(error).code).toBe("invariantViolation");
 });
 
 test("EventExternal.equals: given the same payload, it should be equal", () => {

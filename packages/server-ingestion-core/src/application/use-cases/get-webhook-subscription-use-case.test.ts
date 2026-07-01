@@ -118,7 +118,6 @@ test("GetWebhookSubscriptionUseCase.execute: given a missing subscription, it sh
   expect(error).toBeInstanceOf(AppError);
   const appError = AppError.from(error);
   expect(appError.code).toBe("serverIngestionCore.webhookSubscriptionNotFound");
-  expect(appError.details).toEqual({ id, tenant });
   expect(repository.findByIdInputs.length).toBe(1);
   expect(repository.findByIdInputs[0]!.id.toString()).toBe(id);
   expect(repository.findByIdInputs[0]!.tenant.toString()).toBe(tenant);

@@ -53,7 +53,11 @@ const createGraphNodeRoutes = (input: CreateGraphNodeRoutesInput) => {
       const pathParams = graphPathParams.parse({
         graphId: c.req.param("graphId"),
       });
-      const body = searchGraphBody.parse(await c.req.json());
+      const body = searchGraphBody.parse(
+        await c.req.json().catch((error: unknown) => {
+          throw AppError.ofCode("invariantViolation", { cause: error });
+        }),
+      );
       const results = await input.deps.searchGraph.execute({
         tenant: input.resolveTenant(c),
         payload: { graphId: pathParams.graphId, query: body.query },

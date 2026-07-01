@@ -14,7 +14,7 @@ test("parseProps: given valid input, it should return normalized data", () => {
   expect(value).toEqual({ value: "hello" });
 });
 
-test("parseProps: given invalid input, it should throw an InvariantViolation app error carrying the zod issues", () => {
+test("parseProps: given invalid input, it should throw an InvariantViolation app error caused by the zod error", () => {
   // GIVEN / WHEN
   let error: unknown;
   try {
@@ -25,6 +25,8 @@ test("parseProps: given invalid input, it should throw an InvariantViolation app
 
   // THEN
   expect(error).toBeInstanceOf(AppError);
-  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
-  expect(Array.isArray(AppError.from(error).details?.issues)).toBe(true);
+  expect(AppError.from(error).code).toBe("invariantViolation");
+  const cause = AppError.from(error).cause;
+  expect(cause).toBeInstanceOf(z.ZodError);
+  expect((cause as z.ZodError).issues.length).toBeGreaterThan(0);
 });

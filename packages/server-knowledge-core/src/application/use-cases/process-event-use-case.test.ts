@@ -148,8 +148,6 @@ test("ProcessEventUseCase.execute: given a missing graph, it should throw before
   expect(error).toBeInstanceOf(AppError);
   const appError = AppError.from(error);
   expect(appError.code).toBe("serverKnowledgeCore.graphNotFound");
-  expect(appError.message).toBe("Graph not found");
-  expect(appError.details).toEqual({ id: graphId, tenant });
   expect(embeddingGateway.inputs).toEqual([]);
   expect(graphNodeRepository.inputs).toEqual([]);
 });

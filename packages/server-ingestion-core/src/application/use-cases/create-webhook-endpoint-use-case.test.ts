@@ -135,7 +135,7 @@ test("CreateWebhookSubscriptionUseCase.execute: given an invalid tenant, it shou
 
   // THEN
   expect(error).toBeInstanceOf(AppError);
-  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
+  expect(AppError.from(error).code).toBe("invariantViolation");
   expect(unitOfWork.ran).toBe(0);
   expect(secretGenerator.generated).toBe(0);
   expect(unitOfWork.webhookSubscriptions.inserted.length).toBe(0);

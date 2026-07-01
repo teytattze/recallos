@@ -78,7 +78,10 @@ test("createApiKeyMiddleware: given an invalid API key, it should return 401", a
   });
 
   expect(response.status).toBe(401);
-  expect(await response.json()).toEqual({ message: "Unauthorized" });
+  expect(await response.json()).toEqual({
+    code: "serverIamCore.invalidApiKey",
+    message: "Unauthorized",
+  });
 });
 
 test("createApiKeyMiddleware: given insufficient permissions, it should return 403", async () => {
@@ -100,5 +103,8 @@ test("createApiKeyMiddleware: given insufficient permissions, it should return 4
   });
 
   expect(response.status).toBe(403);
-  expect(await response.json()).toEqual({ message: "Forbidden" });
+  expect(await response.json()).toEqual({
+    code: "serverIamCore.insufficientPermission",
+    message: "Forbidden",
+  });
 });

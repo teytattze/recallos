@@ -51,7 +51,7 @@ class EmptyListGraphNodes implements ListGraphNodesPort {
 
 class InvalidListGraphNodes implements ListGraphNodesPort {
   execute(): ListGraphNodesPortOutput {
-    return Promise.reject(AppError.ofCode("serverKernel.invariantViolation"));
+    return Promise.reject(AppError.ofCode("invariantViolation"));
   }
 }
 
@@ -109,7 +109,10 @@ test("createGraphNodeRoutes: given a missing event id, it should return 422 with
 
   // THEN
   expect(response.status).toBe(422);
-  expect(await response.json()).toEqual({ message: "Invalid request" });
+  expect(await response.json()).toEqual({
+    code: "invariantViolation",
+    message: "Invariant violation",
+  });
   expect(listGraphNodes.executeCalls).toEqual([]);
 });
 
@@ -130,7 +133,10 @@ test("createGraphNodeRoutes: given a malformed tenant rejected by the core, it s
 
   // THEN
   expect(response.status).toBe(422);
-  expect(await response.json()).toEqual({ message: "Invalid request" });
+  expect(await response.json()).toEqual({
+    code: "invariantViolation",
+    message: "Invariant violation",
+  });
 });
 
 test("createGraphNodeRoutes: given a search query, it should return matching raw event DTOs", async () => {
@@ -177,5 +183,8 @@ test("createGraphNodeRoutes: given malformed search JSON, it should return 422",
 
   // THEN
   expect(response.status).toBe(422);
-  expect(await response.json()).toEqual({ message: "Invalid request" });
+  expect(await response.json()).toEqual({
+    code: "invariantViolation",
+    message: "Invariant violation",
+  });
 });

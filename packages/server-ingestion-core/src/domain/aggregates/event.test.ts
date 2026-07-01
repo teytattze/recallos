@@ -110,7 +110,7 @@ test.each([
 
     // THEN
     expect(error).toBeInstanceOf(AppError);
-    expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
+    expect(AppError.from(error).code).toBe("invariantViolation");
   },
 );
 
@@ -163,5 +163,5 @@ test("Event.restore: given an unsupported external provider, it should throw an 
 
   // THEN
   expect(error).toBeInstanceOf(AppError);
-  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
+  expect(AppError.from(error).code).toBe("invariantViolation");
 });

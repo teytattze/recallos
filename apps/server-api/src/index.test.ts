@@ -85,7 +85,10 @@ test("server api fetch: given a graph node request without an IAM API key, it sh
 
   // THEN
   expect(response.status).toBe(401);
-  expect(await response.json()).toEqual({ message: "Unauthorized" });
+  expect(await response.json()).toEqual({
+    code: "serverIamCore.missingSessionCookie",
+    message: "Unauthorized",
+  });
 });
 
 test("server api fetch: given a knowledge search request without an IAM API key, it should return 401", async () => {
@@ -111,7 +114,10 @@ test("server api fetch: given a knowledge search request without an IAM API key,
 
   // THEN
   expect(response.status).toBe(401);
-  expect(await response.json()).toEqual({ message: "Unauthorized" });
+  expect(await response.json()).toEqual({
+    code: "serverIamCore.missingSessionCookie",
+    message: "Unauthorized",
+  });
 });
 
 test("server api fetch: given an MCP request without an IAM API key, it should return 401", async () => {
@@ -131,5 +137,8 @@ test("server api fetch: given an MCP request without an IAM API key, it should r
 
   // THEN
   expect(response.status).toBe(401);
-  expect(await response.json()).toEqual({ message: "Unauthorized" });
+  expect(await response.json()).toEqual({
+    code: "serverIamCore.missingSessionCookie",
+    message: "Unauthorized",
+  });
 });

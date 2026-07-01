@@ -128,7 +128,7 @@ test("IngestEventUseCase.execute: given an invalid event, it should throw an Inv
 
   // THEN
   expect(error).toBeInstanceOf(AppError);
-  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
+  expect(AppError.from(error).code).toBe("invariantViolation");
   expect(uow.ran).toBe(0);
   expect(uow.events.inserted.length).toBe(0);
 });

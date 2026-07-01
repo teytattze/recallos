@@ -139,7 +139,10 @@ test("createAuthenticationMiddleware: given an invalid session cookie, it should
   });
 
   expect(response.status).toBe(401);
-  expect(await response.json()).toEqual({ message: "Unauthorized" });
+  expect(await response.json()).toEqual({
+    code: "serverIamCore.invalidSessionCookie",
+    message: "Unauthorized",
+  });
 });
 
 test("createAuthenticationMiddleware: given insufficient permissions, it should return 403", async () => {
@@ -162,5 +165,8 @@ test("createAuthenticationMiddleware: given insufficient permissions, it should 
   });
 
   expect(response.status).toBe(403);
-  expect(await response.json()).toEqual({ message: "Forbidden" });
+  expect(await response.json()).toEqual({
+    code: "serverIamCore.insufficientPermission",
+    message: "Forbidden",
+  });
 });

@@ -1,5 +1,5 @@
 import { merge } from "es-toolkit";
-import z from "zod";
+import z, { ZodError } from "zod";
 
 import {
   appErrorCodeToDefinition,
@@ -41,19 +41,26 @@ class AppError extends Error {
   }
 
   static from(error: unknown) {
-    if (error instanceof AppError) {
-      return error;
-    }
     if (isAppErrorCode(error)) {
       return AppError.ofCode(error);
     }
-    const result = appErrorJson.safeParse(error);
 
+    if (error instanceof AppError) {
+      return error;
+    }
+    if (error instanceof ZodError) {
+      return AppError.ofCode("invariantViolation", {
+        cause: error,
+      });
+    }
+
+    const result = appErrorJson.safeParse(error);
     if (result.success) {
       return AppError.ofCode(result.data.code, {
         message: result.data.message,
       });
     }
+
     return AppError.ofCode("unknown");
   }
 

@@ -18,14 +18,14 @@ const baseAppErrorCodeToDefinition = {
     message: "Unknown error",
     origin: null,
   },
+  invariantViolation: {
+    mappings: { httpStatus: 422 },
+    message: "Invariant violation",
+    origin: null,
+  },
 } as const satisfies BaseAppErrorDefinitions;
 
 const serverAppErrorCodeToDefinition = {
-  "serverKernel.invariantViolation": {
-    mappings: { httpStatus: 422 },
-    message: "Invalid request",
-    origin: "serverKernel",
-  },
   "serverIngestionCore.invalidWebhookAuthentication": {
     mappings: { httpStatus: 403 },
     message: "Forbidden",

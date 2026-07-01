@@ -33,5 +33,5 @@ test("GraphId.restore: given an empty value, it should throw an InvariantViolati
 
   // THEN
   expect(error).toBeInstanceOf(AppError);
-  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
+  expect(AppError.from(error).code).toBe("invariantViolation");
 });

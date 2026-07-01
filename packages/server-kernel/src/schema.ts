@@ -7,7 +7,7 @@ export function parseProps<S extends z.ZodType>(
 ): z.output<S> {
   const parsed = schema.safeParse(input);
   if (parsed.success) return parsed.data;
-  throw AppError.ofCode("serverKernel.invariantViolation", {
+  throw AppError.ofCode("invariantViolation", {
     cause: parsed.error,
   });
 }
