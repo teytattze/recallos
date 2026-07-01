@@ -8,9 +8,18 @@ import type {
 } from "@repo/server-knowledge-core";
 
 import { AppError } from "@repo/app-error";
+import { createHttpErrorHandler } from "@repo/server-platform";
 import { expect, test } from "bun:test";
+import { Hono } from "hono";
 
 import { createGraphNodeRoutes } from "./graph-node-routes.ts";
+
+const withErrorHandling = (routes: Hono) => {
+  const app = new Hono();
+  app.onError(createHttpErrorHandler());
+  app.route("", routes);
+  return app;
+};
 
 const tenant = "organization:org1";
 const eventId = "event-1";
@@ -105,7 +114,9 @@ test("createGraphNodeRoutes: given a missing event id, it should return 422 with
   });
 
   // WHEN
-  const response = await routes.request(`http://localhost/${graphId}/nodes`);
+  const response = await withErrorHandling(routes).request(
+    `http://localhost/${graphId}/nodes`,
+  );
 
   // THEN
   expect(response.status).toBe(422);
@@ -127,7 +138,7 @@ test("createGraphNodeRoutes: given a malformed tenant rejected by the core, it s
   });
 
   // WHEN
-  const response = await routes.request(
+  const response = await withErrorHandling(routes).request(
     `http://localhost/${graphId}/nodes?eventId=${eventId}&tenant=${tenant}`,
   );
 
@@ -175,11 +186,14 @@ test("createGraphNodeRoutes: given malformed search JSON, it should return 422",
   });
 
   // WHEN
-  const response = await routes.request(`http://localhost/${graphId}/search`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: "{",
-  });
+  const response = await withErrorHandling(routes).request(
+    `http://localhost/${graphId}/search`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{",
+    },
+  );
 
   // THEN
   expect(response.status).toBe(422);

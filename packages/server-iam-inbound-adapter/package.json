@@ -15,6 +15,7 @@
     "hono": "catalog:"
   },
   "devDependencies": {
+    "@repo/server-platform": "workspace:*",
     "@repo/typescript-config": "workspace:*"
   }
 }

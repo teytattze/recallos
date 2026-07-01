@@ -7,6 +7,7 @@ import type {
 
 import { AppError } from "@repo/app-error";
 import { permissions } from "@repo/server-iam-core";
+import { createHttpErrorHandler } from "@repo/server-platform";
 import { expect, test } from "bun:test";
 import { Hono } from "hono";
 
@@ -62,6 +63,7 @@ test("createApiKeyMiddleware: given a valid API key, it should inject the princi
 test("createApiKeyMiddleware: given an invalid API key, it should return 401", async () => {
   const app = new Hono();
 
+  app.onError(createHttpErrorHandler());
   app.use(
     "*",
     createApiKeyMiddleware({
@@ -87,6 +89,7 @@ test("createApiKeyMiddleware: given an invalid API key, it should return 401", a
 test("createApiKeyMiddleware: given insufficient permissions, it should return 403", async () => {
   const app = new Hono();
 
+  app.onError(createHttpErrorHandler());
   app.use(
     "*",
     createApiKeyMiddleware({

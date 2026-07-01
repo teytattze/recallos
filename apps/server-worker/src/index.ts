@@ -1,3 +1,4 @@
+import { createHttpErrorHandler } from "@repo/server-platform";
 import { Hono } from "hono";
 
 import { commonHttpApp, markWorkerReady } from "./common.ts";
@@ -5,6 +6,8 @@ import { config } from "./config.ts";
 import { mongodbChangeStream } from "./ingestion.ts";
 
 const app = new Hono();
+
+app.onError(createHttpErrorHandler());
 
 app.route("", commonHttpApp);
 

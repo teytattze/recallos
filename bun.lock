@@ -160,6 +160,7 @@
         "hono": "catalog:",
       },
       "devDependencies": {
+        "@repo/server-platform": "workspace:*",
         "@repo/typescript-config": "workspace:*",
       },
     },
@@ -246,6 +247,7 @@
         "zod": "catalog:",
       },
       "devDependencies": {
+        "@repo/server-platform": "workspace:*",
         "@repo/typescript-config": "workspace:*",
       },
     },
@@ -264,6 +266,7 @@
     "packages/server-platform": {
       "name": "@repo/server-platform",
       "dependencies": {
+        "@repo/app-error": "workspace:*",
         "hono": "catalog:",
         "pino": "catalog:",
         "pino-pretty": "catalog:",

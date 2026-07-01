@@ -1,3 +1,4 @@
+import { createHttpErrorHandler } from "@repo/server-platform";
 import { Hono } from "hono";
 
 import { commonHttpApp } from "./common";
@@ -7,6 +8,8 @@ import { ingestionHttpApp } from "./ingestion";
 import { knowledgeHttpApp } from "./knowledge";
 
 const app = new Hono();
+
+app.onError(createHttpErrorHandler());
 
 app.route("", commonHttpApp);
 app.route("", iamHttpApp);
