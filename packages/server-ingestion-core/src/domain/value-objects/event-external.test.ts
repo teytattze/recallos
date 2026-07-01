@@ -1,3 +1,4 @@
+import { AppError } from "@repo/app-error";
 import { test, expect } from "bun:test";
 
 import type { EventExternalPropsIn } from "./event-external.ts";
@@ -33,28 +34,42 @@ test("EventExternal.restore: given a Jira external reference, it should expose i
   expect(String(value.toJSON().provider)).toBe(external.provider);
 });
 
-test("EventExternal.create: given an unsupported provider, it should throw an InvalidEvent error", () => {
-  // GIVEN / WHEN / THEN
-  expect(() =>
+test("EventExternal.create: given an unsupported provider, it should throw an InvariantViolation app error", () => {
+  // GIVEN / WHEN
+  let error: unknown;
+  try {
     EventExternal.create({
       payload: {
         ...external,
         provider: "github",
       } as unknown as EventExternalPropsIn,
-    }),
-  ).toThrow(expect.objectContaining({ kind: "InvalidEvent" }));
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  // THEN
+  expect(error).toBeInstanceOf(AppError);
+  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
 });
 
-test("EventExternal.restore: given an unsupported provider, it should throw an InvariantViolation error", () => {
-  // GIVEN / WHEN / THEN
-  expect(() =>
+test("EventExternal.restore: given an unsupported provider, it should throw an InvariantViolation app error", () => {
+  // GIVEN / WHEN
+  let error: unknown;
+  try {
     EventExternal.restore({
       payload: {
         ...external,
         provider: "github",
       } as unknown as EventExternalPropsIn,
-    }),
-  ).toThrow(expect.objectContaining({ kind: "InvariantViolation" }));
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  // THEN
+  expect(error).toBeInstanceOf(AppError);
+  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
 });
 
 test("EventExternal.equals: given the same payload, it should be equal", () => {

@@ -1,3 +1,4 @@
+import { AppError } from "@repo/app-error";
 import { Tenant, type Clock } from "@repo/server-kernel";
 
 import type {
@@ -10,7 +11,6 @@ import type { GraphNodeRepositoryPort } from "../ports/outbound/graph-node-repos
 import type { GraphRepositoryPort } from "../ports/outbound/graph-repository-port.ts";
 
 import { GraphNode } from "../../domain/aggregates/graph-node.ts";
-import { createGraphNotFoundError } from "../../domain/errors/graph-not-found-error.ts";
 import { GraphId } from "../../domain/value-objects/graph-id.ts";
 
 class ProcessEventUseCase implements ProcessEventPort {
@@ -32,10 +32,7 @@ class ProcessEventUseCase implements ProcessEventPort {
     });
 
     if (graph === null) {
-      throw createGraphNotFoundError("Graph not found", {
-        id: input.payload.graphId,
-        tenant: input.tenant,
-      });
+      throw AppError.ofCode("serverKnowledgeCore.graphNotFound");
     }
 
     const { embedding } = await this.embeddingGateway.embed({

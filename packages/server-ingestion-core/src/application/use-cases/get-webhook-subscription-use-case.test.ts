@@ -1,3 +1,4 @@
+import { AppError } from "@repo/app-error";
 import { expect, test } from "bun:test";
 
 import type {
@@ -114,11 +115,10 @@ test("GetWebhookSubscriptionUseCase.execute: given a missing subscription, it sh
     .catch((caught: unknown) => caught);
 
   // THEN
-  expect(error).toMatchObject({
-    kind: "WebhookSubscriptionNotFound",
-    category: "not-found",
-    details: { id, tenant },
-  });
+  expect(error).toBeInstanceOf(AppError);
+  const appError = AppError.from(error);
+  expect(appError.code).toBe("serverIngestionCore.webhookSubscriptionNotFound");
+  expect(appError.details).toEqual({ id, tenant });
   expect(repository.findByIdInputs.length).toBe(1);
   expect(repository.findByIdInputs[0]!.id.toString()).toBe(id);
   expect(repository.findByIdInputs[0]!.tenant.toString()).toBe(tenant);

@@ -1,3 +1,4 @@
+import { AppError } from "@repo/app-error";
 import { test, expect } from "bun:test";
 
 import { GraphId } from "./graph-id.ts";
@@ -21,9 +22,16 @@ test("GraphId.equals: given the same value, it should be equal", () => {
   ).toBe(true);
 });
 
-test("GraphId.restore: given an empty value, it should throw an InvariantViolation error", () => {
-  // GIVEN / WHEN / THEN
-  expect(() => GraphId.restore({ payload: "" })).toThrow(
-    expect.objectContaining({ kind: "InvariantViolation" }),
-  );
+test("GraphId.restore: given an empty value, it should throw an InvariantViolation app error", () => {
+  // GIVEN / WHEN
+  let error: unknown;
+  try {
+    GraphId.restore({ payload: "" });
+  } catch (caught) {
+    error = caught;
+  }
+
+  // THEN
+  expect(error).toBeInstanceOf(AppError);
+  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
 });

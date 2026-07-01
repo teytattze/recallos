@@ -14,9 +14,7 @@ class VerifyApiKeyUseCase implements VerifyApiKeyPort {
     const apiKey = input.apiKey?.trim();
 
     if (apiKey === undefined || apiKey.length === 0) {
-      throw AppError.ofCode("serverIamCore.missingApiKey", {
-        message: "Missing API key",
-      });
+      throw AppError.ofCode("serverIamCore.missingApiKey");
     }
 
     const principal = await this.apiKeyVerifier.verify({
@@ -30,10 +28,7 @@ class VerifyApiKeyUseCase implements VerifyApiKeyPort {
     );
 
     if (missingPermissions.length > 0) {
-      throw AppError.ofCode("serverIamCore.insufficientPermission", {
-        details: { permissions: missingPermissions },
-        message: "API key does not grant the required permissions",
-      });
+      throw AppError.ofCode("serverIamCore.insufficientPermission");
     }
 
     return principal;

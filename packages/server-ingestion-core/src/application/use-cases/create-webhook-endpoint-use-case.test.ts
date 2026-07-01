@@ -1,3 +1,4 @@
+import { AppError } from "@repo/app-error";
 import { createFixedClock } from "@repo/server-kernel";
 import { expect, test } from "bun:test";
 
@@ -133,7 +134,8 @@ test("CreateWebhookSubscriptionUseCase.execute: given an invalid tenant, it shou
     .catch((caught: unknown) => caught);
 
   // THEN
-  expect(error).toMatchObject({ kind: "InvariantViolation" });
+  expect(error).toBeInstanceOf(AppError);
+  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
   expect(unitOfWork.ran).toBe(0);
   expect(secretGenerator.generated).toBe(0);
   expect(unitOfWork.webhookSubscriptions.inserted.length).toBe(0);

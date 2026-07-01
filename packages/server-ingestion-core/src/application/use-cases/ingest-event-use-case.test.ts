@@ -1,5 +1,6 @@
 import type { JsonObject } from "type-fest";
 
+import { AppError } from "@repo/app-error";
 import { createFixedClock } from "@repo/server-kernel";
 import { test, expect } from "bun:test";
 
@@ -107,7 +108,7 @@ test("IngestEventUseCase.execute: given valid input, it should insert the event 
   expect(uow.events.inserted[0]!.raw).toEqual(raw);
 });
 
-test("IngestEventUseCase.execute: given an invalid event, it should throw an InvalidEvent error without inserting", async () => {
+test("IngestEventUseCase.execute: given an invalid event, it should throw an InvariantViolation app error without inserting", async () => {
   // GIVEN
   const uow = new FakeUnitOfWork();
   const useCase = new IngestEventUseCase(createFixedClock(createdAt), uow);
@@ -126,7 +127,8 @@ test("IngestEventUseCase.execute: given an invalid event, it should throw an Inv
   const error = await useCase.execute(input).catch((caught: unknown) => caught);
 
   // THEN
-  expect(error).toMatchObject({ kind: "InvalidEvent" });
+  expect(error).toBeInstanceOf(AppError);
+  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
   expect(uow.ran).toBe(0);
   expect(uow.events.inserted.length).toBe(0);
 });

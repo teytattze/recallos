@@ -1,3 +1,4 @@
+import { AppError } from "@repo/app-error";
 import { Tenant } from "@repo/server-kernel";
 
 import type {
@@ -9,7 +10,6 @@ import type { EmbeddingGatewayPort } from "../ports/outbound/embedding-gateway-p
 import type { GraphNodeRepositoryPort } from "../ports/outbound/graph-node-repository-port.ts";
 import type { GraphRepositoryPort } from "../ports/outbound/graph-repository-port.ts";
 
-import { createGraphNotFoundError } from "../../domain/errors/graph-not-found-error.ts";
 import { GraphId } from "../../domain/value-objects/graph-id.ts";
 
 class SearchGraphUseCase implements SearchGraphPort {
@@ -25,10 +25,7 @@ class SearchGraphUseCase implements SearchGraphPort {
     const graph = await this.graphRepository.findById({ id: graphId, tenant });
 
     if (graph === null) {
-      throw createGraphNotFoundError("Graph not found", {
-        id: input.payload.graphId,
-        tenant: input.tenant,
-      });
+      throw AppError.ofCode("serverKnowledgeCore.graphNotFound");
     }
 
     const embedResult = await this.embeddingGateway.embed({

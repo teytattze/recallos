@@ -182,6 +182,7 @@
     "packages/server-ingestion-core": {
       "name": "@repo/server-ingestion-core",
       "dependencies": {
+        "@repo/app-error": "workspace:*",
         "@repo/server-kernel": "workspace:*",
         "zod": "catalog:",
       },
@@ -216,6 +217,7 @@
     "packages/server-kernel": {
       "name": "@repo/server-kernel",
       "dependencies": {
+        "@repo/app-error": "workspace:*",
         "es-toolkit": "catalog:",
         "zod": "catalog:",
       },
@@ -226,6 +228,7 @@
     "packages/server-knowledge-core": {
       "name": "@repo/server-knowledge-core",
       "dependencies": {
+        "@repo/app-error": "workspace:*",
         "@repo/server-kernel": "workspace:*",
         "zod": "catalog:",
       },
@@ -236,6 +239,7 @@
     "packages/server-knowledge-inbound-adapter": {
       "name": "@repo/server-knowledge-inbound-adapter",
       "dependencies": {
+        "@repo/app-error": "workspace:*",
         "@repo/server-knowledge-core": "workspace:*",
         "hono": "catalog:",
         "mongodb": "catalog:",

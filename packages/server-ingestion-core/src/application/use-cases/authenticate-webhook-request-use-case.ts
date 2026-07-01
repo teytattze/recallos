@@ -1,3 +1,4 @@
+import { AppError } from "@repo/app-error";
 import { Tenant } from "@repo/server-kernel";
 import { timingSafeEqual } from "node:crypto";
 
@@ -9,7 +10,6 @@ import type {
 import type { WebhookSignatureGeneratorPort } from "../ports/outbound/webhook-signature-generator-port.ts";
 import type { WebhookSubscriptionRepositoryPort } from "../ports/outbound/webhook-subscription-repository-port.ts";
 
-import { createInvalidWebhookAuthenticationError } from "../../domain/errors/invalid-webhook-authentication-error.ts";
 import { WebhookSubscriptionId } from "../../domain/value-objects/webhook-subscription-id.ts";
 
 class AuthenticateWebhookRequestUseCase implements AuthenticateWebhookRequestPort {
@@ -33,9 +33,7 @@ class AuthenticateWebhookRequestUseCase implements AuthenticateWebhookRequestPor
       });
 
     if (webhookSubscription === null) {
-      throw createInvalidWebhookAuthenticationError(
-        "Webhook authentication failed",
-      );
+      throw AppError.ofCode("serverIngestionCore.invalidWebhookAuthentication");
     }
     const expectedSignature = this.webhookSignatureGenerator.generate({
       secret: webhookSubscription.secret,
@@ -49,9 +47,7 @@ class AuthenticateWebhookRequestUseCase implements AuthenticateWebhookRequestPor
     if (isValid) {
       return;
     }
-    throw createInvalidWebhookAuthenticationError(
-      "Webhook authentication failed",
-    );
+    throw AppError.ofCode("serverIngestionCore.invalidWebhookAuthentication");
   }
 }
 

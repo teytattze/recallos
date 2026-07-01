@@ -13,7 +13,6 @@ export * from "./application/use-cases/search-graph-use-case.ts";
 
 export * from "./domain/aggregates/graph-node.ts";
 export * from "./domain/aggregates/graph.ts";
-export * from "./domain/errors/graph-not-found-error.ts";
 export * from "./domain/value-objects/embedding-metadata.ts";
 export * from "./domain/value-objects/event-id.ts";
 export * from "./domain/value-objects/graph-id.ts";

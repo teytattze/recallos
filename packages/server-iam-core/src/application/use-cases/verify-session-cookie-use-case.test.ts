@@ -55,11 +55,7 @@ test("VerifySessionCookieUseCase.execute: given a missing cookie header, it shou
 
 test("VerifySessionCookieUseCase.execute: given an invalid session cookie, it should surface the verifier failure", async () => {
   const verifier = new FakeSessionCookieVerifier(
-    Promise.reject(
-      AppError.ofCode("serverIamCore.invalidSessionCookie", {
-        message: "Invalid session cookie",
-      }),
-    ),
+    Promise.reject(AppError.ofCode("serverIamCore.invalidSessionCookie")),
   );
   const useCase = new VerifySessionCookieUseCase(verifier);
 

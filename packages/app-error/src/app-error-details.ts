@@ -21,6 +21,21 @@ const baseAppErrorCodeToDefinition = {
 } as const satisfies BaseAppErrorDefinitions;
 
 const serverAppErrorCodeToDefinition = {
+  "serverKernel.invariantViolation": {
+    mappings: { httpStatus: 422 },
+    message: "Invalid request",
+    origin: "serverKernel",
+  },
+  "serverIngestionCore.invalidWebhookAuthentication": {
+    mappings: { httpStatus: 403 },
+    message: "Forbidden",
+    origin: "serverIngestionCore",
+  },
+  "serverIngestionCore.webhookSubscriptionNotFound": {
+    mappings: { httpStatus: 404 },
+    message: "Not found",
+    origin: "serverIngestionCore",
+  },
   "serverIamCore.missingApiKey": {
     mappings: { httpStatus: 401 },
     message: "Unauthorized",
@@ -46,7 +61,17 @@ const serverAppErrorCodeToDefinition = {
     message: "Forbidden",
     origin: "serverIamCore",
   },
-} as const satisfies BaseAppErrorDefinitions<"serverIamCore">;
+  "serverKnowledgeCore.graphNotFound": {
+    mappings: { httpStatus: 404 },
+    message: "Not found",
+    origin: "serverKnowledgeCore",
+  },
+} as const satisfies BaseAppErrorDefinitions<
+  | "serverIamCore"
+  | "serverIngestionCore"
+  | "serverKernel"
+  | "serverKnowledgeCore"
+>;
 
 const webAppErrorCodeToDefinition = {} as const satisfies Record<
   string,

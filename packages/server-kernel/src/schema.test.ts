@@ -1,7 +1,7 @@
+import { AppError } from "@repo/app-error";
 import { test, expect } from "bun:test";
 import { z } from "zod";
 
-import { defineError } from "./domain-error.ts";
 import { parseProps } from "./schema.ts";
 
 const schema = z.object({ value: z.string().trim().min(1) });
@@ -14,33 +14,17 @@ test("parseProps: given valid input, it should return normalized data", () => {
   expect(value).toEqual({ value: "hello" });
 });
 
-test("parseProps: given invalid input, it should throw a validation error carrying the zod issues", () => {
-  // GIVEN / WHEN / THEN
+test("parseProps: given invalid input, it should throw an InvariantViolation app error carrying the zod issues", () => {
+  // GIVEN / WHEN
+  let error: unknown;
   try {
     parseProps(schema, { value: "   " });
-    throw new Error("Expected parseProps to throw");
-  } catch (error) {
-    expect(error).toMatchObject({
-      category: "validation",
-      kind: "InvariantViolation",
-    });
-    expect(
-      Array.isArray(
-        (error as { details?: { issues?: unknown } }).details?.issues,
-      ),
-    ).toBe(true);
+  } catch (caught) {
+    error = caught;
   }
-});
 
-test("parseProps: given a custom error builder, it should throw an error with that builder's kind", () => {
-  // GIVEN
-  const CustomInvalid = defineError("CustomInvalid", "conflict");
-
-  // WHEN / THEN
-  expect(() => parseProps(schema, { value: "" }, CustomInvalid)).toThrow(
-    expect.objectContaining({
-      category: "conflict",
-      kind: "CustomInvalid",
-    }),
-  );
+  // THEN
+  expect(error).toBeInstanceOf(AppError);
+  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
+  expect(Array.isArray(AppError.from(error).details?.issues)).toBe(true);
 });

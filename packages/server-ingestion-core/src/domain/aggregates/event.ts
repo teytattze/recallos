@@ -8,7 +8,6 @@ import {
 } from "@repo/server-kernel";
 import { z } from "zod";
 
-import { createInvalidEventError } from "../errors/invalid-event-error";
 import {
   EventExternal,
   type EventExternalPropsIn,
@@ -52,15 +51,11 @@ class Event extends TenantAwareAggregateRoot<EventId, EventProps> {
       EventId.create(),
       Tenant.fromString(input.tenant),
       EntityMetadata.create({ payload: input.metadata }),
-      parseProps(
-        eventPropsSchema,
-        {
-          external: EventExternal.create({ payload: input.payload.external }),
-          graphId: GraphId.restore({ payload: input.payload.graphId }),
-          raw: input.payload.raw,
-        },
-        createInvalidEventError,
-      ),
+      parseProps(eventPropsSchema, {
+        external: EventExternal.create({ payload: input.payload.external }),
+        graphId: GraphId.restore({ payload: input.payload.graphId }),
+        raw: input.payload.raw,
+      }),
     );
   }
 

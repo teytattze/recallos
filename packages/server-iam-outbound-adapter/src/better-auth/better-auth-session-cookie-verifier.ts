@@ -1,4 +1,3 @@
-import { AppError } from "@repo/app-error";
 import type {
   Permission,
   SessionCookieVerifierPort,
@@ -6,6 +5,7 @@ import type {
   SessionCookieVerifierPortVerifyOutput,
 } from "@repo/server-iam-core";
 
+import { AppError } from "@repo/app-error";
 import { Tenant } from "@repo/server-kernel";
 
 import { toBetterAuthPermissionRecord } from "./permission-record.ts";
@@ -59,9 +59,7 @@ class BetterAuthSessionCookieVerifier implements SessionCookieVerifierPort {
     });
 
     if (result === null) {
-      throw AppError.ofCode("serverIamCore.invalidSessionCookie", {
-        message: "Invalid session cookie",
-      });
+      throw AppError.ofCode("serverIamCore.invalidSessionCookie");
     }
 
     const organizationId = result.session.activeOrganizationId;
@@ -71,9 +69,7 @@ class BetterAuthSessionCookieVerifier implements SessionCookieVerifierPort {
       organizationId === null ||
       organizationId.length === 0
     ) {
-      throw AppError.ofCode("serverIamCore.invalidSessionCookie", {
-        message: "Session cookie has no active organization",
-      });
+      throw AppError.ofCode("serverIamCore.invalidSessionCookie");
     }
 
     const permissionResult = await this.input.api.hasPermission({

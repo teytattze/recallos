@@ -3,8 +3,8 @@ import type {
   SearchGraphPort,
 } from "@repo/server-knowledge-core";
 
+import { AppError } from "@repo/app-error";
 import { Hono, type Context } from "hono";
-import { ZodError } from "zod";
 
 import {
   graphPathParams,
@@ -21,16 +21,6 @@ type CreateGraphNodeRoutesInput = {
   };
   resolveTenant: ResolveTenant;
 };
-
-type CategorizedError = {
-  category: string;
-};
-
-const isCategorizedError = (error: unknown): error is CategorizedError =>
-  typeof error === "object" &&
-  error !== null &&
-  "category" in error &&
-  typeof error.category === "string";
 
 const createGraphNodeRoutes = (input: CreateGraphNodeRoutesInput) => {
   const routes = new Hono();
@@ -53,10 +43,8 @@ const createGraphNodeRoutes = (input: CreateGraphNodeRoutesInput) => {
 
       return c.json(graphNodes);
     } catch (error) {
-      if (isValidationError(error)) {
-        return c.json({ message: "Invalid request" }, 422);
-      }
-      throw error;
+      const appError = AppError.from(error);
+      return c.json(appError.toJSON(), appError.httpStatus);
     }
   });
 
@@ -73,19 +61,12 @@ const createGraphNodeRoutes = (input: CreateGraphNodeRoutesInput) => {
 
       return c.json(results);
     } catch (error) {
-      if (isValidationError(error)) {
-        return c.json({ message: "Invalid request" }, 422);
-      }
-      throw error;
+      const appError = AppError.from(error);
+      return c.json(appError.toJSON(), appError.httpStatus);
     }
   });
 
   return routes;
 };
-
-const isValidationError = (error: unknown): boolean =>
-  error instanceof SyntaxError ||
-  error instanceof ZodError ||
-  (isCategorizedError(error) && error.category === "validation");
 
 export { createGraphNodeRoutes };

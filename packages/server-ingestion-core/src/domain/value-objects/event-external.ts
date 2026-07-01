@@ -1,8 +1,6 @@
 import { parseProps, ValueObject } from "@repo/server-kernel";
 import { z } from "zod";
 
-import { createInvalidEventError } from "../errors/invalid-event-error";
-
 const eventExternalPropsSchema = z.object({
   id: z.string().brand<"EventExternalId">(),
   provider: z.enum(["jira"]).brand<"EventExternalProvider">(),
@@ -21,11 +19,7 @@ type RestoreEventExternalInput = {
 class EventExternal extends ValueObject<EventExternalProps> {
   static create(input: CreateEventExternalInput): EventExternal {
     return new EventExternal(
-      parseProps(
-        eventExternalPropsSchema,
-        input.payload,
-        createInvalidEventError,
-      ),
+      parseProps(eventExternalPropsSchema, input.payload),
     );
   }
 

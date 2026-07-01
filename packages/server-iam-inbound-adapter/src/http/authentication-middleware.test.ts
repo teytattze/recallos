@@ -1,4 +1,3 @@
-import { AppError } from "@repo/app-error";
 import type {
   Principal,
   VerifyApiKeyPort,
@@ -9,6 +8,7 @@ import type {
   VerifySessionCookiePortOutput,
 } from "@repo/server-iam-core";
 
+import { AppError } from "@repo/app-error";
 import { permissions } from "@repo/server-iam-core";
 import { expect, test } from "bun:test";
 import { Hono } from "hono";
@@ -128,11 +128,7 @@ test("createAuthenticationMiddleware: given an invalid session cookie, it should
       requiredPermissions: [permissions.knowledgeRead],
       verifyApiKey: new FakeVerifyApiKey(Promise.resolve(apiKeyPrincipal)),
       verifySessionCookie: new FakeVerifySessionCookie(
-        Promise.reject(
-          AppError.ofCode("serverIamCore.invalidSessionCookie", {
-            message: "Invalid session",
-          }),
-        ),
+        Promise.reject(AppError.ofCode("serverIamCore.invalidSessionCookie")),
       ),
     }),
   );
@@ -155,11 +151,7 @@ test("createAuthenticationMiddleware: given insufficient permissions, it should 
       requiredPermissions: [permissions.ingestionWrite],
       verifyApiKey: new FakeVerifyApiKey(Promise.resolve(apiKeyPrincipal)),
       verifySessionCookie: new FakeVerifySessionCookie(
-        Promise.reject(
-          AppError.ofCode("serverIamCore.insufficientPermission", {
-            message: "Forbidden",
-          }),
-        ),
+        Promise.reject(AppError.ofCode("serverIamCore.insufficientPermission")),
       ),
     }),
   );

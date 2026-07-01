@@ -10,6 +10,7 @@
     "test": "bun test --randomize"
   },
   "dependencies": {
+    "@repo/app-error": "workspace:*",
     "@repo/server-kernel": "workspace:*",
     "zod": "catalog:"
   },

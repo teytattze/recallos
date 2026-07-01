@@ -52,11 +52,7 @@ test("VerifyApiKeyUseCase.execute: given a missing API key, it should throw with
 
 test("VerifyApiKeyUseCase.execute: given an invalid API key, it should surface the verifier failure", async () => {
   const verifier = new FakeApiKeyVerifier(
-    Promise.reject(
-      AppError.ofCode("serverIamCore.invalidApiKey", {
-        message: "Invalid API key",
-      }),
-    ),
+    Promise.reject(AppError.ofCode("serverIamCore.invalidApiKey")),
   );
   const useCase = new VerifyApiKeyUseCase(verifier);
 

@@ -18,9 +18,7 @@ class VerifySessionCookieUseCase implements VerifySessionCookiePort {
     const cookieHeader = input.cookieHeader?.trim();
 
     if (cookieHeader === undefined || cookieHeader.length === 0) {
-      throw AppError.ofCode("serverIamCore.missingSessionCookie", {
-        message: "Missing session cookie",
-      });
+      throw AppError.ofCode("serverIamCore.missingSessionCookie");
     }
 
     const principal = await this.sessionCookieVerifier.verify({
@@ -34,10 +32,7 @@ class VerifySessionCookieUseCase implements VerifySessionCookiePort {
     );
 
     if (missingPermissions.length > 0) {
-      throw AppError.ofCode("serverIamCore.insufficientPermission", {
-        details: { permissions: missingPermissions },
-        message: "Session does not grant the required permissions",
-      });
+      throw AppError.ofCode("serverIamCore.insufficientPermission");
     }
 
     return principal;

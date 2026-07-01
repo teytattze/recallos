@@ -10,8 +10,21 @@ const iamErrorCodes = [
   "serverIamCore.insufficientPermission",
 ] as const satisfies readonly AppErrorCode[];
 
+const serverErrorCodes = [
+  "serverKernel.invariantViolation",
+  "serverIngestionCore.invalidWebhookAuthentication",
+  "serverIngestionCore.webhookSubscriptionNotFound",
+  "serverKnowledgeCore.graphNotFound",
+] as const satisfies readonly AppErrorCode[];
+
 test("AppError.ofCode: given IAM error codes, it should create recognized app errors", () => {
   for (const code of iamErrorCodes) {
+    expect(AppError.ofCode(code).code).toBe(code);
+  }
+});
+
+test("AppError.ofCode: given server error codes, it should create recognized app errors", () => {
+  for (const code of serverErrorCodes) {
     expect(AppError.ofCode(code).code).toBe(code);
   }
 });

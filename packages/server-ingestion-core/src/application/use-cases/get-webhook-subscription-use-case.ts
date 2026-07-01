@@ -1,3 +1,4 @@
+import { AppError } from "@repo/app-error";
 import { Tenant } from "@repo/server-kernel";
 
 import type {
@@ -7,7 +8,6 @@ import type {
 } from "../ports/inbound/get-webhook-subscription-port.ts";
 import type { WebhookSubscriptionRepositoryPort } from "../ports/outbound/webhook-subscription-repository-port.ts";
 
-import { createWebhookSubscriptionNotFoundError } from "../../domain/errors/webhook-subscription-not-found-error.ts";
 import { WebhookSubscriptionId } from "../../domain/value-objects/webhook-subscription-id.ts";
 
 class GetWebhookSubscriptionUseCase implements GetWebhookSubscriptionPort {
@@ -28,13 +28,7 @@ class GetWebhookSubscriptionUseCase implements GetWebhookSubscriptionPort {
       });
 
     if (webhookSubscription === null) {
-      throw createWebhookSubscriptionNotFoundError(
-        "Webhook subscription not found",
-        {
-          id: input.payload.id,
-          tenant: input.tenant,
-        },
-      );
+      throw AppError.ofCode("serverIngestionCore.webhookSubscriptionNotFound");
     }
 
     return {

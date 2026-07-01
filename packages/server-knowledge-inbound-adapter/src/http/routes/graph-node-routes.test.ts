@@ -7,6 +7,7 @@ import type {
   SearchGraphPortOutput,
 } from "@repo/server-knowledge-core";
 
+import { AppError } from "@repo/app-error";
 import { expect, test } from "bun:test";
 
 import { createGraphNodeRoutes } from "./graph-node-routes.ts";
@@ -50,11 +51,7 @@ class EmptyListGraphNodes implements ListGraphNodesPort {
 
 class InvalidListGraphNodes implements ListGraphNodesPort {
   execute(): ListGraphNodesPortOutput {
-    return Promise.reject({
-      kind: "InvalidTenant",
-      category: "validation",
-      message: "Invalid tenant",
-    });
+    return Promise.reject(AppError.ofCode("serverKernel.invariantViolation"));
   }
 }
 

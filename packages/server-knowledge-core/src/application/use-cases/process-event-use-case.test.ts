@@ -1,4 +1,5 @@
 import { createFixedClock } from "@repo/server-kernel";
+import { AppError } from "@repo/app-error";
 import { expect, test } from "bun:test";
 
 import type {
@@ -144,12 +145,11 @@ test("ProcessEventUseCase.execute: given a missing graph, it should throw before
     .catch((caught: unknown) => caught);
 
   // THEN
-  expect(error).toEqual({
-    kind: "GraphNotFound",
-    category: "not-found",
-    message: "Graph not found",
-    details: { id: graphId, tenant },
-  });
+  expect(error).toBeInstanceOf(AppError);
+  const appError = AppError.from(error);
+  expect(appError.code).toBe("serverKnowledgeCore.graphNotFound");
+  expect(appError.message).toBe("Graph not found");
+  expect(appError.details).toEqual({ id: graphId, tenant });
   expect(embeddingGateway.inputs).toEqual([]);
   expect(graphNodeRepository.inputs).toEqual([]);
 });

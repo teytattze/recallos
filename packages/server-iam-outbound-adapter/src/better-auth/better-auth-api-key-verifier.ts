@@ -52,17 +52,13 @@ class BetterAuthApiKeyVerifier implements ApiKeyVerifierPort {
     });
 
     if (!result.valid || result.key === null) {
-      throw AppError.ofCode("serverIamCore.invalidApiKey", {
-        message: "Invalid API key",
-      });
+      throw AppError.ofCode("serverIamCore.invalidApiKey");
     }
 
     const organizationId = result.key.referenceId;
 
     if (organizationId === undefined || organizationId.length === 0) {
-      throw AppError.ofCode("serverIamCore.invalidApiKey", {
-        message: "API key is not organization-owned",
-      });
+      throw AppError.ofCode("serverIamCore.invalidApiKey");
     }
 
     return {

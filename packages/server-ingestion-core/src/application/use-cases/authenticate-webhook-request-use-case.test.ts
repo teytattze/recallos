@@ -1,3 +1,4 @@
+import { AppError } from "@repo/app-error";
 import { expect, test } from "bun:test";
 
 import type { WebhookSubscription } from "../../domain/aggregates/webhook-subscription.ts";
@@ -142,10 +143,10 @@ test("AuthenticateWebhookRequestUseCase.execute: given a missing subscription, i
     .catch((caught: unknown) => caught);
 
   // THEN
-  expect(error).toMatchObject({
-    kind: "InvalidWebhookAuthentication",
-    category: "forbidden",
-  });
+  expect(error).toBeInstanceOf(AppError);
+  expect(AppError.from(error).code).toBe(
+    "serverIngestionCore.invalidWebhookAuthentication",
+  );
   expect(repository.findByIdInputs.length).toBe(1);
   expect(repository.findByIdInputs[0]!.id.toString()).toBe(id);
   expect(repository.findByIdInputs[0]!.tenant.toString()).toBe(tenant);
@@ -179,10 +180,10 @@ test("AuthenticateWebhookRequestUseCase.execute: given a same-length invalid sig
     .catch((caught: unknown) => caught);
 
   // THEN
-  expect(error).toMatchObject({
-    kind: "InvalidWebhookAuthentication",
-    category: "forbidden",
-  });
+  expect(error).toBeInstanceOf(AppError);
+  expect(AppError.from(error).code).toBe(
+    "serverIngestionCore.invalidWebhookAuthentication",
+  );
   expect(error).not.toBeInstanceOf(RangeError);
   expect(signatureGenerator.generateInputs.length).toBe(1);
 });

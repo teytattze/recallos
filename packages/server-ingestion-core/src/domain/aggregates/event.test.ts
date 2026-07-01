@@ -1,5 +1,6 @@
 import type { JsonObject } from "type-fest";
 
+import { AppError } from "@repo/app-error";
 import { test, expect } from "bun:test";
 
 import type { EventExternalPropsIn } from "../value-objects/event-external.ts";
@@ -91,7 +92,7 @@ test.each([
     } as unknown as EventPayload,
   },
 ])(
-  "Event.create: given $label, it should throw an InvalidEvent error",
+  "Event.create: given $label, it should throw an InvariantViolation app error",
   ({ payload }) => {
     // GIVEN
     const input = {
@@ -100,12 +101,16 @@ test.each([
     };
 
     // WHEN
-    const createEvent = () => Event.create(input);
+    let error: unknown;
+    try {
+      Event.create(input);
+    } catch (caught) {
+      error = caught;
+    }
 
     // THEN
-    expect(createEvent).toThrow(
-      expect.objectContaining({ kind: "InvalidEvent" }),
-    );
+    expect(error).toBeInstanceOf(AppError);
+    expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
   },
 );
 
@@ -138,9 +143,10 @@ test("Event.restore: given a stored row, it should preserve persisted identity a
   expect(event.raw).toEqual(raw);
 });
 
-test("Event.restore: given an unsupported external provider, it should throw an InvariantViolation error", () => {
-  // GIVEN / WHEN / THEN
-  expect(() =>
+test("Event.restore: given an unsupported external provider, it should throw an InvariantViolation app error", () => {
+  // GIVEN / WHEN
+  let error: unknown;
+  try {
     Event.restore({
       ...storedInput,
       payload: {
@@ -150,6 +156,12 @@ test("Event.restore: given an unsupported external provider, it should throw an 
           provider: "github",
         } as unknown as EventExternalPropsIn,
       },
-    }),
-  ).toThrow(expect.objectContaining({ kind: "InvariantViolation" }));
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  // THEN
+  expect(error).toBeInstanceOf(AppError);
+  expect(AppError.from(error).code).toBe("serverKernel.invariantViolation");
 });

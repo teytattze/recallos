@@ -1,3 +1,4 @@
+import { merge } from "es-toolkit";
 import z from "zod";
 
 import {
@@ -9,40 +10,34 @@ import {
 
 const appErrorJson = z.object({
   code: z.string().refine(isAppErrorCode),
-  details: z.record(z.string(), z.unknown()).optional(),
   message: z.string().optional(),
 });
 type AppErrorJson = z.infer<typeof appErrorJson>;
 
 type OfCodeOptions = {
   cause?: unknown;
-  details?: Readonly<Record<string, unknown>>;
   message?: string;
 };
 
 class AppError extends Error {
   #code: AppErrorCode;
   #definition: AppErrorDefinition;
-  #details: Readonly<Record<string, unknown>> | undefined;
 
   private constructor(
     code: AppErrorCode,
     definition: AppErrorDefinition,
-    options: ErrorOptions & {
-      readonly details?: Readonly<Record<string, unknown>>;
-      readonly message?: string;
-    },
+    options: ErrorOptions,
   ) {
-    super(options.message ?? definition.message, options);
+    super(definition.message, options);
     this.#code = code;
     this.#definition = definition;
-    this.#details = options.details;
   }
 
   static ofCode(code: AppErrorCode, options?: OfCodeOptions) {
-    const { cause, details, message } = options ?? {};
+    const { cause, message } = options ?? {};
     const definition = appErrorCodeToDefinition[code];
-    return new AppError(code, definition, { cause, details, message });
+    const updatedDefinition = merge(definition, { message });
+    return new AppError(code, updatedDefinition, { cause });
   }
 
   static from(error: unknown) {
@@ -56,7 +51,6 @@ class AppError extends Error {
 
     if (result.success) {
       return AppError.ofCode(result.data.code, {
-        details: result.data.details,
         message: result.data.message,
       });
     }
@@ -66,7 +60,6 @@ class AppError extends Error {
   toJSON() {
     return {
       code: this.#code,
-      ...(this.#details === undefined ? {} : { details: this.#details }),
       message: this.message,
     } as const satisfies AppErrorJson;
   }
@@ -74,17 +67,8 @@ class AppError extends Error {
   get code() {
     return this.#code;
   }
-
-  get details() {
-    return this.#details;
-  }
-
   get httpStatus() {
     return this.#definition.mappings.httpStatus;
-  }
-
-  get publicMessage() {
-    return this.#definition.message;
   }
 }
 

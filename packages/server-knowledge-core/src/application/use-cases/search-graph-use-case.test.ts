@@ -1,3 +1,4 @@
+import { AppError } from "@repo/app-error";
 import { expect, test } from "bun:test";
 
 import type {
@@ -163,7 +164,10 @@ test("SearchGraphUseCase.execute: given a missing graph, it should throw before 
     .execute({ tenant, payload: { graphId, query: "billing incident" } })
     .catch((caught: unknown) => caught);
 
-  expect(error).toHaveProperty("kind", "GraphNotFound");
+  expect(error).toBeInstanceOf(AppError);
+  const appError = AppError.from(error);
+  expect(appError.code).toBe("serverKnowledgeCore.graphNotFound");
+  expect(appError.details).toEqual({ id: graphId, tenant });
   expect(embeddingGateway.embedInputs).toEqual([]);
   expect(graphNodeRepository.searchInputs).toEqual([]);
 });
