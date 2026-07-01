@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { Center } from "@/components/ui/center";
-import { Field, FieldError, FieldGroup } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import type { SignUpSendEmailOtpForm } from "@/features/sign-up/forms/sign-up-send-email-otp-form";
 
+import { Center } from "@/components/extended-ui/center";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { withFormSubmitPreventDefault } from "@/libs/form/utils";
 
 type SignUpSendEmailOtpStepProps = {

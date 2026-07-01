@@ -1,5 +1,6 @@
 import { useSelector } from "@tanstack/react-store";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { iamAuthDataHook } from "@/data/iam/iam-auth-data-hook";
 import { SignInEmailOtpVerifiedStep } from "@/features/sign-in/components/sign-in-email-otp-verified-step";
@@ -7,7 +8,6 @@ import { SignInSendEmailOtpStep } from "@/features/sign-in/components/sign-in-se
 import { SignInVerifyEmailOtpStep } from "@/features/sign-in/components/sign-in-verify-email-otp-step";
 import { useSignInSendEmailOtpForm } from "@/features/sign-in/forms/sign-in-send-email-otp-form";
 import { useSignInVerifyEmailOtpForm } from "@/features/sign-in/forms/sign-in-verify-email-otp-form";
-import { toast } from "sonner";
 
 type StepKey = "send-email-otp" | "verify-email-otp" | "email-otp-verified";
 

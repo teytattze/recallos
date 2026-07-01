@@ -1,8 +1,10 @@
-import { Center } from "@/components/ui/center";
-import { Pending } from "@/components/ui/pending";
-import type { FileRoutesByFullPath } from "@/routeTree.gen";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+
+import type { FileRoutesByFullPath } from "@/routeTree.gen";
+
+import { Center } from "@/components/extended-ui/center";
+import { Pending } from "@/components/extended-ui/pending";
 
 type SignUpEmailOtpVerifiedStepProps = {
   redirectTo: keyof FileRoutesByFullPath;

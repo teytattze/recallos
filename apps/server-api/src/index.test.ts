@@ -23,9 +23,7 @@ const withServerApiEnv = async <T>(run: () => Promise<T>): Promise<T> => {
     process.env.INGESTION_MONGODB_URL = "mongodb://127.0.0.1:27017";
     process.env.INGESTION_MONGODB_DATABASE_NAME = "recallos-test";
     process.env.IAM_MONGODB_URL = "mongodb://127.0.0.1:27017";
-    process.env.IAM_TRUSTED_ORIGINS = JSON.stringify([
-      "http://localhost:8000",
-    ]);
+    process.env.IAM_TRUSTED_ORIGINS = JSON.stringify(["http://localhost:8000"]);
     process.env.IAM_SECRETS = JSON.stringify([
       { version: 1, value: "local-iam-secret-change-before-production" },
     ]);

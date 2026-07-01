@@ -1,8 +1,9 @@
+import type { SignInSendEmailOtpForm } from "@/features/sign-in/forms/sign-in-send-email-otp-form";
+
+import { Center } from "@/components/extended-ui/center";
 import { Button } from "@/components/ui/button";
-import { Center } from "@/components/ui/center";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import type { SignInSendEmailOtpForm } from "@/features/sign-in/forms/sign-in-send-email-otp-form";
 import { withFormSubmitPreventDefault } from "@/libs/form/utils";
 
 type SignInSendEmailOtpStepProps = {

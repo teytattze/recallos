@@ -1,4 +1,4 @@
-import { Center } from "@/components/ui/center";
+import { Center } from "@/components/extended-ui/center";
 import { Spinner } from "@/components/ui/spinner";
 
 type PendingProps = {

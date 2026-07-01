@@ -1,8 +1,11 @@
 import { ArrowLeftIcon } from "lucide-react";
 
+import type { SignUpSendEmailOtpForm } from "@/features/sign-up/forms/sign-up-send-email-otp-form";
+import type { SignUpVerifyEmailOtpForm } from "@/features/sign-up/forms/sign-up-verify-email-otp-form";
+
+import { Center } from "@/components/extended-ui/center";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { Center } from "@/components/ui/center";
 import {
   Field,
   FieldDescription,
@@ -15,8 +18,6 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { withFormSubmitPreventDefault } from "@/libs/form/utils";
-import type { SignUpSendEmailOtpForm } from "@/features/sign-up/forms/sign-up-send-email-otp-form";
-import type { SignUpVerifyEmailOtpForm } from "@/features/sign-up/forms/sign-up-verify-email-otp-form";
 
 type SignUpVerifyEmailOtpStepProps = {
   sendEmailOtpForm: SignUpSendEmailOtpForm;
