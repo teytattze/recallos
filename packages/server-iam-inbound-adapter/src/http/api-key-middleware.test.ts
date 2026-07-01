@@ -1,3 +1,4 @@
+import { AppError } from "@repo/app-error";
 import type {
   Principal,
   VerifyApiKeyPort,
@@ -5,7 +6,7 @@ import type {
   VerifyApiKeyPortOutput,
 } from "@repo/server-iam-core";
 
-import { createInvalidApiKeyError, permissions } from "@repo/server-iam-core";
+import { permissions } from "@repo/server-iam-core";
 import { expect, test } from "bun:test";
 import { Hono } from "hono";
 
@@ -66,7 +67,11 @@ test("createApiKeyMiddleware: given an invalid API key, it should return 401", a
     createApiKeyMiddleware({
       requiredPermissions: [permissions.knowledgeRead],
       verifyApiKey: new FakeVerifyApiKey(
-        Promise.reject(createInvalidApiKeyError("Invalid API key")),
+        Promise.reject(
+          AppError.ofCode("serverIamCore.invalidApiKey", {
+            message: "Invalid API key",
+          }),
+        ),
       ),
     }),
   );
@@ -88,11 +93,11 @@ test("createApiKeyMiddleware: given insufficient permissions, it should return 4
     createApiKeyMiddleware({
       requiredPermissions: [permissions.ingestionWrite],
       verifyApiKey: new FakeVerifyApiKey(
-        Promise.reject({
-          kind: "InsufficientPermission",
-          category: "forbidden",
-          message: "Forbidden",
-        }),
+        Promise.reject(
+          AppError.ofCode("serverIamCore.insufficientPermission", {
+            message: "Forbidden",
+          }),
+        ),
       ),
     }),
   );

@@ -1,5 +1,5 @@
 {
-  "name": "@repo/server-iam-outbound-adapter",
+  "name": "@repo/app-error",
   "private": true,
   "type": "module",
   "exports": {
@@ -10,13 +10,7 @@
     "test": "bun test --randomize --pass-with-no-tests"
   },
   "dependencies": {
-    "@better-auth/api-key": "1.6.11",
-    "@repo/app-error": "workspace:*",
-    "@repo/server-iam-core": "workspace:*",
-    "@repo/server-kernel": "workspace:*",
-    "better-auth": "catalog:",
-    "mongodb": "catalog:",
-    "resend": "6.6.0",
+    "es-toolkit": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -1,12 +1,11 @@
+import { AppError } from "@repo/app-error";
+
 import type {
   VerifyApiKeyPort,
   VerifyApiKeyPortInput,
   VerifyApiKeyPortOutput,
 } from "../ports/inbound/verify-api-key-port.ts";
 import type { ApiKeyVerifierPort } from "../ports/outbound/api-key-verifier-port.ts";
-
-import { createInsufficientPermissionError } from "../../domain/errors/insufficient-permission-error.ts";
-import { createMissingApiKeyError } from "../../domain/errors/missing-api-key-error.ts";
 
 class VerifyApiKeyUseCase implements VerifyApiKeyPort {
   constructor(private readonly apiKeyVerifier: ApiKeyVerifierPort) {}
@@ -15,7 +14,9 @@ class VerifyApiKeyUseCase implements VerifyApiKeyPort {
     const apiKey = input.apiKey?.trim();
 
     if (apiKey === undefined || apiKey.length === 0) {
-      throw createMissingApiKeyError("Missing API key");
+      throw AppError.ofCode("serverIamCore.missingApiKey", {
+        message: "Missing API key",
+      });
     }
 
     const principal = await this.apiKeyVerifier.verify({
@@ -29,10 +30,10 @@ class VerifyApiKeyUseCase implements VerifyApiKeyPort {
     );
 
     if (missingPermissions.length > 0) {
-      throw createInsufficientPermissionError(
-        "API key does not grant the required permissions",
-        { permissions: missingPermissions },
-      );
+      throw AppError.ofCode("serverIamCore.insufficientPermission", {
+        details: { permissions: missingPermissions },
+        message: "API key does not grant the required permissions",
+      });
     }
 
     return principal;

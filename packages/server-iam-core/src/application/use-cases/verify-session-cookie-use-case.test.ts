@@ -1,3 +1,4 @@
+import { AppError, type AppErrorCode } from "@repo/app-error";
 import { expect, test } from "bun:test";
 
 import type {
@@ -6,7 +7,6 @@ import type {
   SessionCookieVerifierPortVerifyOutput,
 } from "../ports/outbound/session-cookie-verifier-port.ts";
 
-import { createInvalidSessionCookieError } from "../../domain/errors/invalid-session-cookie-error.ts";
 import { permissions } from "../../domain/permission.ts";
 import { VerifySessionCookieUseCase } from "./verify-session-cookie-use-case.ts";
 
@@ -32,6 +32,11 @@ class FakeSessionCookieVerifier implements SessionCookieVerifierPort {
   }
 }
 
+const expectAppErrorCode = (error: unknown, code: AppErrorCode) => {
+  expect(error).toBeInstanceOf(AppError);
+  expect(AppError.from(error).code).toBe(code);
+};
+
 test("VerifySessionCookieUseCase.execute: given a missing cookie header, it should throw without calling the verifier", async () => {
   const verifier = new FakeSessionCookieVerifier(Promise.resolve(principal));
   const useCase = new VerifySessionCookieUseCase(verifier);
@@ -43,14 +48,18 @@ test("VerifySessionCookieUseCase.execute: given a missing cookie header, it shou
     });
     throw new Error("Expected missing session cookie error");
   } catch (error) {
-    expect(error).toMatchObject({ kind: "MissingSessionCookie" });
+    expectAppErrorCode(error, "serverIamCore.missingSessionCookie");
   }
   expect(verifier.verifyCalls).toEqual([]);
 });
 
 test("VerifySessionCookieUseCase.execute: given an invalid session cookie, it should surface the verifier failure", async () => {
   const verifier = new FakeSessionCookieVerifier(
-    Promise.reject(createInvalidSessionCookieError("Invalid session cookie")),
+    Promise.reject(
+      AppError.ofCode("serverIamCore.invalidSessionCookie", {
+        message: "Invalid session cookie",
+      }),
+    ),
   );
   const useCase = new VerifySessionCookieUseCase(verifier);
 
@@ -61,7 +70,7 @@ test("VerifySessionCookieUseCase.execute: given an invalid session cookie, it sh
     });
     throw new Error("Expected invalid session cookie error");
   } catch (error) {
-    expect(error).toMatchObject({ kind: "InvalidSessionCookie" });
+    expectAppErrorCode(error, "serverIamCore.invalidSessionCookie");
   }
 });
 
@@ -76,7 +85,7 @@ test("VerifySessionCookieUseCase.execute: given a session missing a required per
     });
     throw new Error("Expected insufficient permission error");
   } catch (error) {
-    expect(error).toMatchObject({ kind: "InsufficientPermission" });
+    expectAppErrorCode(error, "serverIamCore.insufficientPermission");
   }
 });
 

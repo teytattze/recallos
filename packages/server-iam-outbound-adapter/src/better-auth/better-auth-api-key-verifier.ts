@@ -5,7 +5,7 @@ import type {
   Permission,
 } from "@repo/server-iam-core";
 
-import { createInvalidApiKeyError } from "@repo/server-iam-core";
+import { AppError } from "@repo/app-error";
 import { Tenant } from "@repo/server-kernel";
 
 import {
@@ -52,13 +52,17 @@ class BetterAuthApiKeyVerifier implements ApiKeyVerifierPort {
     });
 
     if (!result.valid || result.key === null) {
-      throw createInvalidApiKeyError("Invalid API key");
+      throw AppError.ofCode("serverIamCore.invalidApiKey", {
+        message: "Invalid API key",
+      });
     }
 
     const organizationId = result.key.referenceId;
 
     if (organizationId === undefined || organizationId.length === 0) {
-      throw createInvalidApiKeyError("API key is not organization-owned");
+      throw AppError.ofCode("serverIamCore.invalidApiKey", {
+        message: "API key is not organization-owned",
+      });
     }
 
     return {

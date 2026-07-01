@@ -121,6 +121,16 @@
         "@repo/typescript-config": "workspace:*",
       },
     },
+    "packages/app-error": {
+      "name": "@repo/app-error",
+      "dependencies": {
+        "es-toolkit": "catalog:",
+        "zod": "catalog:",
+      },
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+      },
+    },
     "packages/server-database": {
       "name": "@repo/server-database",
       "dependencies": {
@@ -135,7 +145,7 @@
     "packages/server-iam-core": {
       "name": "@repo/server-iam-core",
       "dependencies": {
-        "@repo/server-kernel": "workspace:*",
+        "@repo/app-error": "workspace:*",
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -145,6 +155,7 @@
     "packages/server-iam-inbound-adapter": {
       "name": "@repo/server-iam-inbound-adapter",
       "dependencies": {
+        "@repo/app-error": "workspace:*",
         "@repo/server-iam-core": "workspace:*",
         "hono": "catalog:",
       },
@@ -156,6 +167,7 @@
       "name": "@repo/server-iam-outbound-adapter",
       "dependencies": {
         "@better-auth/api-key": "1.6.11",
+        "@repo/app-error": "workspace:*",
         "@repo/server-iam-core": "workspace:*",
         "@repo/server-kernel": "workspace:*",
         "better-auth": "catalog:",
@@ -690,6 +702,8 @@
     "@protobufjs/utf8": ["@protobufjs/utf8@1.1.1", "", {}, "sha512-oOAWABowe8EAbMyWKM0tYDKi8Yaox52D+HWZhAIJqQXbqe0xI/GV7FhLWqlEKreMkfDjshR5FKgi3mnle0h6Eg=="],
 
     "@repo/app-config": ["@repo/app-config@workspace:packages/app-config"],
+
+    "@repo/app-error": ["@repo/app-error@workspace:packages/app-error"],
 
     "@repo/e2e-server": ["@repo/e2e-server@workspace:tests/e2e-server"],
 

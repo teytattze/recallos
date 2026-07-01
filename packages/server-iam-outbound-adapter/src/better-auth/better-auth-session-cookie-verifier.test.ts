@@ -1,3 +1,4 @@
+import { AppError, type AppErrorCode } from "@repo/app-error";
 import { permissions } from "@repo/server-iam-core";
 import { expect, test } from "bun:test";
 
@@ -36,6 +37,11 @@ class FakeBetterAuthApi implements BetterAuthSessionCookieApi {
     return Promise.resolve(this.hasPermissionOutput);
   }
 }
+
+const expectAppErrorCode = (error: unknown, code: AppErrorCode) => {
+  expect(error).toBeInstanceOf(AppError);
+  expect(AppError.from(error).code).toBe(code);
+};
 
 test("BetterAuthSessionCookieVerifier.verify: given a valid session with permission, it should return a principal", async () => {
   const api = new FakeBetterAuthApi(
@@ -93,7 +99,7 @@ test("BetterAuthSessionCookieVerifier.verify: given an invalid session, it shoul
     });
     throw new Error("Expected invalid session cookie error");
   } catch (error) {
-    expect(error).toMatchObject({ kind: "InvalidSessionCookie" });
+    expectAppErrorCode(error, "serverIamCore.invalidSessionCookie");
   }
 });
 
@@ -118,7 +124,7 @@ test("BetterAuthSessionCookieVerifier.verify: given a session without an active 
     });
     throw new Error("Expected invalid session cookie error");
   } catch (error) {
-    expect(error).toMatchObject({ kind: "InvalidSessionCookie" });
+    expectAppErrorCode(error, "serverIamCore.invalidSessionCookie");
   }
 });
 

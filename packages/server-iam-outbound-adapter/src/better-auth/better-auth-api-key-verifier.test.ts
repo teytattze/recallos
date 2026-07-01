@@ -1,3 +1,4 @@
+import { AppError, type AppErrorCode } from "@repo/app-error";
 import { permissions } from "@repo/server-iam-core";
 import { expect, test } from "bun:test";
 
@@ -22,6 +23,11 @@ class FakeBetterAuthApi implements BetterAuthApiKeyApi {
     return Promise.resolve(this.output);
   }
 }
+
+const expectAppErrorCode = (error: unknown, code: AppErrorCode) => {
+  expect(error).toBeInstanceOf(AppError);
+  expect(AppError.from(error).code).toBe(code);
+};
 
 test("BetterAuthApiKeyVerifier.verify: given a valid org-owned key, it should return a principal", async () => {
   const api = new FakeBetterAuthApi({
@@ -75,7 +81,7 @@ test("BetterAuthApiKeyVerifier.verify: given an invalid key, it should throw an 
     });
     throw new Error("Expected invalid API key error");
   } catch (error) {
-    expect(error).toMatchObject({ kind: "InvalidApiKey" });
+    expectAppErrorCode(error, "serverIamCore.invalidApiKey");
   }
 });
 
@@ -95,6 +101,6 @@ test("BetterAuthApiKeyVerifier.verify: given a user-owned key, it should throw a
     });
     throw new Error("Expected invalid API key error");
   } catch (error) {
-    expect(error).toMatchObject({ kind: "InvalidApiKey" });
+    expectAppErrorCode(error, "serverIamCore.invalidApiKey");
   }
 });
